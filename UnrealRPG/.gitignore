@@ -72,3 +72,8 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Large asset files
+
+# Character Asset
+Content/ParagonAurora/*
