@@ -6,7 +6,9 @@
 #include "Camera/CameraComponent.h"
 
 // Sets default values
-AMeleeCharacter::AMeleeCharacter()
+AMeleeCharacter::AMeleeCharacter() :
+	BaseTurnRate(45.f),
+	BaseLookUpRate(45.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -32,6 +34,44 @@ void AMeleeCharacter::BeginPlay()
 	
 }
 
+void AMeleeCharacter::MoveForward(float Value)
+{
+	if (Controller && Value != 0.f) {
+		const FRotator Rotation{ Controller->GetControlRotation() };
+		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
+
+		// 어느쪽이 전방인지 알아내고, 그 방향으로 이동
+		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AMeleeCharacter::MoveRight(float Value)
+{
+	if (Controller && Value != 0.f) {
+		const FRotator Rotation{ Controller->GetControlRotation() };
+		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
+
+		// 어느쪽이 우측인지 알아내고, 그 방향으로 이동
+		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AMeleeCharacter::TurnAtRate(float Rate)
+{
+	// 이번 프레임에 이동해야될 Yaw 각도를 구함
+	// deg/sec * sec/frame
+	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AMeleeCharacter::LookUpAtRate(float Rate)
+{
+	// 이번 프레임에 이동해야될 Pitch 각도를 구함
+	// deg/sec * sec/frame
+	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {
@@ -43,6 +83,16 @@ void AMeleeCharacter::Tick(float DeltaTime)
 void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	check(PlayerInputComponent);
 
+	PlayerInputComponent->BindAxis("MoveForward", this, &AMeleeCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AMeleeCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("TurnRate", this, &AMeleeCharacter::TurnAtRate);
+	PlayerInputComponent->BindAxis("LookUpRate", this, &AMeleeCharacter::LookUpAtRate);
+	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 }
 
