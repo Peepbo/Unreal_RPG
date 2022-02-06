@@ -37,6 +37,9 @@ protected:
 	*/
 	void LookUpAtRate(float Rate);
 
+	/* 공격 버튼이 눌렸을 때 작동하는 함수 */
+	void Attack();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -61,6 +64,10 @@ private:
 	/* 상하를 둘러보는 감도 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float BaseLookUpRate;
+
+	/* 공격 몽타주 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* AttackMontage;
 public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
