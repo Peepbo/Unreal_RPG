@@ -9,7 +9,11 @@
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
 	BaseTurnRate(45.f),
-	BaseLookUpRate(45.f)
+	BaseLookUpRate(45.f),
+	bShouldComboAttack(false),
+	CombatState(ECombatState::ECS_Unoccupied),
+	AttackCombo(0),
+	MaximumAttackCombo(3)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -87,12 +91,82 @@ void AMeleeCharacter::LookUpAtRate(float Rate)
 
 void AMeleeCharacter::Attack()
 {
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	bShouldComboAttack = false;
+
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
 	if (AnimInstance && AttackMontage)
 	{
 		AnimInstance->Montage_Play(AttackMontage);
-		AnimInstance->Montage_JumpToSection(FName("StartAttack"));
 	}
+
+	CombatState = ECombatState::ECS_Attack;
+}
+
+void AMeleeCharacter::PressedAttack()
+{
+	bPressedAttackButton = true;
+
+	if (CombatState == ECombatState::ECS_Unoccupied) 
+	{
+		Attack();
+	}
+}
+
+void AMeleeCharacter::ReleasedAttack()
+{
+	bPressedAttackButton = false;
+}
+
+void AMeleeCharacter::CheckComboAttack()
+{
+	if (bShouldComboAttack) 
+	{
+		AttackCombo++;
+		bShouldComboAttack = false;
+	}
+	else
+	{
+		EndAttack();
+	}
+}
+
+void AMeleeCharacter::EndAttack()
+{
+	GetWorldTimerManager().ClearTimer(ComboTimer);
+
+	// 공격 애니메이션 도중 종료할 때
+	if (AttackCombo < MaximumAttackCombo) {
+		// 공격 애니메이션을 멈춘다.
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance) {
+			AnimInstance->Montage_Stop(0.3f, AttackMontage);
+		}
+	}
+
+	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
+	AttackCombo = 0;
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void AMeleeCharacter::CheckComboTimer()
+{
+	if (bPressedAttackButton) {
+		bShouldComboAttack = true;
+		GetWorldTimerManager().ClearTimer(ComboTimer);
+	}
+}
+
+void AMeleeCharacter::StartComboTimer()
+{
+	// clearTimer가 호출되기 전까지 0.1초 마다 콤보를 확인하는 타이머
+	GetWorldTimerManager().SetTimer(
+		ComboTimer,
+		this,
+		&AMeleeCharacter::CheckComboTimer,
+		0.1f,
+		true);
 }
 
 // Called every frame
@@ -118,6 +192,7 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &AMeleeCharacter::Attack);
+	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &AMeleeCharacter::PressedAttack);
+	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &AMeleeCharacter::ReleasedAttack);
 }
 
