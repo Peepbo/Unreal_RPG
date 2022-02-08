@@ -37,4 +37,12 @@ private:
 	/* 캐릭터가 움직이고 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bIsAccelerating;
+
+	/* 캐릭터(머리)가 바라봐야 하는 Pitch */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Look, meta = (AllowPrivateAccess = "true"))
+	float PitchOfLook;
+
+	/* 캐릭터(머리)가 바라봐야 하는 Yaw */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Look, meta = (AllowPrivateAccess = "true"))
+	float YawOfLook;
 };

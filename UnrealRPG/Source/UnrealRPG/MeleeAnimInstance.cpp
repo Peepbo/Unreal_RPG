@@ -4,6 +4,7 @@
 #include "MeleeAnimInstance.h"
 #include "MeleeCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UMeleeAnimInstance::NativeInitializeAnimation()
 {
@@ -36,5 +37,18 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		{
 			bIsAccelerating = false;
 		}
+	}
+	if (MeleeCharacter) {
+		// 실질적으로 바라보고있는 방향을 가져온다.
+		const FRotator BaseAimRot = MeleeCharacter->GetBaseAimRotation();
+		// 캐릭터의 방향을 받아온다.
+		const FRotator ActorRotation = MeleeCharacter->GetActorRotation();
+
+		// 캐릭터의 머리가 봐야할 각도를 구한다.
+		const FRotator Result = UKismetMathLibrary::NormalizedDeltaRotator(BaseAimRot, ActorRotation);
+
+		// PitchOfLook, YawOfLook 둘 다 업데이트 해준다.
+		PitchOfLook = Result.Pitch;
+		YawOfLook = Result.Yaw;
 	}
 }
