@@ -122,4 +122,5 @@ private:
 public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 };

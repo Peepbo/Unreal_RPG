@@ -45,4 +45,8 @@ private:
 	/* 캐릭터(머리)가 바라봐야 하는 Yaw */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Look, meta = (AllowPrivateAccess = "true"))
 	float YawOfLook;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bIsAttackWithoutMoving;
+
 };

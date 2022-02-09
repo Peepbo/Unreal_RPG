@@ -51,4 +51,10 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		PitchOfLook = Result.Pitch;
 		YawOfLook = Result.Yaw;
 	}
+	if (MeleeCharacter) {
+		// 가만히 멈춰서 공격하는지 확인한다.
+		const bool bIsAttack{ MeleeCharacter->GetAttacking() };
+		// 공격중이며, 공중이 아니고, 움직이지 않는 경우가 True
+		bIsAttackWithoutMoving = bIsAttack && !bIsInAir && Speed == 0;
+	}
 }
