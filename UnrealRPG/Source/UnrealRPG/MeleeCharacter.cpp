@@ -5,6 +5,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Item.h"
+#include "Weapon.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -13,7 +16,13 @@ AMeleeCharacter::AMeleeCharacter() :
 	bShouldComboAttack(false),
 	CombatState(ECombatState::ECS_Unoccupied),
 	AttackCombo(0),
-	MaximumAttackCombo(3)
+	MaximumAttackCombo(3),
+	// Stat
+	HP(100),
+	MaximumHP(100),
+	AD(0),
+	AP(0),
+	DEF(0)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -49,6 +58,8 @@ void AMeleeCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	EquipWeapon(SpawnDefaultWeapon());
+	EquippedWeapon->SetCharacter(this);
 }
 
 void AMeleeCharacter::MoveForward(float Value)
@@ -167,6 +178,25 @@ void AMeleeCharacter::StartComboTimer()
 		&AMeleeCharacter::CheckComboTimer,
 		0.1f,
 		true);
+}
+
+AWeapon* AMeleeCharacter::SpawnDefaultWeapon()
+{
+	if (DefaultWeaponClass) {
+		return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+	}
+	return nullptr;
+}
+
+void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
+{
+	if (Weapon) {
+		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (HandSocket) {
+			HandSocket->AttachActor(Weapon, GetMesh());
+		}
+		EquippedWeapon = Weapon;
+	}
 }
 
 // Called every frame

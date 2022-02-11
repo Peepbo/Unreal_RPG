@@ -70,6 +70,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StartComboTimer();
 
+	class AWeapon* SpawnDefaultWeapon();
+
+	void EquipWeapon(AWeapon* Weapon, bool bSwapping = false);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -118,6 +122,29 @@ private:
 	/* 최대 콤보 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	int32 MaximumAttackCombo;
+
+	/* Health Point */
+	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	float HP;
+	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	float MaximumHP;
+	/* Attack Damage */
+	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	float AD;
+	/* Ability Power */
+	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	float AP;
+	/* Defense */
+	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	float DEF;
+
+	/* 타입의 안정성을 보장해주는 템플릿 클래스, 기본 무기를 설정하는 곳 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AWeapon> DefaultWeaponClass;
+
+	/* 플레이어가 착용하고있는 무기 */
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AWeapon* EquippedWeapon;
 
 public:
 

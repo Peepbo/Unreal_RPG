@@ -77,3 +77,7 @@ DerivedDataCache/*
 
 # Character Asset
 Content/ParagonAurora/*
+Content/ParagonKwang/*
+
+# Weapon Asset
+Content/Weapon_Pack
