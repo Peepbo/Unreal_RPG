@@ -47,7 +47,7 @@ protected:
 	void LookUpAtRate(float Rate);
 
 	/* 공격 함수 */
-	void Attack();
+	void Attack(int32 MontageIndex = 0);
 
 	/* 공격 버튼을 눌렀을 때 호출하는 함수 */
 	void PressedAttack();
@@ -70,8 +70,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StartComboTimer();
 
+	/* 기본 무기 생성 */
 	class AWeapon* SpawnDefaultWeapon();
 
+	/* 무기 장착 */
 	void EquipWeapon(AWeapon* Weapon, bool bSwapping = false);
 
 public:	
@@ -101,10 +103,6 @@ private:
 	/* 캐릭터의 상태 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	ECombatState CombatState;
-
-	/* 공격 몽타주 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class UAnimMontage* AttackMontage;
 
 	/* 공격 버튼이 눌렸는지 안눌렸는지 */
 	bool bPressedAttackButton;
@@ -145,6 +143,10 @@ private:
 	/* 플레이어가 착용하고있는 무기 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AWeapon* EquippedWeapon;
+
+	/* 공격 몽타주 모음 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TArray<UAnimMontage*> AttackMontages;
 
 public:
 

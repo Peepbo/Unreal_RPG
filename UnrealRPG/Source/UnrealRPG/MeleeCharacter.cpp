@@ -100,16 +100,15 @@ void AMeleeCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-void AMeleeCharacter::Attack()
+void AMeleeCharacter::Attack(int32 MontageIndex)
 {
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
 	bShouldComboAttack = false;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
-	if (AnimInstance && AttackMontage)
+	if (AnimInstance && AttackMontages[MontageIndex])
 	{
-		AnimInstance->Montage_Play(AttackMontage);
+		AnimInstance->Montage_Play(AttackMontages[MontageIndex]);
 	}
 
 	CombatState = ECombatState::ECS_Attack;
@@ -119,6 +118,7 @@ void AMeleeCharacter::PressedAttack()
 {
 	bPressedAttackButton = true;
 
+	// 공격 시작
 	if (CombatState == ECombatState::ECS_Unoccupied) 
 	{
 		Attack();
@@ -132,10 +132,10 @@ void AMeleeCharacter::ReleasedAttack()
 
 void AMeleeCharacter::CheckComboAttack()
 {
-	if (bShouldComboAttack) 
+	AttackCombo++;
+	if (bShouldComboAttack && AttackCombo < AttackMontages.Num() && AttackMontages[AttackCombo])
 	{
-		AttackCombo++;
-		bShouldComboAttack = false;
+		Attack(AttackCombo);
 	}
 	else
 	{
@@ -146,15 +146,6 @@ void AMeleeCharacter::CheckComboAttack()
 void AMeleeCharacter::EndAttack()
 {
 	GetWorldTimerManager().ClearTimer(ComboTimer);
-
-	// 공격 애니메이션 도중 종료할 때
-	if (AttackCombo < MaximumAttackCombo) {
-		// 공격 애니메이션을 멈춘다.
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance) {
-			AnimInstance->Montage_Stop(0.3f, AttackMontage);
-		}
-	}
 
 	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
 	AttackCombo = 0;
