@@ -57,4 +57,8 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		// 공격중이며, 공중이 아니고, 움직이지 않는 경우가 True
 		bIsAttackWithoutMoving = bIsAttack && !bIsInAir && Speed == 0;
 	}
+	if (MeleeCharacter) {
+		// MeleeCharacter의 bIsSprint를 받아온다.
+		bIsSprint = MeleeCharacter->GetSprinting();
+	}
 }

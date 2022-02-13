@@ -8,6 +8,7 @@
 #include "Item.h"
 #include "Weapon.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "MeleeAnimInstance.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -15,14 +16,18 @@ AMeleeCharacter::AMeleeCharacter() :
 	BaseLookUpRate(45.f),
 	bShouldComboAttack(false),
 	CombatState(ECombatState::ECS_Unoccupied),
-	AttackCombo(0),
-	MaximumAttackCombo(3),
+	AttackCombo(0.f),
 	// Stat
-	HP(100),
-	MaximumHP(100),
-	AD(0),
-	AP(0),
-	DEF(0)
+	HP(100.f),
+	MaximumHP(100.f),
+	AD(0.f),
+	AP(0.f),
+	DEF(0.f),
+	ST(100.f),
+	MaximumST(100.f),
+	bIsSprint(false),
+	DefaultSpeed(700.f),
+	MaximumSpeed(1000.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -51,6 +56,7 @@ AMeleeCharacter::AMeleeCharacter() :
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
 }
 
 // Called when the game starts or when spawned
@@ -60,11 +66,25 @@ void AMeleeCharacter::BeginPlay()
 	
 	EquipWeapon(SpawnDefaultWeapon());
 	EquippedWeapon->SetCharacter(this);
+	
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst) {
+		UMeleeAnimInstance* MeleeAnimInst = Cast<UMeleeAnimInstance>(AnimInst);
+		if (MeleeAnimInst) {
+			AnimInstance = MeleeAnimInst;
+		}
+	}
 }
 
 void AMeleeCharacter::MoveForward(float Value)
 {
 	if (Controller && Value != 0.f) {
+		if (bIsSprint) {
+			// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
+			// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
+			Value = Value < 0.f ? -1.f : 1.f;
+		}
+
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
 
@@ -77,6 +97,12 @@ void AMeleeCharacter::MoveForward(float Value)
 void AMeleeCharacter::MoveRight(float Value)
 {
 	if (Controller && Value != 0.f) {
+		if (bIsSprint) {
+			// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
+			// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
+			Value = Value < 0.f ? -1.f : 1.f;
+		}
+
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
 
@@ -104,9 +130,7 @@ void AMeleeCharacter::Attack(int32 MontageIndex)
 {
 	bShouldComboAttack = false;
 
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-
-	if (AnimInstance && AttackMontages[MontageIndex])
+	if (AnimInstance && AttackMontages.IsValidIndex(MontageIndex) && AttackMontages[MontageIndex])
 	{
 		AnimInstance->Montage_Play(AttackMontages[MontageIndex]);
 	}
@@ -173,6 +197,7 @@ void AMeleeCharacter::StartComboTimer()
 
 AWeapon* AMeleeCharacter::SpawnDefaultWeapon()
 {
+	// 기본 무기를 생성한 뒤 반환한다.
 	if (DefaultWeaponClass) {
 		return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
 	}
@@ -181,12 +206,55 @@ AWeapon* AMeleeCharacter::SpawnDefaultWeapon()
 
 void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 {
+	// 무기를 RightHandSocket 위치에 부착한다.
 	if (Weapon) {
 		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("RightHandSocket"));
 		if (HandSocket) {
 			HandSocket->AttachActor(Weapon, GetMesh());
 		}
 		EquippedWeapon = Weapon;
+	}
+}
+
+void AMeleeCharacter::Roll()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (ST < 10.f)return;
+
+	if (AnimInstance && RollMontage) {
+		ST -= 10.f;
+		
+		// 구르기 모션을 재생하고 상태를 바꾼다.
+		AnimInstance->Montage_Play(RollMontage);
+		CombatState = ECombatState::ECS_Roll;
+	}
+}
+
+void AMeleeCharacter::EndRoll()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void AMeleeCharacter::Sprint()
+{
+	if (bIsSprint)return;
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+
+	if (AnimInstance && AnimInstance->GetSpeed() > 0) {
+		bIsSprint = true;
+
+		// 최대 속도를 스프린트 속도로 바꿔준다.
+		GetCharacterMovement()->MaxWalkSpeed = MaximumSpeed;
+	}
+}
+
+void AMeleeCharacter::EndSprint()
+{
+	if (bIsSprint) {
+		bIsSprint = false;
+
+		// 최대 속도를 기본 속도로 되돌린다.
+		GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
 	}
 }
 
@@ -215,5 +283,9 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &AMeleeCharacter::PressedAttack);
 	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &AMeleeCharacter::ReleasedAttack);
+
+	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AMeleeCharacter::Roll);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::Sprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::EndSprint);
 }
 

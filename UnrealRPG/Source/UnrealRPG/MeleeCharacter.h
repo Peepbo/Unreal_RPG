@@ -11,6 +11,7 @@ enum class ECombatState : uint8
 {
 	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	ECS_Attack UMETA(DisplayName = "Attack"),
+	ECS_Roll UMETA(DisplayName = "Roll"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };
@@ -76,6 +77,15 @@ protected:
 	/* 무기 장착 */
 	void EquipWeapon(AWeapon* Weapon, bool bSwapping = false);
 
+	/* 일단 캐릭터가 보는 방향으로 구르기 */
+	void Roll();
+
+	UFUNCTION(BlueprintCallable)
+	void EndRoll();
+
+	void Sprint();
+	void EndSprint();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -117,10 +127,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	int32 AttackCombo;
 
-	/* 최대 콤보 */
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	int32 MaximumAttackCombo;
-
 	/* Health Point */
 	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float HP;
@@ -132,6 +138,9 @@ private:
 	/* Ability Power */
 	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float AP;
+	/* Steminar */
+	float ST;
+	float MaximumST;
 	/* Defense */
 	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float DEF;
@@ -148,8 +157,26 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TArray<UAnimMontage*> AttackMontages;
 
+	/* 구르기 몽타주 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* RollMontage;
+
+	/* 캐릭터가 스프린트 상태인지 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bIsSprint;
+
+	/* 최대 기본 속도 */
+	float DefaultSpeed;
+	/* 최대 스프린트 속도 */
+	float MaximumSpeed;
+
+	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */
+	class UMeleeAnimInstance* AnimInstance;
+
 public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
+	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
+	FORCEINLINE float GetMaximumSpeed() const { return MaximumSpeed; }
 };

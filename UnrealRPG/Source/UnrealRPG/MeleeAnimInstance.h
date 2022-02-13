@@ -46,7 +46,14 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Look, meta = (AllowPrivateAccess = "true"))
 	float YawOfLook;
 
+	/* 움직이지 않은체 공격하는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bIsAttackWithoutMoving;
 
+	/* 캐릭터가 Sprint 상태인지 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bIsSprint;
+
+public:
+	FORCEINLINE float GetSpeed() const { return Speed; }
 };
