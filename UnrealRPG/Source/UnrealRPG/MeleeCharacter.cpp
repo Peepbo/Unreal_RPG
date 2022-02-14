@@ -218,6 +218,7 @@ void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 
 void AMeleeCharacter::Roll()
 {
+	if (GetCharacterMovement()->IsFalling())return;
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 	if (ST < 10.f)return;
 
@@ -237,6 +238,7 @@ void AMeleeCharacter::EndRoll()
 
 void AMeleeCharacter::Sprint()
 {
+	if (GetCharacterMovement()->IsFalling())return;
 	if (bIsSprint)return;
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 
