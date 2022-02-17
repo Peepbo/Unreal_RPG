@@ -9,6 +9,7 @@
 UENUM(BlueprintType)
 enum class EItemType : uint8 {
 	EIT_Weapon UMETA(DisplayName = "Weapon"),
+	EIT_Shield UMETA(DisplayName = "Shield"),
 	EIT_Potion UMETA(DisplayName = "Potion"),
 	EIT_MAX UMETA(DisplayName = "DefaultMax")
 };

@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Item.h"
 #include "Weapon.h"
+#include "Shield.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "MeleeAnimInstance.h"
 
@@ -26,8 +27,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	ST(100.f),
 	MaximumST(100.f),
 	bIsSprint(false),
-	DefaultSpeed(700.f),
-	MaximumSpeed(1000.f)
+	MaximumWalkSpeed(350.f),
+	MaximumSprintSpeed(800.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -56,7 +57,7 @@ AMeleeCharacter::AMeleeCharacter() :
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
-	GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 }
 
 // Called when the game starts or when spawned
@@ -66,6 +67,8 @@ void AMeleeCharacter::BeginPlay()
 	
 	EquipWeapon(SpawnDefaultWeapon());
 	EquippedWeapon->SetCharacter(this);
+	EquipShield(SpawnDefaultShield());
+	EquippedShield->SetCharacter(this);
 	
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (AnimInst) {
@@ -204,6 +207,15 @@ AWeapon* AMeleeCharacter::SpawnDefaultWeapon()
 	return nullptr;
 }
 
+AShield* AMeleeCharacter::SpawnDefaultShield()
+{
+	// 기본 방패를 생성한 뒤 반환한다.
+	if (DefaultShieldClass) {
+		return GetWorld()->SpawnActor<AShield>(DefaultShieldClass);
+	}
+	return nullptr;
+}
+
 void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 {
 	// 무기를 RightHandSocket 위치에 부착한다.
@@ -213,6 +225,18 @@ void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 			HandSocket->AttachActor(Weapon, GetMesh());
 		}
 		EquippedWeapon = Weapon;
+	}
+}
+
+void AMeleeCharacter::EquipShield(AShield* Shield, bool bSwapping)
+{
+	// 방패를 LeftHandSocket 위치에 부착한다.
+	if (Shield) {
+		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("LeftHandSocket"));
+		if (HandSocket) {
+			HandSocket->AttachActor(Shield, GetMesh());
+		}
+		EquippedShield = Shield;
 	}
 }
 
@@ -246,7 +270,7 @@ void AMeleeCharacter::Sprint()
 		bIsSprint = true;
 
 		// 최대 속도를 스프린트 속도로 바꿔준다.
-		GetCharacterMovement()->MaxWalkSpeed = MaximumSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
 	}
 }
 
@@ -256,7 +280,7 @@ void AMeleeCharacter::EndSprint()
 		bIsSprint = false;
 
 		// 최대 속도를 기본 속도로 되돌린다.
-		GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 	}
 }
 

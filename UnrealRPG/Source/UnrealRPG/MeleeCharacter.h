@@ -74,8 +74,12 @@ protected:
 	/* 기본 무기 생성 */
 	class AWeapon* SpawnDefaultWeapon();
 
+	class AShield* SpawnDefaultShield();
+
 	/* 무기 장착 */
 	void EquipWeapon(AWeapon* Weapon, bool bSwapping = false);
+
+	void EquipShield(AShield* Shield, bool bSwapping = false);
 
 	/* 일단 캐릭터가 보는 방향으로 구르기 */
 	void Roll();
@@ -149,9 +153,15 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AWeapon> DefaultWeaponClass;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AShield> DefaultShieldClass;
+
 	/* 플레이어가 착용하고있는 무기 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AShield* EquippedShield;
 
 	/* 공격 몽타주 모음 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -166,9 +176,11 @@ private:
 	bool bIsSprint;
 
 	/* 최대 기본 속도 */
-	float DefaultSpeed;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float MaximumWalkSpeed;
 	/* 최대 스프린트 속도 */
-	float MaximumSpeed;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float MaximumSprintSpeed;
 
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */
 	class UMeleeAnimInstance* AnimInstance;
@@ -178,5 +190,5 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
-	FORCEINLINE float GetMaximumSpeed() const { return MaximumSpeed; }
+	FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
 };
