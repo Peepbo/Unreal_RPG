@@ -22,10 +22,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	HP(100.f),
 	MaximumHP(100.f),
 	AD(0.f),
-	AP(0.f),
-	DEF(0.f),
-	ST(100.f),
-	MaximumST(100.f),
+	ST(50.f),
+	MaximumST(50.f),
 	bIsSprint(false),
 	MaximumWalkSpeed(350.f),
 	MaximumSprintSpeed(800.f)
