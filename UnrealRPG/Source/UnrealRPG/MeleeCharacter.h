@@ -90,6 +90,11 @@ protected:
 	void Sprint();
 	void EndSprint();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdateLeftItemIcon();
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdateRightItemIcon();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -160,10 +165,10 @@ private:
 	TSubclassOf<AShield> DefaultShieldClass;
 
 	/* 플레이어가 착용하고있는 무기 */
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AWeapon* EquippedWeapon;
 
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AShield* EquippedShield;
 
 	/* 공격 몽타주 모음 */

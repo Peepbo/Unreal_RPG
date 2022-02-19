@@ -223,6 +223,9 @@ void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 			HandSocket->AttachActor(Weapon, GetMesh());
 		}
 		EquippedWeapon = Weapon;
+
+		// HUD에 연결된 아이템 아이콘을 변경한다. (한 손, 양손 무기 위치는 오른쪽)
+		UpdateRightItemIcon();
 	}
 }
 
@@ -235,6 +238,9 @@ void AMeleeCharacter::EquipShield(AShield* Shield, bool bSwapping)
 			HandSocket->AttachActor(Shield, GetMesh());
 		}
 		EquippedShield = Shield;
+
+		// HUD에 연결된 아이템 아이콘을 변경한다. (방패는 왼쪽)
+		UpdateLeftItemIcon();
 	}
 }
 
