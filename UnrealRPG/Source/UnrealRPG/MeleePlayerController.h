@@ -24,5 +24,5 @@ private:
 	TSubclassOf<class UUserWidget> HubOverlayClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widgets, meta = (AllowPrivateAccess = "true"))
-	UUserWidget* HUBOverlay;
+	UUserWidget* HUDOverlay;
 };

@@ -15,11 +15,11 @@ void AMeleePlayerController::BeginPlay()
 
 	if (HubOverlayClass) 
 	{
-		HUBOverlay = CreateWidget<UUserWidget>(this, HubOverlayClass);
-		if (HUBOverlay)
+		HUDOverlay = CreateWidget<UUserWidget>(this, HubOverlayClass);
+		if (HUDOverlay)
 		{
-			HUBOverlay->AddToViewport();
-			HUBOverlay->SetVisibility(ESlateVisibility::Visible);
+			HUDOverlay->AddToViewport();
+			HUDOverlay->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 }
