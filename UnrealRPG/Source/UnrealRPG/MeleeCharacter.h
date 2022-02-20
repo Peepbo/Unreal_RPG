@@ -87,13 +87,33 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndRoll();
 
+	void PressedRoll();
+	void ReleasedRoll();
+
 	void Sprint();
-	void EndSprint();
+	void EndSprint(bool bChangeState = false);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateLeftItemIcon();
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateRightItemIcon();
+
+	/* 스태미나 타이머에서 호출할 함수 */
+	void FillStamina();
+
+	void InitStaminaTimer();
+	void StartStaminaDelayTimer();
+	void StartStaminaTimer();
+	void StopStaminaTimer();
+
+	void InitSprintStaminaTimer();
+	void StartSprintStaminaTimer();
+	void StopSprintStaminaTimer();
+
+	void ReduceStamina();
+
+	void PressedSprint();
+	void ReleasedSprint();
 
 public:	
 	// Called every frame
@@ -145,6 +165,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float AD;
 	
+	/* Steminar */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float ST;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
@@ -152,7 +173,6 @@ private:
 	///* Ability Power */
 	//UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	//float AP;
-	/* Steminar */
 	///* Defense */
 	//UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	//float DEF;
@@ -192,6 +212,21 @@ private:
 
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */
 	class UMeleeAnimInstance* AnimInstance;
+
+	/* 스태미나를 채울 수 있을 때 작동하는 타이머 */
+	FTimerHandle StaminaTimer;
+
+	/* 딜레이 시간 이후에 스태미나 타이머를 작동시키는 딜레이 타이머 */
+	FTimerHandle StaminaDelayTimer;
+
+	float StaminaDelayTime;
+
+	/* 뛰고있을 때 스태미나를 줄어들게 만드는 타이머 */
+	FTimerHandle SprintStaminaTimer;
+
+	bool bPressedSprintButton;
+
+	bool bPressedRollButton;
 
 public:
 

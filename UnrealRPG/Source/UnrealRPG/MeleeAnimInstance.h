@@ -56,4 +56,5 @@ private:
 
 public:
 	FORCEINLINE float GetSpeed() const { return Speed; }
+	FORCEINLINE bool GetAccelerating() const { return bIsAccelerating; }
 };

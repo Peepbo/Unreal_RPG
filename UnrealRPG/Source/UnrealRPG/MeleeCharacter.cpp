@@ -26,7 +26,10 @@ AMeleeCharacter::AMeleeCharacter() :
 	MaximumST(50.f),
 	bIsSprint(false),
 	MaximumWalkSpeed(350.f),
-	MaximumSprintSpeed(800.f)
+	MaximumSprintSpeed(800.f),
+	StaminaDelayTime(0.3f),
+	bPressedSprintButton(false),
+	bPressedRollButton(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -52,7 +55,7 @@ AMeleeCharacter::AMeleeCharacter() :
 	// 캐릭터의 방향은 입력 방향으로 지정합니다.
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	// 캐릭터의 회전 속도를 의미합니다.
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
@@ -75,16 +78,21 @@ void AMeleeCharacter::BeginPlay()
 			AnimInstance = MeleeAnimInst;
 		}
 	}
+
+	InitStaminaTimer();
+	InitSprintStaminaTimer();
 }
 
 void AMeleeCharacter::MoveForward(float Value)
 {
+	// 공격중일 때 이동을 제한한다.
+	if (CombatState == ECombatState::ECS_Attack)return;
 	if (Controller && Value != 0.f) {
-		if (bIsSprint) {
-			// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
-			// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
-			Value = Value < 0.f ? -1.f : 1.f;
-		}
+		//if (bIsSprint) {
+		//	// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
+		//	// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
+		//	Value = Value < 0.f ? -1.f : 1.f;
+		//}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
@@ -97,12 +105,14 @@ void AMeleeCharacter::MoveForward(float Value)
 
 void AMeleeCharacter::MoveRight(float Value)
 {
+	// 공격중일 때 이동을 제한한다.
+	if (CombatState == ECombatState::ECS_Attack)return;
 	if (Controller && Value != 0.f) {
-		if (bIsSprint) {
-			// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
-			// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
-			Value = Value < 0.f ? -1.f : 1.f;
-		}
+		//if (bIsSprint) {
+		//	// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
+		//	// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
+		//	Value = Value < 0.f ? -1.f : 1.f;
+		//}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
@@ -129,7 +139,9 @@ void AMeleeCharacter::LookUpAtRate(float Rate)
 
 void AMeleeCharacter::Attack(int32 MontageIndex)
 {
+	// 공격 시작
 	bShouldComboAttack = false;
+	ST -= 10.f;
 
 	if (AnimInstance && AttackMontages.IsValidIndex(MontageIndex) && AttackMontages[MontageIndex])
 	{
@@ -143,9 +155,13 @@ void AMeleeCharacter::PressedAttack()
 {
 	bPressedAttackButton = true;
 
-	// 공격 시작
-	if (CombatState == ECombatState::ECS_Unoccupied) 
-	{
+	// 최초 공격
+	if(CombatState == ECombatState::ECS_Unoccupied &&
+		ST - 10.f > 0.f) {
+		GetWorldTimerManager().ClearTimer(StaminaDelayTimer);
+		StopStaminaTimer();
+		EndSprint(true);
+
 		Attack();
 	}
 }
@@ -158,7 +174,10 @@ void AMeleeCharacter::ReleasedAttack()
 void AMeleeCharacter::CheckComboAttack()
 {
 	AttackCombo++;
-	if (bShouldComboAttack && AttackCombo < AttackMontages.Num() && AttackMontages[AttackCombo])
+	if (bShouldComboAttack && 
+		AttackCombo < AttackMontages.Num() && 
+		AttackMontages[AttackCombo] &&
+		ST - 10.f > 0.f)
 	{
 		Attack(AttackCombo);
 	}
@@ -175,6 +194,14 @@ void AMeleeCharacter::EndAttack()
 	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
 	AttackCombo = 0;
 	CombatState = ECombatState::ECS_Unoccupied;
+
+	//if (bPressedSprintButton) {
+	//	Sprint();
+	//}
+	//else {
+	//	StartStaminaDelayTimer();
+	//}
+	StartStaminaDelayTimer();
 }
 
 void AMeleeCharacter::CheckComboTimer()
@@ -248,7 +275,6 @@ void AMeleeCharacter::Roll()
 {
 	if (GetCharacterMovement()->IsFalling())return;
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
-	if (ST < 10.f)return;
 
 	if (AnimInstance && RollMontage) {
 		ST -= 10.f;
@@ -262,6 +288,33 @@ void AMeleeCharacter::Roll()
 void AMeleeCharacter::EndRoll()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
+	
+	//if (bPressedSprintButton) {
+	//	Sprint();
+	//}
+	//else {
+	//	StartStaminaDelayTimer();
+	//}
+	StartStaminaDelayTimer();
+}
+
+void AMeleeCharacter::PressedRoll()
+{
+	bPressedRollButton = true;
+
+	if (CombatState == ECombatState::ECS_Unoccupied &&
+		ST > 10.f) {
+		GetWorldTimerManager().ClearTimer(StaminaDelayTimer);
+		StopStaminaTimer();
+		EndSprint(true);
+
+		Roll();
+	}
+}
+
+void AMeleeCharacter::ReleasedRoll()
+{
+	bPressedRollButton = false;
 }
 
 void AMeleeCharacter::Sprint()
@@ -270,29 +323,129 @@ void AMeleeCharacter::Sprint()
 	if (bIsSprint)return;
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 
-	if (AnimInstance && AnimInstance->GetSpeed() > 0) {
+	if (AnimInstance &&
+		AnimInstance->GetSpeed() > 0.f &&
+		ST > 1.f) {
 		bIsSprint = true;
 
 		// 최대 속도를 스프린트 속도로 바꿔준다.
 		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
+
+		// 스태미나 타이머를 멈춘다.
+		StopStaminaTimer();
+		// 질주 스태미나 타이머를 시작한다.
+		StartSprintStaminaTimer();
 	}
 }
 
-void AMeleeCharacter::EndSprint()
+void AMeleeCharacter::EndSprint(bool bChangeState)
 {
 	if (bIsSprint) {
 		bIsSprint = false;
 
 		// 최대 속도를 기본 속도로 되돌린다.
 		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
+
+		// 스프린트 스태미나 타이머를 멈춘다.
+		StopSprintStaminaTimer();
+
+		if (!bChangeState) {
+			StartStaminaDelayTimer();
+		}
 	}
+}
+
+void AMeleeCharacter::FillStamina()
+{
+	if (ST + 1.f < MaximumST) {
+		ST += 0.1f;
+	}
+	else {
+		ST = MaximumST;
+		StopStaminaTimer();
+	}
+
+}
+
+void AMeleeCharacter::InitStaminaTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		StaminaTimer,
+		this,
+		&AMeleeCharacter::FillStamina,
+		0.01f,
+		true);
+
+	StopStaminaTimer();
+}
+
+void AMeleeCharacter::StartStaminaDelayTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		StaminaDelayTimer, 
+		this,
+		&AMeleeCharacter::StartStaminaTimer, 
+		StaminaDelayTime);
+}
+
+void AMeleeCharacter::StartStaminaTimer()
+{
+	GetWorldTimerManager().UnPauseTimer(StaminaTimer);
+}
+
+void AMeleeCharacter::StopStaminaTimer()
+{
+	GetWorldTimerManager().PauseTimer(StaminaTimer);
+}
+
+void AMeleeCharacter::InitSprintStaminaTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		SprintStaminaTimer,
+		this,
+		&AMeleeCharacter::ReduceStamina,
+		0.01f,
+		true);
+
+	StopSprintStaminaTimer();
+}
+
+void AMeleeCharacter::StartSprintStaminaTimer()
+{
+	GetWorldTimerManager().UnPauseTimer(SprintStaminaTimer);
+}
+
+void AMeleeCharacter::StopSprintStaminaTimer()
+{
+	GetWorldTimerManager().PauseTimer(SprintStaminaTimer);
+}
+
+void AMeleeCharacter::ReduceStamina()
+{
+	if (ST > 0.1f) {
+		ST -= 0.1f;
+	}
+	else {
+		EndSprint();
+	}
+}
+
+void AMeleeCharacter::PressedSprint()
+{
+	bPressedSprintButton = true;
+	Sprint();
+}
+
+void AMeleeCharacter::ReleasedSprint()
+{
+	bPressedSprintButton = false;
+	EndSprint();
 }
 
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -314,8 +467,10 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &AMeleeCharacter::PressedAttack);
 	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &AMeleeCharacter::ReleasedAttack);
 
-	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AMeleeCharacter::Roll);
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::Sprint);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::EndSprint);
+	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AMeleeCharacter::PressedRoll);
+	PlayerInputComponent->BindAction("Roll", IE_Released, this, &AMeleeCharacter::ReleasedRoll);
+
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::PressedSprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::ReleasedSprint);
 }
 
