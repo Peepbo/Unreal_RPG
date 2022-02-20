@@ -27,7 +27,7 @@ AMeleeCharacter::AMeleeCharacter() :
 	bIsSprint(false),
 	MaximumWalkSpeed(350.f),
 	MaximumSprintSpeed(800.f),
-	StaminaDelayTime(0.3f),
+	StaminaRecoveryDelayTime(0.3f),
 	bPressedSprintButton(false),
 	bPressedRollButton(false)
 {
@@ -78,9 +78,6 @@ void AMeleeCharacter::BeginPlay()
 			AnimInstance = MeleeAnimInst;
 		}
 	}
-
-	InitStaminaTimer();
-	InitSprintStaminaTimer();
 }
 
 void AMeleeCharacter::MoveForward(float Value)
@@ -158,8 +155,8 @@ void AMeleeCharacter::PressedAttack()
 	// 최초 공격
 	if(CombatState == ECombatState::ECS_Unoccupied &&
 		ST - 10.f > 0.f) {
-		GetWorldTimerManager().ClearTimer(StaminaDelayTimer);
-		StopStaminaTimer();
+		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
+		StopStaminaRecoveryTimer();
 		EndSprint(true);
 
 		Attack();
@@ -195,13 +192,7 @@ void AMeleeCharacter::EndAttack()
 	AttackCombo = 0;
 	CombatState = ECombatState::ECS_Unoccupied;
 
-	//if (bPressedSprintButton) {
-	//	Sprint();
-	//}
-	//else {
-	//	StartStaminaDelayTimer();
-	//}
-	StartStaminaDelayTimer();
+	StartStaminaRecoveryDelayTimer();
 }
 
 void AMeleeCharacter::CheckComboTimer()
@@ -289,13 +280,7 @@ void AMeleeCharacter::EndRoll()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
 	
-	//if (bPressedSprintButton) {
-	//	Sprint();
-	//}
-	//else {
-	//	StartStaminaDelayTimer();
-	//}
-	StartStaminaDelayTimer();
+	StartStaminaRecoveryDelayTimer();
 }
 
 void AMeleeCharacter::PressedRoll()
@@ -304,8 +289,8 @@ void AMeleeCharacter::PressedRoll()
 
 	if (CombatState == ECombatState::ECS_Unoccupied &&
 		ST > 10.f) {
-		GetWorldTimerManager().ClearTimer(StaminaDelayTimer);
-		StopStaminaTimer();
+		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
+		StopStaminaRecoveryTimer();
 		EndSprint(true);
 
 		Roll();
@@ -332,9 +317,9 @@ void AMeleeCharacter::Sprint()
 		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
 
 		// 스태미나 타이머를 멈춘다.
-		StopStaminaTimer();
+		StopStaminaRecoveryTimer();
 		// 질주 스태미나 타이머를 시작한다.
-		StartSprintStaminaTimer();
+		StartStaminaReductionTimer();
 	}
 }
 
@@ -347,77 +332,63 @@ void AMeleeCharacter::EndSprint(bool bChangeState)
 		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 
 		// 스프린트 스태미나 타이머를 멈춘다.
-		StopSprintStaminaTimer();
+		StopStaminaReductionTimer();
 
 		if (!bChangeState) {
-			StartStaminaDelayTimer();
+			StartStaminaRecoveryDelayTimer();
 		}
 	}
 }
 
-void AMeleeCharacter::FillStamina()
+void AMeleeCharacter::RecoverStamina()
 {
 	if (ST + 1.f < MaximumST) {
 		ST += 0.1f;
 	}
 	else {
 		ST = MaximumST;
-		StopStaminaTimer();
+		StopStaminaRecoveryTimer();
 	}
 
 }
 
-void AMeleeCharacter::InitStaminaTimer()
+void AMeleeCharacter::StartStaminaRecoveryTimer()
 {
 	GetWorldTimerManager().SetTimer(
-		StaminaTimer,
+		StaminaRecoveryTimer,
 		this,
-		&AMeleeCharacter::FillStamina,
+		&AMeleeCharacter::RecoverStamina,
 		0.01f,
 		true);
-
-	StopStaminaTimer();
 }
 
-void AMeleeCharacter::StartStaminaDelayTimer()
+void AMeleeCharacter::StopStaminaRecoveryTimer()
+{
+	GetWorldTimerManager().ClearTimer(StaminaRecoveryTimer);
+}
+
+void AMeleeCharacter::StartStaminaRecoveryDelayTimer()
 {
 	GetWorldTimerManager().SetTimer(
-		StaminaDelayTimer, 
+		StaminaRecoveryDelayTimer,
 		this,
-		&AMeleeCharacter::StartStaminaTimer, 
-		StaminaDelayTime);
+		&AMeleeCharacter::StartStaminaRecoveryTimer,
+		StaminaRecoveryDelayTime);
 }
 
-void AMeleeCharacter::StartStaminaTimer()
-{
-	GetWorldTimerManager().UnPauseTimer(StaminaTimer);
-}
-
-void AMeleeCharacter::StopStaminaTimer()
-{
-	GetWorldTimerManager().PauseTimer(StaminaTimer);
-}
-
-void AMeleeCharacter::InitSprintStaminaTimer()
+void AMeleeCharacter::StartStaminaReductionTimer()
 {
 	GetWorldTimerManager().SetTimer(
-		SprintStaminaTimer,
+		StaminaReductionTimer,
 		this,
 		&AMeleeCharacter::ReduceStamina,
 		0.01f,
 		true);
-
-	StopSprintStaminaTimer();
 }
 
-void AMeleeCharacter::StartSprintStaminaTimer()
+void AMeleeCharacter::StopStaminaReductionTimer()
 {
-	GetWorldTimerManager().UnPauseTimer(SprintStaminaTimer);
-}
-
-void AMeleeCharacter::StopSprintStaminaTimer()
-{
-	GetWorldTimerManager().PauseTimer(SprintStaminaTimer);
+	GetWorldTimerManager().ClearTimer(StaminaReductionTimer);
 }
 
 void AMeleeCharacter::ReduceStamina()

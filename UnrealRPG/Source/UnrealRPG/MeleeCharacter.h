@@ -50,10 +50,8 @@ protected:
 	/* 공격 함수 */
 	void Attack(int32 MontageIndex = 0);
 
-	/* 공격 버튼을 눌렀을 때 호출하는 함수 */
+	/* 공격 버튼 관련 함수 */
 	void PressedAttack();
-
-	/* 공격 버튼을 땠을 때 호출하는 함수 */
 	void ReleasedAttack();
 
 	/* 콤보를 이어나갈지 멈출지 확인하는 함수 */
@@ -87,31 +85,37 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndRoll();
 
+	/* 구르기 버튼 관련 함수 */
 	void PressedRoll();
 	void ReleasedRoll();
 
 	void Sprint();
 	void EndSprint(bool bChangeState = false);
 
+	/* 착용 아이템 아이콘 변경 함수 (블루프린트에서 작성) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateLeftItemIcon();
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateRightItemIcon();
 
-	/* 스태미나 타이머에서 호출할 함수 */
-	void FillStamina();
+	/* 스태미나 회복 */
+	void RecoverStamina();
 
-	void InitStaminaTimer();
-	void StartStaminaDelayTimer();
-	void StartStaminaTimer();
-	void StopStaminaTimer();
+	/* 스태미나 회복 타이머 */
+	void StartStaminaRecoveryTimer();
+	void StopStaminaRecoveryTimer();
 
-	void InitSprintStaminaTimer();
-	void StartSprintStaminaTimer();
-	void StopSprintStaminaTimer();
+	/* 스태미나 회복 지연 타이머 */
+	void StartStaminaRecoveryDelayTimer();
 
+	/* 스태미나 감소 */
 	void ReduceStamina();
 
+	/* 스태미나 감소 타이머 */
+	void StartStaminaReductionTimer();
+	void StopStaminaReductionTimer();
+
+	/* 달리기 버튼 관련 함수 */
 	void PressedSprint();
 	void ReleasedSprint();
 
@@ -146,7 +150,7 @@ private:
 	/* 공격 버튼이 눌렸는지 안눌렸는지 */
 	bool bPressedAttackButton;
 
-	/* 콤보 타이머 */
+	/* 콤보 타이머 (loop) */
 	FTimerHandle ComboTimer;
 
 	/* true: 연속 공격 진행, false: 연속 공격 종료 */
@@ -213,16 +217,17 @@ private:
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */
 	class UMeleeAnimInstance* AnimInstance;
 
-	/* 스태미나를 채울 수 있을 때 작동하는 타이머 */
-	FTimerHandle StaminaTimer;
+	/* 스태미나 회복 타이머, 스태미나를 채울 수 있을 때 작동하는 타이머 (loop) */
+	FTimerHandle StaminaRecoveryTimer;
 
-	/* 딜레이 시간 이후에 스태미나 타이머를 작동시키는 딜레이 타이머 */
-	FTimerHandle StaminaDelayTimer;
+	/* 스태미나 회복 지연 타이머, 지연 시간 이후 스태미나 타이머를 작동시키는 딜레이 타이머 */
+	FTimerHandle StaminaRecoveryDelayTimer;
+	
+	/* 스태미나 회복 지연 시간, 일반 상태에서 회복 상태로 바뀌는 시간 */
+	float StaminaRecoveryDelayTime;
 
-	float StaminaDelayTime;
-
-	/* 뛰고있을 때 스태미나를 줄어들게 만드는 타이머 */
-	FTimerHandle SprintStaminaTimer;
+	/* 스태미나를 감소시키는 타이머 (loop) */
+	FTimerHandle StaminaReductionTimer;
 
 	bool bPressedSprintButton;
 
