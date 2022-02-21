@@ -6,6 +6,7 @@
 #include "Item.h"
 #include "Engine/DataTable.h"
 #include "WeaponType.h"
+
 #include "Weapon.generated.h"
 
 /**
@@ -52,4 +53,10 @@ private:
 	EWeaponType WeaponType;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	float WeaponDamage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UBoxComponent* WeaponCollision;
+
+public:
+	FORCEINLINE UBoxComponent* GetWeaponCollision() const { return WeaponCollision; }
 };

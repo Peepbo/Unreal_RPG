@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "DamageState.h"
 #include "Enemy.generated.h"
 
 UCLASS()
@@ -26,6 +27,8 @@ private:
 	float MaximumHP;
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bDying;
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	EDamageState DamageState;
 
 public:	
 	// Called every frame
@@ -35,5 +38,10 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
+	
+	FORCEINLINE EDamageState GetDamageState() const { return DamageState; }
+	
+	//FORCEINLINE UFUNCTION() 
+	UFUNCTION() 
+	void ResetDamageState() { DamageState = EDamageState::EDS_Unoccupied; }
 };

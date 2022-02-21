@@ -2,10 +2,12 @@
 
 
 #include "Weapon.h"
+#include "Components/BoxComponent.h"
 
 AWeapon::AWeapon()
 {
-
+	WeaponCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
+	WeaponCollision->SetupAttachment(GetRootComponent());
 }
 
 void AWeapon::Tick(float DeltaTime)

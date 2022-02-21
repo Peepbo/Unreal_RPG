@@ -10,6 +10,10 @@
 #include "Shield.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "MeleeAnimInstance.h"
+#include "Enemy.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -77,6 +81,13 @@ void AMeleeCharacter::BeginPlay()
 		if (MeleeAnimInst) {
 			AnimInstance = MeleeAnimInst;
 		}
+	}
+
+	auto WeaponCollision = EquippedWeapon->GetWeaponCollision();
+	if (WeaponCollision) {
+		WeaponCollision->OnComponentBeginOverlap.AddDynamic(
+			this,
+			&AMeleeCharacter::OnRightWeaponOverlap);
 	}
 }
 
@@ -411,6 +422,33 @@ void AMeleeCharacter::ReleasedSprint()
 {
 	bPressedSprintButton = false;
 	EndSprint();
+}
+
+void AMeleeCharacter::OnRightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (CombatState != ECombatState::ECS_Attack)return;
+
+	if (OtherActor) {
+		auto Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy && 
+			Enemy->GetDamageState() == EDamageState::EDS_Unoccupied) {
+			// DoDamage
+			UGameplayStatics::ApplyDamage(
+				Enemy,
+				10,
+				GetController(),
+				this,
+				UDamageType::StaticClass()
+			);
+
+			EnemyDamageTypeResetDelegate.AddUFunction(Enemy, FName("ResetDamageState"));
+		}
+	}
+}
+
+void AMeleeCharacter::ResetDamageState()
+{
+	EnemyDamageTypeResetDelegate.Broadcast();
 }
 
 // Called every frame

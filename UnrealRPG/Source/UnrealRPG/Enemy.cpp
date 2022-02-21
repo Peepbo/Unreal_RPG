@@ -39,6 +39,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 {
 	if (bDying)return DamageAmount;
 
+	DamageState = EDamageState::EDS_invincibility;
 	if (HP - DamageAmount > 0.f) {
 		HP -= DamageAmount;
 	}

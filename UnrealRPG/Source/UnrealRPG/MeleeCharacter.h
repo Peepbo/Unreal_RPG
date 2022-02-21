@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "DamageState.h"
+
 #include "MeleeCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -15,6 +17,8 @@ enum class ECombatState : uint8
 
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };
+
+DECLARE_MULTICAST_DELEGATE(FEnemyDamageTypeResetDelegate); 
 
 UCLASS()
 class UNREALRPG_API AMeleeCharacter : public ACharacter
@@ -118,6 +122,23 @@ protected:
 	/* 달리기 버튼 관련 함수 */
 	void PressedSprint();
 	void ReleasedSprint();
+
+	/* 오른손 무기 오버랩 함수 */
+	UFUNCTION()
+	void OnRightWeaponOverlap(
+		class UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
+	/* 
+	* 데미지 타입 리셋 함수
+	* EnemyDamageTypeResetDelegate에 들어가있는 함수를 모두 호출시킴 
+	*/
+	UFUNCTION(BlueprintCallable)
+	void ResetDamageState();
 
 public:	
 	// Called every frame
@@ -232,6 +253,12 @@ private:
 	bool bPressedSprintButton;
 
 	bool bPressedRollButton;
+
+	/* 
+	* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트
+	* 사용 이유 : 여러번 공격되는 것을 방지
+	*/
+	FEnemyDamageTypeResetDelegate EnemyDamageTypeResetDelegate;
 
 public:
 
