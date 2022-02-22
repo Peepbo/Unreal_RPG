@@ -33,7 +33,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	MaximumSprintSpeed(800.f),
 	StaminaRecoveryDelayTime(0.3f),
 	bPressedSprintButton(false),
-	bPressedRollButton(false)
+	bPressedRollButton(false),
+	bPressedSubAttackButton(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -157,6 +158,14 @@ void AMeleeCharacter::Attack(int32 MontageIndex)
 	}
 
 	CombatState = ECombatState::ECS_Attack;
+}
+
+void AMeleeCharacter::SubAttack()
+{
+	if (EquippedShield) {
+		CombatState = ECombatState::ECS_Guard;
+		// Montage Play
+	}
 }
 
 void AMeleeCharacter::PressedAttack()
@@ -316,7 +325,6 @@ void AMeleeCharacter::ReleasedRoll()
 void AMeleeCharacter::Sprint()
 {
 	if (GetCharacterMovement()->IsFalling())return;
-	if (bIsSprint)return;
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 
 	if (AnimInstance &&
@@ -338,6 +346,9 @@ void AMeleeCharacter::EndSprint(bool bChangeState)
 {
 	if (bIsSprint) {
 		bIsSprint = false;
+
+		// 속도 확인을 멈춘다.
+		GetWorldTimerManager().ClearTimer(VelocityChecker);
 
 		// 최대 속도를 기본 속도로 되돌린다.
 		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
@@ -416,6 +427,15 @@ void AMeleeCharacter::PressedSprint()
 {
 	bPressedSprintButton = true;
 	Sprint();
+
+	//VelocityChecker
+	GetWorldTimerManager().SetTimer(
+		VelocityChecker,
+		this,
+		&AMeleeCharacter::CheckVelocity,
+		0.1f,
+		true, 
+		1.f);
 }
 
 void AMeleeCharacter::ReleasedSprint()
@@ -451,6 +471,37 @@ void AMeleeCharacter::ResetDamageState()
 	EnemyDamageTypeResetDelegate.Broadcast();
 }
 
+void AMeleeCharacter::PressedSubAttack()
+{
+	bPressedSubAttackButton = true;
+
+	if (CombatState == ECombatState::ECS_Unoccupied) {
+		SubAttack();
+	}
+}
+
+void AMeleeCharacter::ReleasedSubAttack()
+{
+	bPressedSubAttackButton = false;
+
+	if (CombatState == ECombatState::ECS_Guard) {
+		EndSubAttack();
+	}
+}
+
+void AMeleeCharacter::EndSubAttack()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+	// End Montage
+}
+
+void AMeleeCharacter::CheckVelocity()
+{
+	if (GetCharacterMovement()->Velocity.Size() == 0.f) {
+		EndSprint();
+	}
+}
+
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {
@@ -481,5 +532,8 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::PressedSprint);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::ReleasedSprint);
+
+	PlayerInputComponent->BindAction("SubAttackButton", IE_Pressed, this, &AMeleeCharacter::PressedSubAttack);
+	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &AMeleeCharacter::ReleasedSubAttack);
 }
 

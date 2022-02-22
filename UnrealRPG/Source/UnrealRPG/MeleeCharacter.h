@@ -14,6 +14,7 @@ enum class ECombatState : uint8
 	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	ECS_Attack UMETA(DisplayName = "Attack"),
 	ECS_Roll UMETA(DisplayName = "Roll"),
+	ECS_Guard UMETA(DisplayName = "Guard"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };
@@ -53,6 +54,7 @@ protected:
 
 	/* 공격 함수 */
 	void Attack(int32 MontageIndex = 0);
+	void SubAttack();
 
 	/* 공격 버튼 관련 함수 */
 	void PressedAttack();
@@ -139,6 +141,14 @@ protected:
 	*/
 	UFUNCTION(BlueprintCallable)
 	void ResetDamageState();
+
+	/* 보조 공격(가드) 버튼 관련 함수 */
+	void PressedSubAttack();
+	void ReleasedSubAttack();
+
+	void EndSubAttack();
+
+	void CheckVelocity();
 
 public:	
 	// Called every frame
@@ -254,11 +264,14 @@ private:
 
 	bool bPressedRollButton;
 
+	bool bPressedSubAttackButton;
 	/* 
 	* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트
 	* 사용 이유 : 여러번 공격되는 것을 방지
 	*/
 	FEnemyDamageTypeResetDelegate EnemyDamageTypeResetDelegate;
+
+	FTimerHandle VelocityChecker;
 
 public:
 
@@ -266,4 +279,5 @@ public:
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
 	FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
+	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 };

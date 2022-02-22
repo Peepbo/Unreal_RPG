@@ -54,6 +54,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bIsSprint;
 
+	/* 캐릭터가 Guard 상태인지 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bIsGuard;
+
 public:
 	FORCEINLINE float GetSpeed() const { return Speed; }
 	FORCEINLINE bool GetAccelerating() const { return bIsAccelerating; }

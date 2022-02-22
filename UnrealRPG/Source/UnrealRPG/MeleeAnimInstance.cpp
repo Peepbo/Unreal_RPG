@@ -17,6 +17,7 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 	{
 		MeleeCharacter = Cast<AMeleeCharacter>(TryGetPawnOwner());
 	}
+
 	if (MeleeCharacter) 
 	{
 		// 캐릭터의 속도를 구함
@@ -37,8 +38,8 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		{
 			bIsAccelerating = false;
 		}
-	}
-	if (MeleeCharacter) {
+
+
 		// 실질적으로 바라보고있는 방향을 가져온다.
 		const FRotator BaseAimRot = MeleeCharacter->GetBaseAimRotation();
 		// 캐릭터의 방향을 받아온다.
@@ -50,15 +51,19 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		// PitchOfLook, YawOfLook 둘 다 업데이트 해준다.
 		PitchOfLook = Result.Pitch;
 		YawOfLook = Result.Yaw;
-	}
-	if (MeleeCharacter) {
+
+
 		// 가만히 멈춰서 공격하는지 확인한다.
 		const bool bIsAttack{ MeleeCharacter->GetAttacking() };
 		// 공격중이며, 공중이 아니고, 움직이지 않는 경우가 True
 		bIsAttackWithoutMoving = bIsAttack && !bIsInAir && Speed == 0;
-	}
-	if (MeleeCharacter) {
-		// MeleeCharacter의 bIsSprint를 받아온다.
+
+
+		// 스프린트 상태인지 확인한다.
 		bIsSprint = MeleeCharacter->GetSprinting();
+
+
+		// 가드 상태인지 확인한다.
+		bIsGuard = MeleeCharacter->GetGuarding();
 	}
 }
