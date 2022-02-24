@@ -153,10 +153,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SaveDegree();
 
-	void LinearRotate(float DeltaTime, float End);
-
-	UFUNCTION(BlueprintCallable)
-	void PrintTemp();
+	void BeginAttackRotate(float DeltaTime);
 
 public:	
 	// Called every frame
@@ -269,10 +266,9 @@ private:
 	FTimerHandle StaminaReductionTimer;
 
 	bool bPressedSprintButton;
-
 	bool bPressedRollButton;
-
 	bool bPressedSubAttackButton;
+
 	/* 
 	* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트
 	* 사용 이유 : 여러번 공격되는 것을 방지
@@ -281,20 +277,16 @@ private:
 
 	FTimerHandle VelocityChecker;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
-	bool bIsMotionStop;
+	/* 공격 전 회전을 할 지 */
+	bool bIsBeforeAttackRotate;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float LastDegree;
+	/* 컨트롤러가 가리키는 월드 방향 */
+	FRotator SaveRotator;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool TempRot;
-
+	/* 회전(공격 전) 속도 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float LerpValue;
+	float BeforeAttackLerpSpeed;
 
-	bool bFastForwardRotation;
-	bool bIsPositiveDegree;
 
 public:
 

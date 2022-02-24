@@ -36,10 +36,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	bPressedSprintButton(false),
 	bPressedRollButton(false),
 	bPressedSubAttackButton(false),
-	bIsMotionStop(false),
-	TempRot(false),
-	LerpValue(0.1f),
-	bFastForwardRotation(true)
+	BeforeAttackLerpSpeed(0.1f),
+	bIsBeforeAttackRotate(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -129,7 +127,6 @@ void AMeleeCharacter::MoveRight(float Value)
 
 void AMeleeCharacter::TurnAtRate(float Rate)
 {
-	if (bIsMotionStop) return;
 	// 이번 프레임에 이동해야될 Yaw 각도를 구함
 	// deg/sec * sec/frame
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
@@ -505,115 +502,44 @@ void AMeleeCharacter::CheckVelocity()
 
 void AMeleeCharacter::SaveDegree()
 {
-	/*
-		FRotator Rot{ Controller->GetControlRotation() };
-		const FVector AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight"), 0.f };
-		const float ThumbstickDegree = UKismetMathLibrary::DegAtan2(AxisData.Y, AxisData.X);
-		const FRotator ThumbRot{ 0,ThumbstickDegree,0 };
-		Rot = UKismetMathLibrary::ComposeRotators(Rot, ThumbRot);
-		SetActorRotation(Rot);
-	*/
-	FRotator ControllerRotation{ Controller->GetControlRotation() };
-	const FVector2D AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
-	const float ThumbstickDegree = UKismetMathLibrary::DegAtan2(AxisData.Y, AxisData.X);
+	// 게임 패드 스틱의 방향
+	const FVector2D ThumbstickAxis{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
+	const float ThumbstickYaw{ UKismetMathLibrary::DegAtan2(ThumbstickAxis.Y, ThumbstickAxis.X) };
+	const FRotator ThumbstickRotator{ 0,ThumbstickYaw,0 };
 
+	// 컨트롤러 방향 (카메라 정면 방향)
+	const FRotator ControllerRotator{ 0,GetControlRotation().Yaw,0 };
 
-	//const FVector2D AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
-	//const FRotator YawRotation{ 0,GetActorRotation().Yaw,0 };
-	//const float NowDegree = FRotationMatrix{ YawRotation }.GetUnitAxis(EAxis::X).Y;
-	
-	const float NowDegree = ControllerRotation.Yaw;
-	
-
-	if (AxisData.X == 0.f && AxisData.Y == 0.f) {
-
-		//LastDegree = GetActorRotation().Yaw;
-		//LastDegree = NowDegree;
-		LastDegree = NowDegree;
-
-		bFastForwardRotation = true;
-	}
-	else {
-		LastDegree = ThumbstickDegree;
-
-		const float AbsSubDistance = abs(LastDegree - NowDegree);
-
-		if (AbsSubDistance < 180.f) {
-			bFastForwardRotation = true;
-		}
-		else {
-			bFastForwardRotation = false;
-		}
+	// 만약 패드 스틱을 조작하지 않았을 땐 Rotation을 저장할 필요가 없다.
+	if (ThumbstickAxis.X == 0.f, ThumbstickAxis.Y == 0.f) {
+		return;
 	}
 
-	bIsPositiveDegree = (NowDegree >= 0.f ? true : false);
+	// 이외의 경우는 Rotation을 저장해야 한다.
+	bIsBeforeAttackRotate = true;
+
+	// 두 방향을 혼합하여 플레이어가 최종적으로 가리켜야될 방향을 저장한다.
+	// 카메라의 정면과 캐릭터의 정면이 서로 일치하지 않을 수 있어 아래와 같이 Compose하여 최종 월드 방향을 구해야 한다.
+	SaveRotator = UKismetMathLibrary::ComposeRotators(ThumbstickRotator, ControllerRotator);
 }
 
-void AMeleeCharacter::LinearRotate(float DeltaTime, float End)
+void AMeleeCharacter::BeginAttackRotate(float DeltaTime)
 {
-	const float IncreaseValue{ LerpValue * DeltaTime };
-	const float MidPoint{ bIsPositiveDegree ? 180.f : -180.f };
-	const float GoalPoint{ bFastForwardRotation ? End : MidPoint };
-
-	float NewRotYaw{ GetActorRotation().Yaw };
-	bool bReachedGoal = false;
-
-	if (NewRotYaw < GoalPoint) {
-		NewRotYaw += IncreaseValue;
-		if (NewRotYaw > GoalPoint) {
-			NewRotYaw = GoalPoint;
-
-			bReachedGoal = true;
-		}
-	}
-	else {
-		NewRotYaw -= IncreaseValue;
-		if (NewRotYaw < GoalPoint) {
-			NewRotYaw = GoalPoint;
-
-			bReachedGoal = true;
-		}
+	// 각도가 거의 비슷해졌다면 회전을 종료한다.
+	if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), SaveRotator, 0.01f)) {
+		bIsBeforeAttackRotate = false;
+		return;
 	}
 
-	if (bReachedGoal) {
-		if (bFastForwardRotation) {
-			TempRot = false;
-		}
-		else {
-			bFastForwardRotation = true;
-			//NewRotYaw *= -1; // 180 -> -180, -180 -> 180
-			bIsPositiveDegree = !bIsPositiveDegree;
-		}
-	}
-
-	//NewRot.Yaw = NewRotYaw;
-	/*
-		const FRotator ThumbRot{ 0,ThumbstickDegree,0 };
-		Rot = UKismetMathLibrary::ComposeRotators(Rot, ThumbRot);
-		SetActorRotation(Rot);
-	*/
-	FRotator Rot{ GetActorRotation() };
-	const FRotator NewRotation{ 0,NewRotYaw,0 };
-	Rot = UKismetMathLibrary::ComposeRotators(Rot, NewRotation);
-
-	SetActorRotation(Rot);
-}
-
-void AMeleeCharacter::PrintTemp()
-{
-	const FRotator DefaultRot{ Controller->GetControlRotation() };
-	FRotator Rot{ 0,DefaultRot.Yaw,0 };
-	const FVector AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight"), 0.f };
-	const float ThumbstickDegree = UKismetMathLibrary::DegAtan2(AxisData.Y, AxisData.X);
-	const FRotator ThumbRot{ 0,ThumbstickDegree,0 };
-	//Rot.Yaw += ThumbRot.Yaw;
-	Rot = UKismetMathLibrary::ComposeRotators(Rot, ThumbRot);
-	//Rot.Pitch = DefaultRot.Pitch;
-	//Rot.Roll = DefaultRot.Roll;
-	SetActorRotation(Rot);
-
-	UE_LOG(LogTemp, Log, TEXT("ThumbstickDegree : %f"), ThumbstickDegree);
-
+	// 액터의 방향을 바꾼다.
+	SetActorRotation(
+		// Lerp를 사용하여 SaveRotator까지 회전을 한다.
+		UKismetMathLibrary::RLerp(
+			GetActorRotation(),
+			SaveRotator,
+			BeforeAttackLerpSpeed * DeltaTime,
+			true)
+	);
 }
 
 // Called every frame
@@ -621,13 +547,9 @@ void AMeleeCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (TempRot) {
-		PrintTemp();
-		TempRot = false;
-		//LinearRotate(DeltaTime, LastDegree);
+	if (bIsBeforeAttackRotate) {
+		BeginAttackRotate(DeltaTime);
 	}
-
-
 }
 
 // Called to bind functionality to input
