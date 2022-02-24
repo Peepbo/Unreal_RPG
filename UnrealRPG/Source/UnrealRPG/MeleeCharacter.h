@@ -150,6 +150,14 @@ protected:
 
 	void CheckVelocity();
 
+	UFUNCTION(BlueprintCallable)
+	void SaveDegree();
+
+	void LinearRotate(float DeltaTime, float End);
+
+	UFUNCTION(BlueprintCallable)
+	void PrintTemp();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -192,7 +200,7 @@ private:
 	int32 AttackCombo;
 
 	/* Health Point */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float HP;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float MaximumHP;
@@ -273,6 +281,21 @@ private:
 
 	FTimerHandle VelocityChecker;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	bool bIsMotionStop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float LastDegree;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool TempRot;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float LerpValue;
+
+	bool bFastForwardRotation;
+	bool bIsPositiveDegree;
+
 public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -280,4 +303,6 @@ public:
 	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
 	FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
+
+
 };

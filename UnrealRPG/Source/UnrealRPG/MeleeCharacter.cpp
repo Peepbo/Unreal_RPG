@@ -14,6 +14,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -34,7 +35,11 @@ AMeleeCharacter::AMeleeCharacter() :
 	StaminaRecoveryDelayTime(0.3f),
 	bPressedSprintButton(false),
 	bPressedRollButton(false),
-	bPressedSubAttackButton(false)
+	bPressedSubAttackButton(false),
+	bIsMotionStop(false),
+	TempRot(false),
+	LerpValue(0.1f),
+	bFastForwardRotation(true)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -94,46 +99,37 @@ void AMeleeCharacter::BeginPlay()
 
 void AMeleeCharacter::MoveForward(float Value)
 {
-	// 공격중일 때 이동을 제한한다.
 	if (CombatState == ECombatState::ECS_Attack)return;
-	if (Controller && Value != 0.f) {
-		//if (bIsSprint) {
-		//	// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
-		//	// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
-		//	Value = Value < 0.f ? -1.f : 1.f;
-		//}
 
+	if (Controller && Value != 0.f) {
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
 
 		// 어느쪽이 전방인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
+
 		AddMovementInput(Direction, Value);
 	}
 }
 
 void AMeleeCharacter::MoveRight(float Value)
 {
-	// 공격중일 때 이동을 제한한다.
 	if (CombatState == ECombatState::ECS_Attack)return;
-	if (Controller && Value != 0.f) {
-		//if (bIsSprint) {
-		//	// 스프린트 상태일 때 음수면 -1, 양수면 1을 반환하여 속도를 고정시킨다.
-		//	// (패드에서 엄지 그립 위치에 따라 속도가 변화하는것을 방지)
-		//	Value = Value < 0.f ? -1.f : 1.f;
-		//}
 
+	if (Controller && Value != 0.f) {
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
 
 		// 어느쪽이 우측인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
+
 		AddMovementInput(Direction, Value);
 	}
 }
 
 void AMeleeCharacter::TurnAtRate(float Rate)
 {
+	if (bIsMotionStop) return;
 	// 이번 프레임에 이동해야될 Yaw 각도를 구함
 	// deg/sec * sec/frame
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
@@ -476,6 +472,10 @@ void AMeleeCharacter::PressedSubAttack()
 	bPressedSubAttackButton = true;
 
 	if (CombatState == ECombatState::ECS_Unoccupied) {
+		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
+		StopStaminaRecoveryTimer();
+		EndSprint(true);
+
 		SubAttack();
 	}
 }
@@ -492,7 +492,8 @@ void AMeleeCharacter::ReleasedSubAttack()
 void AMeleeCharacter::EndSubAttack()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
-	// End Montage
+
+	StartStaminaRecoveryDelayTimer();
 }
 
 void AMeleeCharacter::CheckVelocity()
@@ -502,10 +503,131 @@ void AMeleeCharacter::CheckVelocity()
 	}
 }
 
+void AMeleeCharacter::SaveDegree()
+{
+	/*
+		FRotator Rot{ Controller->GetControlRotation() };
+		const FVector AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight"), 0.f };
+		const float ThumbstickDegree = UKismetMathLibrary::DegAtan2(AxisData.Y, AxisData.X);
+		const FRotator ThumbRot{ 0,ThumbstickDegree,0 };
+		Rot = UKismetMathLibrary::ComposeRotators(Rot, ThumbRot);
+		SetActorRotation(Rot);
+	*/
+	FRotator ControllerRotation{ Controller->GetControlRotation() };
+	const FVector2D AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
+	const float ThumbstickDegree = UKismetMathLibrary::DegAtan2(AxisData.Y, AxisData.X);
+
+
+	//const FVector2D AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
+	//const FRotator YawRotation{ 0,GetActorRotation().Yaw,0 };
+	//const float NowDegree = FRotationMatrix{ YawRotation }.GetUnitAxis(EAxis::X).Y;
+	
+	const float NowDegree = ControllerRotation.Yaw;
+	
+
+	if (AxisData.X == 0.f && AxisData.Y == 0.f) {
+
+		//LastDegree = GetActorRotation().Yaw;
+		//LastDegree = NowDegree;
+		LastDegree = NowDegree;
+
+		bFastForwardRotation = true;
+	}
+	else {
+		LastDegree = ThumbstickDegree;
+
+		const float AbsSubDistance = abs(LastDegree - NowDegree);
+
+		if (AbsSubDistance < 180.f) {
+			bFastForwardRotation = true;
+		}
+		else {
+			bFastForwardRotation = false;
+		}
+	}
+
+	bIsPositiveDegree = (NowDegree >= 0.f ? true : false);
+}
+
+void AMeleeCharacter::LinearRotate(float DeltaTime, float End)
+{
+	const float IncreaseValue{ LerpValue * DeltaTime };
+	const float MidPoint{ bIsPositiveDegree ? 180.f : -180.f };
+	const float GoalPoint{ bFastForwardRotation ? End : MidPoint };
+
+	float NewRotYaw{ GetActorRotation().Yaw };
+	bool bReachedGoal = false;
+
+	if (NewRotYaw < GoalPoint) {
+		NewRotYaw += IncreaseValue;
+		if (NewRotYaw > GoalPoint) {
+			NewRotYaw = GoalPoint;
+
+			bReachedGoal = true;
+		}
+	}
+	else {
+		NewRotYaw -= IncreaseValue;
+		if (NewRotYaw < GoalPoint) {
+			NewRotYaw = GoalPoint;
+
+			bReachedGoal = true;
+		}
+	}
+
+	if (bReachedGoal) {
+		if (bFastForwardRotation) {
+			TempRot = false;
+		}
+		else {
+			bFastForwardRotation = true;
+			//NewRotYaw *= -1; // 180 -> -180, -180 -> 180
+			bIsPositiveDegree = !bIsPositiveDegree;
+		}
+	}
+
+	//NewRot.Yaw = NewRotYaw;
+	/*
+		const FRotator ThumbRot{ 0,ThumbstickDegree,0 };
+		Rot = UKismetMathLibrary::ComposeRotators(Rot, ThumbRot);
+		SetActorRotation(Rot);
+	*/
+	FRotator Rot{ GetActorRotation() };
+	const FRotator NewRotation{ 0,NewRotYaw,0 };
+	Rot = UKismetMathLibrary::ComposeRotators(Rot, NewRotation);
+
+	SetActorRotation(Rot);
+}
+
+void AMeleeCharacter::PrintTemp()
+{
+	const FRotator DefaultRot{ Controller->GetControlRotation() };
+	FRotator Rot{ 0,DefaultRot.Yaw,0 };
+	const FVector AxisData{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight"), 0.f };
+	const float ThumbstickDegree = UKismetMathLibrary::DegAtan2(AxisData.Y, AxisData.X);
+	const FRotator ThumbRot{ 0,ThumbstickDegree,0 };
+	//Rot.Yaw += ThumbRot.Yaw;
+	Rot = UKismetMathLibrary::ComposeRotators(Rot, ThumbRot);
+	//Rot.Pitch = DefaultRot.Pitch;
+	//Rot.Roll = DefaultRot.Roll;
+	SetActorRotation(Rot);
+
+	UE_LOG(LogTemp, Log, TEXT("ThumbstickDegree : %f"), ThumbstickDegree);
+
+}
+
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (TempRot) {
+		PrintTemp();
+		TempRot = false;
+		//LinearRotate(DeltaTime, LastDegree);
+	}
+
+
 }
 
 // Called to bind functionality to input
