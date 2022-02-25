@@ -157,6 +157,14 @@ protected:
 
 	void PressedBattleModeChange();
 
+	void PressedChargedAttack();
+
+	void PrepareChargedAttack();
+	UFUNCTION(BlueprintCallable)
+	void ChargedAttack();
+
+	void ResetAttack();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -296,6 +304,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bIsBattleMode;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ReadyToChargedAttackMontage;
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ChargedAttackMontage;
 
 public:
 

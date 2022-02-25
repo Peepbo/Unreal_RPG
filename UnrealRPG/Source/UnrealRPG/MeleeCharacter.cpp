@@ -202,11 +202,7 @@ void AMeleeCharacter::CheckComboAttack()
 
 void AMeleeCharacter::EndAttack()
 {
-	GetWorldTimerManager().ClearTimer(ComboTimer);
-
-	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
-	AttackCombo = 0;
-	CombatState = ECombatState::ECS_Unoccupied;
+	ResetAttack();
 
 	StartStaminaRecoveryDelayTimer();
 }
@@ -561,6 +557,43 @@ void AMeleeCharacter::PressedBattleModeChange()
 	}
 }
 
+void AMeleeCharacter::PressedChargedAttack()
+{
+	// 스태미나 검사
+	// Attack 중에 호출할 수 있으며 마무리 공격처럼 사용할 수 있음.
+	bIsBattleMode = true;
+
+	ResetAttack();
+
+	// ST -= Value;
+	PrepareChargedAttack();
+}
+
+void AMeleeCharacter::PrepareChargedAttack()
+{
+	// 준비 몽타주 플레이 후 ChargedAttack을 callable로 적용하여 nodify가 호출될 때 함수를 부르면 될듯.
+	if (ReadyToChargedAttackMontage) {
+		AnimInstance->Montage_Play(ReadyToChargedAttackMontage, 1.f);
+	}
+}
+
+void AMeleeCharacter::ChargedAttack()
+{
+	// Montage play?가 좋을듯 어차피 무기마다 애니메이션 속도를 다르게 하려면 필요하니까.
+	if (ChargedAttackMontage) {
+		AnimInstance->Montage_Play(ChargedAttackMontage, 1.f);
+	}
+}
+
+void AMeleeCharacter::ResetAttack()
+{
+	GetWorldTimerManager().ClearTimer(ComboTimer);
+
+	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
+	AttackCombo = 0;
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {
@@ -600,5 +633,7 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &AMeleeCharacter::ReleasedSubAttack);
 
 	PlayerInputComponent->BindAction("BattleModeChangeButton", IE_Pressed, this, &AMeleeCharacter::PressedBattleModeChange);
+
+	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Pressed, this, &AMeleeCharacter::PressedChargedAttack);
 }
 
