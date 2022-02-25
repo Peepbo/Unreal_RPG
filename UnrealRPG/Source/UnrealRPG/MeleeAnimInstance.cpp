@@ -65,5 +65,9 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		// 가드 상태인지 확인한다.
 		bIsGuard = MeleeCharacter->GetGuarding();
+
+
+		// 전투 모드 상태인지 확인한다.
+		bIsBattleMode = MeleeCharacter->GetBattleMode();
 	}
 }

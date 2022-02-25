@@ -155,6 +155,8 @@ protected:
 
 	void BeginAttackRotate(float DeltaTime);
 
+	void PressedBattleModeChange();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -278,7 +280,12 @@ private:
 	FTimerHandle VelocityChecker;
 
 	/* 공격 전 회전을 할 지 */
+	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bIsBeforeAttackRotate;
+
+	/* 공격 전 회전 방향이 왼쪽인지 */
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bIsLeftRotate;
 
 	/* 컨트롤러가 가리키는 월드 방향 */
 	FRotator SaveRotator;
@@ -287,6 +294,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float BeforeAttackLerpSpeed;
 
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bIsBattleMode;
 
 public:
 
@@ -295,6 +304,6 @@ public:
 	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
 	FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
-
+	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 
 };

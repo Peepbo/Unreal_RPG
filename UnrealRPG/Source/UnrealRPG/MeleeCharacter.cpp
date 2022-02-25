@@ -37,7 +37,9 @@ AMeleeCharacter::AMeleeCharacter() :
 	bPressedRollButton(false),
 	bPressedSubAttackButton(false),
 	BeforeAttackLerpSpeed(0.1f),
-	bIsBeforeAttackRotate(false)
+	bIsBeforeAttackRotate(false),
+	bIsLeftRotate(false),
+	bIsBattleMode(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -163,6 +165,7 @@ void AMeleeCharacter::SubAttack()
 
 void AMeleeCharacter::PressedAttack()
 {
+	bIsBattleMode = true;
 	bPressedAttackButton = true;
 
 	// 최초 공격
@@ -466,6 +469,7 @@ void AMeleeCharacter::ResetDamageState()
 
 void AMeleeCharacter::PressedSubAttack()
 {
+	bIsBattleMode = true;
 	bPressedSubAttackButton = true;
 
 	if (CombatState == ECombatState::ECS_Unoccupied) {
@@ -521,6 +525,14 @@ void AMeleeCharacter::SaveDegree()
 	// 두 방향을 혼합하여 플레이어가 최종적으로 가리켜야될 방향을 저장한다.
 	// 카메라의 정면과 캐릭터의 정면이 서로 일치하지 않을 수 있어 아래와 같이 Compose하여 최종 월드 방향을 구해야 한다.
 	SaveRotator = UKismetMathLibrary::ComposeRotators(ThumbstickRotator, ControllerRotator);
+
+	// 캐릭터의 Rotator보다 
+	if (GetActorRotation().Yaw < SaveRotator.Yaw) {
+		bIsLeftRotate = false;
+	}
+	else {
+		bIsLeftRotate = true;
+	}
 }
 
 void AMeleeCharacter::BeginAttackRotate(float DeltaTime)
@@ -540,6 +552,13 @@ void AMeleeCharacter::BeginAttackRotate(float DeltaTime)
 			BeforeAttackLerpSpeed * DeltaTime,
 			true)
 	);
+}
+
+void AMeleeCharacter::PressedBattleModeChange()
+{
+	if (CombatState == ECombatState::ECS_Unoccupied) {
+		bIsBattleMode = !bIsBattleMode;
+	}
 }
 
 // Called every frame
@@ -579,5 +598,7 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Pressed, this, &AMeleeCharacter::PressedSubAttack);
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &AMeleeCharacter::ReleasedSubAttack);
+
+	PlayerInputComponent->BindAction("BattleModeChangeButton", IE_Pressed, this, &AMeleeCharacter::PressedBattleModeChange);
 }
 
