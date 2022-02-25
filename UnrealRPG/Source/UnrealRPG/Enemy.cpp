@@ -46,6 +46,8 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	else {
 		HP = 0.f;
 		bDying = true;
+
+		HideHealthBar();
 	}
 
 	return DamageAmount;
