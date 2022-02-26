@@ -15,6 +15,7 @@ enum class ECombatState : uint8
 	ECS_Attack UMETA(DisplayName = "Attack"),
 	ECS_Roll UMETA(DisplayName = "Roll"),
 	ECS_Guard UMETA(DisplayName = "Guard"),
+	ECS_Interaction UMETA(DisplayName = "Interaction"), 
 
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };
@@ -157,13 +158,19 @@ protected:
 
 	void PressedBattleModeChange();
 
+	/* 강 공격 버튼 관련 함수 */
 	void PressedChargedAttack();
+	void ReleasedChargedAttack();
 
 	void PrepareChargedAttack();
+
 	UFUNCTION(BlueprintCallable)
 	void ChargedAttack();
 
 	void ResetAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void EndChargedAttack();
 
 public:	
 	// Called every frame
@@ -278,6 +285,7 @@ private:
 	bool bPressedSprintButton;
 	bool bPressedRollButton;
 	bool bPressedSubAttackButton;
+	bool bPressedChargedAttackButton;
 
 	/* 
 	* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트
@@ -309,6 +317,10 @@ private:
 	UAnimMontage* ReadyToChargedAttackMontage;
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* ChargedAttackMontage;
+
+	/* 강 공격인지 아닌지, 해당 변수의 상태에 따라 데미지 적용 값이 바뀐다. */
+	bool bIsChargedAttack;
+	bool bShouldChargedAttack;
 
 public:
 

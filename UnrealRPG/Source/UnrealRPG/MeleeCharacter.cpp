@@ -39,7 +39,9 @@ AMeleeCharacter::AMeleeCharacter() :
 	BeforeAttackLerpSpeed(0.1f),
 	bIsBeforeAttackRotate(false),
 	bIsLeftRotate(false),
-	bIsBattleMode(false)
+	bIsBattleMode(false),
+	bIsChargedAttack(false),
+	bShouldChargedAttack(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -187,21 +189,37 @@ void AMeleeCharacter::ReleasedAttack()
 void AMeleeCharacter::CheckComboAttack()
 {
 	AttackCombo++;
-	if (bShouldComboAttack && 
-		AttackCombo < AttackMontages.Num() && 
-		AttackMontages[AttackCombo] &&
-		ST - 10.f > 0.f)
+
+	if ((bShouldChargedAttack || bShouldComboAttack) && 
+		(ReadyToChargedAttackMontage && ChargedAttackMontage))
 	{
-		Attack(AttackCombo);
+		// fix later : 스테미나 양이 정해지면 수정
+		if (bShouldChargedAttack && 
+			ST - 10.f > 0.f) { 
+			UE_LOG(LogTemp, Warning, TEXT("next combo : ChargedAttack"));
+			ResetAttack();
+
+			PrepareChargedAttack();
+
+			return;
+		}
+		else if (bShouldComboAttack && 
+			AttackCombo < AttackMontages.Num() &&
+			AttackMontages[AttackCombo] &&
+			ST - 10.f > 0.f) {
+			UE_LOG(LogTemp, Warning, TEXT("next combo : Attack"));
+			Attack(AttackCombo);
+
+			return;
+		}
 	}
-	else
-	{
-		EndAttack();
-	}
+	
+	EndAttack();
 }
 
 void AMeleeCharacter::EndAttack()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Call EndAttack Func"));
 	ResetAttack();
 
 	StartStaminaRecoveryDelayTimer();
@@ -209,10 +227,14 @@ void AMeleeCharacter::EndAttack()
 
 void AMeleeCharacter::CheckComboTimer()
 {
-	if (bPressedAttackButton) {
-		bShouldComboAttack = true;
-		GetWorldTimerManager().ClearTimer(ComboTimer);
+	if (bPressedChargedAttackButton) {
+		bShouldChargedAttack = true;
 	}
+	else if (bPressedAttackButton) {
+		bShouldComboAttack = true;
+	}
+
+	GetWorldTimerManager().ClearTimer(ComboTimer);
 }
 
 void AMeleeCharacter::StartComboTimer()
@@ -444,10 +466,14 @@ void AMeleeCharacter::OnRightWeaponOverlap(UPrimitiveComponent* OverlappedCompon
 		auto Enemy = Cast<AEnemy>(OtherActor);
 		if (Enemy && 
 			Enemy->GetDamageState() == EDamageState::EDS_Unoccupied) {
+
+			const float Damage = AD + (bIsChargedAttack ?
+				EquippedWeapon->GetWeaponChargedDamage() : EquippedWeapon->GetWeaponDamage());
+
 			// DoDamage
 			UGameplayStatics::ApplyDamage(
 				Enemy,
-				10,
+				Damage,
 				GetController(),
 				this,
 				UDamageType::StaticClass()
@@ -559,6 +585,11 @@ void AMeleeCharacter::PressedBattleModeChange()
 
 void AMeleeCharacter::PressedChargedAttack()
 {
+	bPressedChargedAttackButton = true;
+
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	//if (CombatState == ECombatState::ECS_Attack || CombatState == ECombatState::ECS_Interaction)return;
+
 	// 스태미나 검사
 	// Attack 중에 호출할 수 있으며 마무리 공격처럼 사용할 수 있음.
 	bIsBattleMode = true;
@@ -569,8 +600,17 @@ void AMeleeCharacter::PressedChargedAttack()
 	PrepareChargedAttack();
 }
 
+void AMeleeCharacter::ReleasedChargedAttack()
+{
+	bPressedChargedAttackButton = false;
+}
+
 void AMeleeCharacter::PrepareChargedAttack()
 {
+	CombatState = ECombatState::ECS_Interaction;
+	bShouldChargedAttack = false;
+
+	StopStaminaRecoveryTimer();
 	// 준비 몽타주 플레이 후 ChargedAttack을 callable로 적용하여 nodify가 호출될 때 함수를 부르면 될듯.
 	if (ReadyToChargedAttackMontage) {
 		AnimInstance->Montage_Play(ReadyToChargedAttackMontage, 1.f);
@@ -581,6 +621,9 @@ void AMeleeCharacter::ChargedAttack()
 {
 	// Montage play?가 좋을듯 어차피 무기마다 애니메이션 속도를 다르게 하려면 필요하니까.
 	if (ChargedAttackMontage) {
+		CombatState = ECombatState::ECS_Attack;
+		bIsChargedAttack = true;
+
 		AnimInstance->Montage_Play(ChargedAttackMontage, 1.f);
 	}
 }
@@ -592,6 +635,13 @@ void AMeleeCharacter::ResetAttack()
 	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
 	AttackCombo = 0;
 	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void AMeleeCharacter::EndChargedAttack()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+	bIsChargedAttack = false;
+	StartStaminaRecoveryDelayTimer();
 }
 
 // Called every frame
@@ -635,5 +685,6 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("BattleModeChangeButton", IE_Pressed, this, &AMeleeCharacter::PressedBattleModeChange);
 
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Pressed, this, &AMeleeCharacter::PressedChargedAttack);
+	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Released, this, &AMeleeCharacter::ReleasedChargedAttack);
 }
 

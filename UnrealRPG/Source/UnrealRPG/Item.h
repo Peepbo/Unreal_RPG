@@ -31,22 +31,24 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-private:
+protected:
 	/* 아이템 이름 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
-	FString ItemName;
+		FString ItemName;
 	/* 아이템 설명 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
-	FString ItemDescription;
+		FString ItemDescription;
 	/* 아이템 타입 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
-	EItemType ItemType;
+		EItemType ItemType;
 	/* 아이템 매쉬 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	class USkeletalMeshComponent* ItemMesh;
 	/* 아이템 아이콘 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	UTexture2D* ItemIcon;
+
+private:
 
 	/* 플레이어 포인터 */
 	class AMeleeCharacter* Character;

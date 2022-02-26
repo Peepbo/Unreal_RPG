@@ -28,6 +28,9 @@ struct FWeaponDataTable : public FTableRowBase
 	float WeaponDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float WeaponChargedDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UTexture2D* WeaponIcon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -43,20 +46,28 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+protected:
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	UDataTable* WeaponDataTable;
 
 	// 아이템 이름, 아이콘, 모델은 AItem에 있음
 	// 그외 type, damage 등을 정의함
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	EWeaponType WeaponType;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	float WeaponDamage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float WeaponChargedDamage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* WeaponCollision;
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponCollision() const { return WeaponCollision; }
+	FORCEINLINE float GetWeaponDamage() const { return WeaponDamage; }
+	FORCEINLINE float GetWeaponChargedDamage() const { return WeaponChargedDamage; }
 };
