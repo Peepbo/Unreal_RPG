@@ -34,7 +34,15 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EDamageState DamageState;
 
-public:	
+	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
+	class UBehaviorTree* BehaviorTree;
+
+	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
+	FVector PatrolPoint;
+
+	class AEnemyAIController* EnemyAIController;
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -42,10 +50,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-	
+
 	FORCEINLINE EDamageState GetDamageState() const { return DamageState; }
-	
-	//FORCEINLINE UFUNCTION() 
-	UFUNCTION() 
+
+	UFUNCTION()
 	void ResetDamageState() { DamageState = EDamageState::EDS_Unoccupied; }
+
+	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 };

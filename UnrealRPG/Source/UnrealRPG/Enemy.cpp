@@ -2,6 +2,10 @@
 
 
 #include "Enemy.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "DrawDebugHelpers.h"
+#include "EnemyAIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -18,7 +22,23 @@ AEnemy::AEnemy() :
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
+	DrawDebugSphere(
+		GetWorld(),
+		WorldPatrolPoint,
+		25.f,
+		12,
+		FColor::Red,
+		true
+	);
+
+	EnemyAIController = Cast<AEnemyAIController>(GetController());
+	if (EnemyAIController) {
+		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
+
+		EnemyAIController->RunBehaviorTree(BehaviorTree);
+	}
 }
 
 // Called every frame
