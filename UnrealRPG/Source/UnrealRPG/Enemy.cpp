@@ -24,6 +24,8 @@ void AEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
+	const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
+
 	DrawDebugSphere(
 		GetWorld(),
 		WorldPatrolPoint,
@@ -33,9 +35,19 @@ void AEnemy::BeginPlay()
 		true
 	);
 
+	DrawDebugSphere(
+		GetWorld(),
+		WorldPatrolPoint2,
+		25.f,
+		12,
+		FColor::Red,
+		true
+	);
+
 	EnemyAIController = Cast<AEnemyAIController>(GetController());
 	if (EnemyAIController) {
 		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
+		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint2"), WorldPatrolPoint2);
 
 		EnemyAIController->RunBehaviorTree(BehaviorTree);
 	}

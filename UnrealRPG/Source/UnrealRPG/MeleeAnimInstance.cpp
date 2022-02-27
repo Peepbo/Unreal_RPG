@@ -6,7 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-void UMeleeAnimInstance::NativeInitializeAnimation()
+void UMeleeAnimInstance::InitializeAnimationProperties()
 {
 	Character = Cast<ACharacter>(TryGetPawnOwner());
 }

@@ -14,8 +14,12 @@ UCLASS()
 class UNREALRPG_API UMeleeAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
+//public:
+//	virtual void NativeInitializeAnimation() override;
+
 public:
-	virtual void NativeInitializeAnimation() override;
+	UFUNCTION(BlueprintCallable)
+		virtual void InitializeAnimationProperties();
 
 	/* 매 프레임 업데이트가 필요한 함수, Blueprint의 EventGraph에서 사용 */
 	UFUNCTION(BlueprintCallable)

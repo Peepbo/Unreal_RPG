@@ -4,7 +4,13 @@
 #include "KnightAnimInstance.h"
 #include "Enemy.h"
 
-void UKnightAnimInstance::NativeInitializeAnimation()
+void UKnightAnimInstance::InitializeAnimationProperties()
 {
-	Enemy = Cast<AEnemy>(TryGetPawnOwner());
+	Super::InitializeAnimationProperties();
+
+}
+
+void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
+{
+	Super::UpdateAnimationProperties(DeltaTime);
 }

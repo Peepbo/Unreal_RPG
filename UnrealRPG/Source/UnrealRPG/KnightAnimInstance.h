@@ -3,25 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Animation/AnimInstance.h"
+#include "MeleeAnimInstance.h"
 #include "KnightAnimInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UNREALRPG_API UKnightAnimInstance : public UAnimInstance
+class UNREALRPG_API UKnightAnimInstance : public UMeleeAnimInstance
 {
 	GENERATED_BODY()
 
 public:
-	virtual void NativeInitializeAnimation() override;
-
-private:
-	class AEnemy* Enemy;
-
-	float Speed;
-	bool bIsInAir;
 
 public:
+	virtual void InitializeAnimationProperties() override;
+
+	virtual void UpdateAnimationProperties(float DeltaTime) override;
+
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	class AEnemy* Enemy;
+
+public:
+
 };

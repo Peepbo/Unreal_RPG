@@ -6,10 +6,12 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-//void UPlayerAnimInstance::NativeInitializeAnimation()
-//{
-//	MeleeCharacter = Cast<AMeleeCharacter>(TryGetPawnOwner());
-//}
+void UPlayerAnimInstance::InitializeAnimationProperties()
+{
+	Super::InitializeAnimationProperties();
+
+	MeleeCharacter = Cast<AMeleeCharacter>(TryGetPawnOwner());
+}
 
 void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 {

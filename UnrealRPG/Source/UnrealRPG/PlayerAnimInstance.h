@@ -18,11 +18,13 @@ public:
 
 
 public:
+	virtual void InitializeAnimationProperties() override;
+
 	virtual void UpdateAnimationProperties(float DeltaTime) override;
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		class AMeleeCharacter* MeleeCharacter;
+	class AMeleeCharacter* MeleeCharacter;
 
 
 };
