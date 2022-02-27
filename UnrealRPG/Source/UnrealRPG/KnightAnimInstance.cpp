@@ -2,4 +2,9 @@
 
 
 #include "KnightAnimInstance.h"
+#include "Enemy.h"
 
+void UKnightAnimInstance::NativeInitializeAnimation()
+{
+	Enemy = Cast<AEnemy>(TryGetPawnOwner());
+}

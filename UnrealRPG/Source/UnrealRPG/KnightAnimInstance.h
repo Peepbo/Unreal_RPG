@@ -13,5 +13,15 @@ UCLASS()
 class UNREALRPG_API UKnightAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
-	
+
+public:
+	virtual void NativeInitializeAnimation() override;
+
+private:
+	class AEnemy* Enemy;
+
+	float Speed;
+	bool bIsInAir;
+
+public:
 };

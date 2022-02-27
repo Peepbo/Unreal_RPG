@@ -17,14 +17,11 @@ class UNREALRPG_API UMeleeAnimInstance : public UAnimInstance
 public:
 	virtual void NativeInitializeAnimation() override;
 
-public:
 	/* 매 프레임 업데이트가 필요한 함수, Blueprint의 EventGraph에서 사용 */
 	UFUNCTION(BlueprintCallable)
-	void UpdateAnimationProperties(float DeltaTime);
+		virtual void UpdateAnimationProperties(float DeltaTime);
 
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	class AMeleeCharacter* MeleeCharacter;
+protected:
 
 	/* 캐릭터의 속도 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -38,18 +35,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bIsAccelerating;
 
-	/* 캐릭터(머리)가 바라봐야 하는 Pitch */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Look, meta = (AllowPrivateAccess = "true"))
-	float PitchOfLook;
-
-	/* 캐릭터(머리)가 바라봐야 하는 Yaw */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Look, meta = (AllowPrivateAccess = "true"))
-	float YawOfLook;
-
-	/* 움직이지 않은체 공격하는지 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
-	bool bIsAttackWithoutMoving;
-
 	/* 캐릭터가 Sprint 상태인지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bIsSprint;
@@ -61,6 +46,9 @@ private:
 	/* 캐릭터가 전투 모드 상태인지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bIsBattleMode;
+
+private:
+	class ACharacter* Character;
 
 public:
 	FORCEINLINE float GetSpeed() const { return Speed; }
