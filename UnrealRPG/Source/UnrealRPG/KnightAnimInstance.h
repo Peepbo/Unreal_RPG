@@ -23,7 +23,8 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	class AEnemy* Enemy;
+	class ADarkKnight* DarkKnight;
+	//class AEnemy* Enemy;
 
 public:
 

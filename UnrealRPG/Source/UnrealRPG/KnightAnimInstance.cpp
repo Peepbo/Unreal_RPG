@@ -2,12 +2,13 @@
 
 
 #include "KnightAnimInstance.h"
-#include "Enemy.h"
+#include "DarkKnight.h"
 
 void UKnightAnimInstance::InitializeAnimationProperties()
 {
 	Super::InitializeAnimationProperties();
 
+	DarkKnight = Cast<ADarkKnight>(TryGetPawnOwner());
 }
 
 void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)

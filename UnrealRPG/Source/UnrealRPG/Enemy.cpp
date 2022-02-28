@@ -13,7 +13,8 @@
 AEnemy::AEnemy() :
 	HP(100.f),
 	MaximumHP(100.f),
-	bDying(false)
+	bDying(false),
+	bInAttackRange(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -21,6 +22,10 @@ AEnemy::AEnemy() :
 	AgroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AgroSphere"));
 	AgroSphere->SetupAttachment(GetRootComponent());
 	AgroSphere->ComponentTags.Add(TEXT("Agro"));
+
+	CombatRangeSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphere"));
+	CombatRangeSphere->SetupAttachment(GetRootComponent());
+	CombatRangeSphere->ComponentTags.Add(TEXT("CombatRange"));
 }
 
 // Called when the game starts or when spawned
@@ -29,6 +34,9 @@ void AEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	AgroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::AgroSphereOverlap);
+
+	CombatRangeSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatRangeOverlap);
+	CombatRangeSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatRangeEndOverlap);
 
 	const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
 	const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
@@ -67,6 +75,36 @@ void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	auto Character = Cast<AMeleeCharacter>(OtherActor);
 	if (Character) {
 		EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
+	}
+}
+
+void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor == nullptr)return;
+
+	auto MeleeCharacter = Cast<AMeleeCharacter>(OtherActor);
+
+	if (MeleeCharacter) {
+		bInAttackRange = true;
+
+		if (EnemyAIController) {
+			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), true);
+		}
+	}
+}
+
+void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor == nullptr)return;
+
+	auto MeleeCharacter = Cast<AMeleeCharacter>(OtherActor);
+
+	if (MeleeCharacter) {
+		bInAttackRange = false;
+
+		if (EnemyAIController) {
+			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), false);
+		}
 	}
 }
 
