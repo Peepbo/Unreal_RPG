@@ -29,9 +29,9 @@ AMeleeCharacter::AMeleeCharacter() :
 	AD(0.f),
 	ST(50.f),
 	MaximumST(50.f),
-	bIsSprint(false),
+	//bIsSprint(false),
 	MaximumWalkSpeed(350.f),
-	MaximumSprintSpeed(800.f),
+	//MaximumSprintSpeed(800.f),
 	StaminaRecoveryDelayTime(0.3f),
 	bPressedSprintButton(false),
 	bPressedRollButton(false),
@@ -175,7 +175,7 @@ void AMeleeCharacter::PressedAttack()
 		ST - 10.f > 0.f) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
-		EndSprint(true);
+		//EndSprint(true);
 
 		Attack();
 	}
@@ -325,7 +325,7 @@ void AMeleeCharacter::PressedRoll()
 		ST > 10.f) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
-		EndSprint(true);
+		//EndSprint(true);
 
 		Roll();
 	}
@@ -336,45 +336,45 @@ void AMeleeCharacter::ReleasedRoll()
 	bPressedRollButton = false;
 }
 
-void AMeleeCharacter::Sprint()
-{
-	if (GetCharacterMovement()->IsFalling())return;
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
+//void AMeleeCharacter::Sprint()
+//{
+//	if (GetCharacterMovement()->IsFalling())return;
+//	if (CombatState != ECombatState::ECS_Unoccupied)return;
+//
+//	if (AnimInstance &&
+//		AnimInstance->GetSpeed() > 0.f &&
+//		ST > 1.f) {
+//		bIsSprint = true;
+//
+//		// 최대 속도를 스프린트 속도로 바꿔준다.
+//		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
+//
+//		// 스태미나 타이머를 멈춘다.
+//		StopStaminaRecoveryTimer();
+//		// 질주 스태미나 타이머를 시작한다.
+//		StartStaminaReductionTimer();
+//	}
+//}
 
-	if (AnimInstance &&
-		AnimInstance->GetSpeed() > 0.f &&
-		ST > 1.f) {
-		bIsSprint = true;
-
-		// 최대 속도를 스프린트 속도로 바꿔준다.
-		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
-
-		// 스태미나 타이머를 멈춘다.
-		StopStaminaRecoveryTimer();
-		// 질주 스태미나 타이머를 시작한다.
-		StartStaminaReductionTimer();
-	}
-}
-
-void AMeleeCharacter::EndSprint(bool bChangeState)
-{
-	if (bIsSprint) {
-		bIsSprint = false;
-
-		// 속도 확인을 멈춘다.
-		GetWorldTimerManager().ClearTimer(VelocityChecker);
-
-		// 최대 속도를 기본 속도로 되돌린다.
-		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
-
-		// 스프린트 스태미나 타이머를 멈춘다.
-		StopStaminaReductionTimer();
-
-		if (!bChangeState) {
-			StartStaminaRecoveryDelayTimer();
-		}
-	}
-}
+//void AMeleeCharacter::EndSprint(bool bChangeState)
+//{
+//	if (bIsSprint) {
+//		bIsSprint = false;
+//
+//		// 속도 확인을 멈춘다.
+//		GetWorldTimerManager().ClearTimer(VelocityChecker);
+//
+//		// 최대 속도를 기본 속도로 되돌린다.
+//		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
+//
+//		// 스프린트 스태미나 타이머를 멈춘다.
+//		StopStaminaReductionTimer();
+//
+//		if (!bChangeState) {
+//			StartStaminaRecoveryDelayTimer();
+//		}
+//	}
+//}
 
 void AMeleeCharacter::RecoverStamina()
 {
@@ -433,30 +433,30 @@ void AMeleeCharacter::ReduceStamina()
 		ST -= 0.1f;
 	}
 	else {
-		EndSprint();
+		//EndSprint();
 	}
 }
 
-void AMeleeCharacter::PressedSprint()
-{
-	bPressedSprintButton = true;
-	Sprint();
+//void AMeleeCharacter::PressedSprint()
+//{
+//	bPressedSprintButton = true;
+//	Sprint();
+//
+//	//VelocityChecker
+//	GetWorldTimerManager().SetTimer(
+//		VelocityChecker,
+//		this,
+//		&AMeleeCharacter::CheckVelocity,
+//		0.1f,
+//		true, 
+//		1.f);
+//}
 
-	//VelocityChecker
-	GetWorldTimerManager().SetTimer(
-		VelocityChecker,
-		this,
-		&AMeleeCharacter::CheckVelocity,
-		0.1f,
-		true, 
-		1.f);
-}
-
-void AMeleeCharacter::ReleasedSprint()
-{
-	bPressedSprintButton = false;
-	EndSprint();
-}
+//void AMeleeCharacter::ReleasedSprint()
+//{
+//	bPressedSprintButton = false;
+//	EndSprint();
+//}
 
 void AMeleeCharacter::OnRightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -497,7 +497,7 @@ void AMeleeCharacter::PressedSubAttack()
 	if (CombatState == ECombatState::ECS_Unoccupied) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
-		EndSprint(true);
+		//EndSprint(true);
 
 		SubAttack();
 	}
@@ -522,7 +522,7 @@ void AMeleeCharacter::EndSubAttack()
 void AMeleeCharacter::CheckVelocity()
 {
 	if (GetCharacterMovement()->Velocity.Size() == 0.f) {
-		EndSprint();
+		//EndSprint();
 	}
 }
 
@@ -667,8 +667,8 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &AMeleeCharacter::PressedAttack);
 	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &AMeleeCharacter::ReleasedAttack);
@@ -676,8 +676,8 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AMeleeCharacter::PressedRoll);
 	PlayerInputComponent->BindAction("Roll", IE_Released, this, &AMeleeCharacter::ReleasedRoll);
 
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::PressedSprint);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::ReleasedSprint);
+	//PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::PressedSprint);
+	//PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::ReleasedSprint);
 
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Pressed, this, &AMeleeCharacter::PressedSubAttack);
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &AMeleeCharacter::ReleasedSubAttack);

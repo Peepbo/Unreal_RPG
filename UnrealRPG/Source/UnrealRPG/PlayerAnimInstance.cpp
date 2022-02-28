@@ -26,7 +26,7 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 	if (MeleeCharacter)
 	{
 		// 스프린트 상태인지 확인한다.
-		bIsSprint = MeleeCharacter->GetSprinting();
+		//bIsSprint = MeleeCharacter->GetSprinting();
 
 		// 가드 상태인지 확인한다.
 		bIsGuard = MeleeCharacter->GetGuarding();

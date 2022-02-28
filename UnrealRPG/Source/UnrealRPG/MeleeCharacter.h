@@ -96,8 +96,8 @@ protected:
 	void PressedRoll();
 	void ReleasedRoll();
 
-	void Sprint();
-	void EndSprint(bool bChangeState = false);
+	//void Sprint();
+	//void EndSprint(bool bChangeState = false);
 
 	/* 착용 아이템 아이콘 변경 함수 (블루프린트에서 작성) */
 	UFUNCTION(BlueprintImplementableEvent)
@@ -123,8 +123,8 @@ protected:
 	void StopStaminaReductionTimer();
 
 	/* 달리기 버튼 관련 함수 */
-	void PressedSprint();
-	void ReleasedSprint();
+	//void PressedSprint();
+	//void ReleasedSprint();
 
 	/* 오른손 무기 오버랩 함수 */
 	UFUNCTION()
@@ -256,16 +256,16 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* RollMontage;
 
-	/* 캐릭터가 스프린트 상태인지 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool bIsSprint;
+	///* 캐릭터가 스프린트 상태인지 */
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	//bool bIsSprint;
 
 	/* 최대 기본 속도 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float MaximumWalkSpeed;
-	/* 최대 스프린트 속도 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float MaximumSprintSpeed;
+	///* 최대 스프린트 속도 */
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	//float MaximumSprintSpeed;
 
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */
 	class UMeleeAnimInstance* AnimInstance;
@@ -326,8 +326,8 @@ public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
-	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
-	FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
+	//FORCEINLINE bool GetSprinting() const { return bIsSprint; }
+	//FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 

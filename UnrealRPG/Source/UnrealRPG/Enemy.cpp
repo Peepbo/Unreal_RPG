@@ -6,6 +6,8 @@
 #include "DrawDebugHelpers.h"
 #include "EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/SphereComponent.h"
+#include "MeleeCharacter.h"
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -16,12 +18,16 @@ AEnemy::AEnemy() :
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	AgroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AgroSphere"));
+	AgroSphere->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AgroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::AgroSphereOverlap);
 
 	const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
 	const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
@@ -50,6 +56,16 @@ void AEnemy::BeginPlay()
 		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint2"), WorldPatrolPoint2);
 
 		EnemyAIController->RunBehaviorTree(BehaviorTree);
+	}
+}
+
+void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor == nullptr)return;
+
+	auto Character = Cast<AMeleeCharacter>(OtherActor);
+	if (Character) {
+		EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
 	}
 }
 
