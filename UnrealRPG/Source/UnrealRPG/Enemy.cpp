@@ -20,6 +20,7 @@ AEnemy::AEnemy() :
 
 	AgroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AgroSphere"));
 	AgroSphere->SetupAttachment(GetRootComponent());
+	AgroSphere->ComponentTags.Add(TEXT("Agro"));
 }
 
 // Called when the game starts or when spawned

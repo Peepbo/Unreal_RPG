@@ -30,7 +30,7 @@ AMeleeCharacter::AMeleeCharacter() :
 	ST(50.f),
 	MaximumST(50.f),
 	//bIsSprint(false),
-	MaximumWalkSpeed(350.f),
+	MaximumWalkSpeed(500.f),
 	//MaximumSprintSpeed(800.f),
 	StaminaRecoveryDelayTime(0.3f),
 	bPressedSprintButton(false),
@@ -463,12 +463,20 @@ void AMeleeCharacter::OnRightWeaponOverlap(UPrimitiveComponent* OverlappedCompon
 	if (CombatState != ECombatState::ECS_Attack)return;
 
 	if (OtherActor) {
+		if (OtherComp) {
+			if (OtherComp->ComponentTags.Num() != 0) {
+				return;
+			}
+		}
+
 		auto Enemy = Cast<AEnemy>(OtherActor);
 		if (Enemy && 
 			Enemy->GetDamageState() == EDamageState::EDS_Unoccupied) {
 
 			const float Damage = AD + (bIsChargedAttack ?
 				EquippedWeapon->GetWeaponChargedDamage() : EquippedWeapon->GetWeaponDamage());
+
+			UE_LOG(LogTemp, Warning, TEXT("do damaged"));
 
 			// DoDamage
 			UGameplayStatics::ApplyDamage(
