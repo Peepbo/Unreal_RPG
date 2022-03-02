@@ -35,6 +35,24 @@ struct FWeaponDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMesh* WeaponMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackRequiredStamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ChargedAttackRequiredStamina;
+
+	UPROPERTY(EditDefaultsOnly)
+	float WeaponScale;
+
+	UPROPERTY(EditDefaultsOnly)
+	float WeaponLocationZ;
+
+	//UPROPERTY(EditDefaultsOnly)
+	//FVector WeaponCollsionLocation;
+
+	//UPROPERTY(EditDefaultsOnly)
+	//FVector WeaponCollsionScale;
 };
 
 UCLASS()
@@ -63,11 +81,23 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	float WeaponChargedDamage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class UBoxComponent* WeaponCollision;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	//class UBoxComponent* WeaponCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float AttackRequiredStamina;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float ChargedAttackRequiredStamina;
+
+	float WeaponLocationZ;
 
 public:
-	FORCEINLINE UBoxComponent* GetWeaponCollision() const { return WeaponCollision; }
+	//FORCEINLINE UBoxComponent* GetWeaponCollision() const { return WeaponCollision; }
 	FORCEINLINE float GetWeaponDamage() const { return WeaponDamage; }
 	FORCEINLINE float GetWeaponChargedDamage() const { return WeaponChargedDamage; }
+	
+	FORCEINLINE float GetAttackRequiredStamina() const { return AttackRequiredStamina; }
+	FORCEINLINE float GetChargedAttackRequiredStamina() const { return ChargedAttackRequiredStamina; }
+	FORCEINLINE void ChangeWeaponHandleLocation() { ItemMesh->SetRelativeLocation(FVector(0, 0, WeaponLocationZ)); }
 };

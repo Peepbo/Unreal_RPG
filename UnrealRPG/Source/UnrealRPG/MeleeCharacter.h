@@ -5,20 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "DamageState.h"
+#include "CombatState.h"
 
 #include "MeleeCharacter.generated.h"
-
-UENUM(BlueprintType)
-enum class ECombatState : uint8 
-{
-	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
-	ECS_Attack UMETA(DisplayName = "Attack"),
-	ECS_Roll UMETA(DisplayName = "Roll"),
-	ECS_Guard UMETA(DisplayName = "Guard"),
-	ECS_Interaction UMETA(DisplayName = "Interaction"), 
-
-	ECS_MAX UMETA(DisplayName = "DefaultMax")
-};
 
 DECLARE_MULTICAST_DELEGATE(FEnemyDamageTypeResetDelegate); 
 
@@ -96,9 +85,6 @@ protected:
 	void PressedRoll();
 	void ReleasedRoll();
 
-	//void Sprint();
-	//void EndSprint(bool bChangeState = false);
-
 	/* 착용 아이템 아이콘 변경 함수 (블루프린트에서 작성) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateLeftItemIcon();
@@ -115,27 +101,6 @@ protected:
 	/* 스태미나 회복 지연 타이머 */
 	void StartStaminaRecoveryDelayTimer();
 
-	/* 스태미나 감소 */
-	void ReduceStamina();
-
-	/* 스태미나 감소 타이머 */
-	void StartStaminaReductionTimer();
-	void StopStaminaReductionTimer();
-
-	/* 달리기 버튼 관련 함수 */
-	//void PressedSprint();
-	//void ReleasedSprint();
-
-	/* 오른손 무기 오버랩 함수 */
-	UFUNCTION()
-	void OnRightWeaponOverlap(
-		class UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult);
-
 	/* 
 	* 데미지 타입 리셋 함수
 	* EnemyDamageTypeResetDelegate에 들어가있는 함수를 모두 호출시킴 
@@ -148,8 +113,6 @@ protected:
 	void ReleasedSubAttack();
 
 	void EndSubAttack();
-
-	void CheckVelocity();
 
 	UFUNCTION(BlueprintCallable)
 	void SaveDegree();
@@ -171,6 +134,16 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void EndChargedAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void StartAttackCheckTime();
+	UFUNCTION(BlueprintCallable)
+	void EndAttackCheckTime();
+
+	void SphereTraceAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void UseStaminaToAttack();
 
 public:	
 	// Called every frame
@@ -227,12 +200,6 @@ private:
 	float ST;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	float MaximumST;
-	///* Ability Power */
-	//UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
-	//float AP;
-	///* Defense */
-	//UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
-	//float DEF;
 
 	/* 타입의 안정성을 보장해주는 템플릿 클래스, 기본 무기를 설정하는 곳 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -256,16 +223,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* RollMontage;
 
-	///* 캐릭터가 스프린트 상태인지 */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	//bool bIsSprint;
-
 	/* 최대 기본 속도 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float MaximumWalkSpeed;
-	///* 최대 스프린트 속도 */
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	//float MaximumSprintSpeed;
 
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */
 	class UMeleeAnimInstance* AnimInstance;
@@ -322,12 +282,15 @@ private:
 	bool bIsChargedAttack;
 	bool bShouldChargedAttack;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Combat, meta = (AllowPrivateAccess = "true"))
+	bool bIsAttackCheckTime;
+
+	float RollRequiredStamina;
+
 public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
-	//FORCEINLINE bool GetSprinting() const { return bIsSprint; }
-	//FORCEINLINE float GetMaximumSpeed() const { return MaximumSprintSpeed; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 

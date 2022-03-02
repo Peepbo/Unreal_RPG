@@ -15,6 +15,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -41,7 +42,9 @@ AMeleeCharacter::AMeleeCharacter() :
 	bIsLeftRotate(false),
 	bIsBattleMode(false),
 	bIsChargedAttack(false),
-	bShouldChargedAttack(false)
+	bShouldChargedAttack(false),
+	bIsAttackCheckTime(false),
+	RollRequiredStamina(10.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -89,13 +92,6 @@ void AMeleeCharacter::BeginPlay()
 		if (MeleeAnimInst) {
 			AnimInstance = MeleeAnimInst;
 		}
-	}
-
-	auto WeaponCollision = EquippedWeapon->GetWeaponCollision();
-	if (WeaponCollision) {
-		WeaponCollision->OnComponentBeginOverlap.AddDynamic(
-			this,
-			&AMeleeCharacter::OnRightWeaponOverlap);
 	}
 }
 
@@ -145,9 +141,9 @@ void AMeleeCharacter::LookUpAtRate(float Rate)
 
 void AMeleeCharacter::Attack(int32 MontageIndex)
 {
+	// 해당 함수는 Weapon이 존재해야 호출될 수 있는 함수임 (PressedAttack에서 검사함)
 	// 공격 시작
 	bShouldComboAttack = false;
-	ST -= 10.f;
 
 	if (AnimInstance && AttackMontages.IsValidIndex(MontageIndex) && AttackMontages[MontageIndex])
 	{
@@ -172,10 +168,10 @@ void AMeleeCharacter::PressedAttack()
 
 	// 최초 공격
 	if(CombatState == ECombatState::ECS_Unoccupied &&
-		ST - 10.f > 0.f) {
+		EquippedWeapon &&
+		ST >= EquippedWeapon->GetAttackRequiredStamina()) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
-		//EndSprint(true);
 
 		Attack();
 	}
@@ -195,8 +191,7 @@ void AMeleeCharacter::CheckComboAttack()
 	{
 		// fix later : 스테미나 양이 정해지면 수정
 		if (bShouldChargedAttack && 
-			ST - 10.f > 0.f) { 
-			UE_LOG(LogTemp, Warning, TEXT("next combo : ChargedAttack"));
+			ST - EquippedWeapon->GetChargedAttackRequiredStamina() >= 0.f) {
 			ResetAttack();
 
 			PrepareChargedAttack();
@@ -206,8 +201,7 @@ void AMeleeCharacter::CheckComboAttack()
 		else if (bShouldComboAttack && 
 			AttackCombo < AttackMontages.Num() &&
 			AttackMontages[AttackCombo] &&
-			ST - 10.f > 0.f) {
-			UE_LOG(LogTemp, Warning, TEXT("next combo : Attack"));
+			ST - EquippedWeapon->GetAttackRequiredStamina() >= 0.f) {
 			Attack(AttackCombo);
 
 			return;
@@ -219,7 +213,6 @@ void AMeleeCharacter::CheckComboAttack()
 
 void AMeleeCharacter::EndAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Call EndAttack Func"));
 	ResetAttack();
 
 	StartStaminaRecoveryDelayTimer();
@@ -276,6 +269,8 @@ void AMeleeCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 		}
 		EquippedWeapon = Weapon;
 
+		Weapon->ChangeWeaponHandleLocation();
+
 		// HUD에 연결된 아이템 아이콘을 변경한다. (한 손, 양손 무기 위치는 오른쪽)
 		UpdateRightItemIcon();
 	}
@@ -302,8 +297,8 @@ void AMeleeCharacter::Roll()
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 
 	if (AnimInstance && RollMontage) {
-		ST -= 10.f;
-		
+		ST -= RollRequiredStamina;
+
 		// 구르기 모션을 재생하고 상태를 바꾼다.
 		AnimInstance->Montage_Play(RollMontage);
 		CombatState = ECombatState::ECS_Roll;
@@ -322,10 +317,9 @@ void AMeleeCharacter::PressedRoll()
 	bPressedRollButton = true;
 
 	if (CombatState == ECombatState::ECS_Unoccupied &&
-		ST > 10.f) {
+		ST >= RollRequiredStamina) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
-		//EndSprint(true);
 
 		Roll();
 	}
@@ -335,46 +329,6 @@ void AMeleeCharacter::ReleasedRoll()
 {
 	bPressedRollButton = false;
 }
-
-//void AMeleeCharacter::Sprint()
-//{
-//	if (GetCharacterMovement()->IsFalling())return;
-//	if (CombatState != ECombatState::ECS_Unoccupied)return;
-//
-//	if (AnimInstance &&
-//		AnimInstance->GetSpeed() > 0.f &&
-//		ST > 1.f) {
-//		bIsSprint = true;
-//
-//		// 최대 속도를 스프린트 속도로 바꿔준다.
-//		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
-//
-//		// 스태미나 타이머를 멈춘다.
-//		StopStaminaRecoveryTimer();
-//		// 질주 스태미나 타이머를 시작한다.
-//		StartStaminaReductionTimer();
-//	}
-//}
-
-//void AMeleeCharacter::EndSprint(bool bChangeState)
-//{
-//	if (bIsSprint) {
-//		bIsSprint = false;
-//
-//		// 속도 확인을 멈춘다.
-//		GetWorldTimerManager().ClearTimer(VelocityChecker);
-//
-//		// 최대 속도를 기본 속도로 되돌린다.
-//		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
-//
-//		// 스프린트 스태미나 타이머를 멈춘다.
-//		StopStaminaReductionTimer();
-//
-//		if (!bChangeState) {
-//			StartStaminaRecoveryDelayTimer();
-//		}
-//	}
-//}
 
 void AMeleeCharacter::RecoverStamina()
 {
@@ -412,86 +366,6 @@ void AMeleeCharacter::StartStaminaRecoveryDelayTimer()
 		StaminaRecoveryDelayTime);
 }
 
-void AMeleeCharacter::StartStaminaReductionTimer()
-{
-	GetWorldTimerManager().SetTimer(
-		StaminaReductionTimer,
-		this,
-		&AMeleeCharacter::ReduceStamina,
-		0.01f,
-		true);
-}
-
-void AMeleeCharacter::StopStaminaReductionTimer()
-{
-	GetWorldTimerManager().ClearTimer(StaminaReductionTimer);
-}
-
-void AMeleeCharacter::ReduceStamina()
-{
-	if (ST > 0.1f) {
-		ST -= 0.1f;
-	}
-	else {
-		//EndSprint();
-	}
-}
-
-//void AMeleeCharacter::PressedSprint()
-//{
-//	bPressedSprintButton = true;
-//	Sprint();
-//
-//	//VelocityChecker
-//	GetWorldTimerManager().SetTimer(
-//		VelocityChecker,
-//		this,
-//		&AMeleeCharacter::CheckVelocity,
-//		0.1f,
-//		true, 
-//		1.f);
-//}
-
-//void AMeleeCharacter::ReleasedSprint()
-//{
-//	bPressedSprintButton = false;
-//	EndSprint();
-//}
-
-void AMeleeCharacter::OnRightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (CombatState != ECombatState::ECS_Attack)return;
-
-	if (OtherActor) {
-		if (OtherComp) {
-			if (OtherComp->ComponentTags.Num() != 0) {
-				return;
-			}
-		}
-
-		auto Enemy = Cast<AEnemy>(OtherActor);
-		if (Enemy && 
-			Enemy->GetDamageState() == EDamageState::EDS_Unoccupied) {
-
-			const float Damage = AD + (bIsChargedAttack ?
-				EquippedWeapon->GetWeaponChargedDamage() : EquippedWeapon->GetWeaponDamage());
-
-			UE_LOG(LogTemp, Warning, TEXT("do damaged"));
-
-			// DoDamage
-			UGameplayStatics::ApplyDamage(
-				Enemy,
-				Damage,
-				GetController(),
-				this,
-				UDamageType::StaticClass()
-			);
-
-			EnemyDamageTypeResetDelegate.AddUFunction(Enemy, FName("ResetDamageState"));
-		}
-	}
-}
-
 void AMeleeCharacter::ResetDamageState()
 {
 	EnemyDamageTypeResetDelegate.Broadcast();
@@ -505,7 +379,6 @@ void AMeleeCharacter::PressedSubAttack()
 	if (CombatState == ECombatState::ECS_Unoccupied) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
-		//EndSprint(true);
 
 		SubAttack();
 	}
@@ -525,13 +398,6 @@ void AMeleeCharacter::EndSubAttack()
 	CombatState = ECombatState::ECS_Unoccupied;
 
 	StartStaminaRecoveryDelayTimer();
-}
-
-void AMeleeCharacter::CheckVelocity()
-{
-	if (GetCharacterMovement()->Velocity.Size() == 0.f) {
-		//EndSprint();
-	}
 }
 
 void AMeleeCharacter::SaveDegree()
@@ -596,7 +462,8 @@ void AMeleeCharacter::PressedChargedAttack()
 	bPressedChargedAttackButton = true;
 
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
-	//if (CombatState == ECombatState::ECS_Attack || CombatState == ECombatState::ECS_Interaction)return;
+	if (EquippedWeapon == nullptr)return;
+	if (ST < EquippedWeapon->GetChargedAttackRequiredStamina())return;
 
 	// 스태미나 검사
 	// Attack 중에 호출할 수 있으며 마무리 공격처럼 사용할 수 있음.
@@ -604,7 +471,6 @@ void AMeleeCharacter::PressedChargedAttack()
 
 	ResetAttack();
 
-	// ST -= Value;
 	PrepareChargedAttack();
 }
 
@@ -615,6 +481,7 @@ void AMeleeCharacter::ReleasedChargedAttack()
 
 void AMeleeCharacter::PrepareChargedAttack()
 {
+	// 해당 함수는 Weapon이 존재해야 호출될 수 있는 함수임 (PressedChargedAttack에서 검사함)
 	CombatState = ECombatState::ECS_Interaction;
 	bShouldChargedAttack = false;
 
@@ -652,6 +519,67 @@ void AMeleeCharacter::EndChargedAttack()
 	StartStaminaRecoveryDelayTimer();
 }
 
+void AMeleeCharacter::StartAttackCheckTime()
+{
+	bIsAttackCheckTime = true;
+}
+
+void AMeleeCharacter::EndAttackCheckTime()
+{
+	bIsAttackCheckTime = false;
+}
+
+void AMeleeCharacter::SphereTraceAttack()
+{
+	const FVector TopSocketLoc{ EquippedWeapon->GetItemMesh()->GetSocketLocation("TopSocket") };
+	const FVector BottomSocketLoc{ EquippedWeapon->GetItemMesh()->GetSocketLocation("BottomSocket") };
+
+	FHitResult HitResult;
+	// SphereTraceSingle로 원을 그리고 원에 겹치는 오브젝트를 HitResult에 담는다.
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		this,
+		BottomSocketLoc,
+		TopSocketLoc,
+		50.f,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		{ this },
+		//EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
+		HitResult,
+		true
+	);
+
+	if (bHit) {
+		if (HitResult.Actor != nullptr) {
+			auto Enemy = Cast<AEnemy>(HitResult.Actor);
+
+			if (Enemy) {
+				if (Enemy->GetDamageState() == EDamageState::EDS_Unoccupied) {
+					EnemyDamageTypeResetDelegate.AddUFunction(Enemy, FName("ResetDamageState"));
+
+					UGameplayStatics::ApplyDamage(
+						Enemy,
+						(bIsChargedAttack ? EquippedWeapon->GetWeaponChargedDamage() : EquippedWeapon->GetWeaponDamage()),
+						GetController(),
+						this,
+						UDamageType::StaticClass());
+				}
+			}
+		}
+	}
+}
+
+void AMeleeCharacter::UseStaminaToAttack()
+{
+	if (bIsChargedAttack) {
+		ST -= EquippedWeapon->GetChargedAttackRequiredStamina();
+	}
+	else {
+		ST -= EquippedWeapon->GetAttackRequiredStamina();
+	}
+}
+
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {
@@ -659,6 +587,10 @@ void AMeleeCharacter::Tick(float DeltaTime)
 
 	if (bIsBeforeAttackRotate) {
 		BeginAttackRotate(DeltaTime);
+	}
+
+	if (bIsAttackCheckTime) {
+		SphereTraceAttack();
 	}
 }
 
@@ -674,18 +606,12 @@ void AMeleeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMeleeCharacter::LookUpAtRate);
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	
-	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &AMeleeCharacter::PressedAttack);
 	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &AMeleeCharacter::ReleasedAttack);
 
 	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AMeleeCharacter::PressedRoll);
 	PlayerInputComponent->BindAction("Roll", IE_Released, this, &AMeleeCharacter::ReleasedRoll);
-
-	//PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMeleeCharacter::PressedSprint);
-	//PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMeleeCharacter::ReleasedSprint);
 
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Pressed, this, &AMeleeCharacter::PressedSubAttack);
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &AMeleeCharacter::ReleasedSubAttack);

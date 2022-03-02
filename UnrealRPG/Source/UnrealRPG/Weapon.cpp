@@ -6,8 +6,8 @@
 
 AWeapon::AWeapon()
 {
-	WeaponCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
-	WeaponCollision->SetupAttachment(GetRootComponent());
+	//WeaponCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
+	//WeaponCollision->SetupAttachment(GetRootComponent());
 }
 
 void AWeapon::OnConstruction(const FTransform& Transform)
@@ -27,7 +27,16 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("TwoHandSword"), TEXT(""));
 			break;
 		}
-
+		//
+		// 	UPROPERTY(EditDefaultsOnly)
+		//float WeaponScale;
+		//
+		//
+		//FVector WeaponCollsionLocation;
+		//
+		//
+		//FVector WeaponCollsionScale;
+		//
 		if (WeaponDataRow) {
 			ItemName = WeaponDataRow->WeaponName;
 			ItemIcon = WeaponDataRow->WeaponIcon;
@@ -35,6 +44,17 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			WeaponType = WeaponDataRow->WeaponType;
 			WeaponDamage = WeaponDataRow->WeaponDamage;
 			WeaponChargedDamage = WeaponDataRow->WeaponChargedDamage;
+			AttackRequiredStamina = WeaponDataRow->AttackRequiredStamina;
+			ChargedAttackRequiredStamina = WeaponDataRow->ChargedAttackRequiredStamina;
+
+			const float WeaponScalar{ WeaponDataRow->WeaponScale };
+			const FVector WeaponSize{ WeaponScalar ,WeaponScalar ,WeaponScalar };
+			ItemMesh->SetWorldScale3D(WeaponSize);
+			WeaponLocationZ = WeaponDataRow->WeaponLocationZ;
+
+			//WeaponCollision->Location
+			//WeaponCollision->SetRelativeLocation(WeaponDataRow->WeaponCollsionLocation);
+			//WeaponCollision->SetRelativeScale3D(WeaponDataRow->WeaponCollsionScale);
 		}
 	}
 }

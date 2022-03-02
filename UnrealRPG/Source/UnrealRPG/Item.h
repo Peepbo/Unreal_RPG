@@ -55,4 +55,5 @@ private:
 
 public:
 	FORCEINLINE void SetCharacter(AMeleeCharacter* Char) { Character = Char; }
+	FORCEINLINE USkeletalMeshComponent* GetItemMesh() const { return ItemMesh; }
 };

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "DamageState.h"
+#include "CombatState.h"
 #include "Enemy.generated.h"
 
 UCLASS()
@@ -25,7 +26,7 @@ protected:
 	void HideHealthBar();
 
 	UFUNCTION()
-	void AgroSphereOverlap(
+	virtual void AgroSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
@@ -41,12 +42,30 @@ protected:
 			int32 OtherBodyIndex,
 			bool bFromSweep,
 			const FHitResult& SweepResult);
+
 	UFUNCTION()
 		void CombatRangeEndOverlap(
 			UPrimitiveComponent* OverlappedComponent,
 			AActor* OtherActor,
 			UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable)
+		void ChangeBattleMode();
+
+protected:
+	class AEnemyAIController* EnemyAIController;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool bIsBattleMode;
+
+	float WalkSpeed;
+	float RunSpeed;
+	float NonBattleWalkSpeed;
+	ECombatState CombatState;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
+		class AMeleeCharacter* Target;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
@@ -55,7 +74,7 @@ private:
 	float MaximumHP;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bDying;
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EDamageState DamageState;
 
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
@@ -67,8 +86,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
 	FVector PatrolPoint2;
 
-	class AEnemyAIController* EnemyAIController;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Combat, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* AgroSphere;
 
@@ -76,6 +93,8 @@ private:
 	USphereComponent* CombatRangeSphere;
 
 	bool bInAttackRange;
+
+	bool bIsSprint;
 
 public:
 	// Called every frame
@@ -92,4 +111,6 @@ public:
 	void ResetDamageState() { DamageState = EDamageState::EDS_Unoccupied; }
 
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
+	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
 };

@@ -8,13 +8,22 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
 #include "MeleeCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Weapon.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 // Sets default values
 AEnemy::AEnemy() :
 	HP(100.f),
 	MaximumHP(100.f),
 	bDying(false),
-	bInAttackRange(false)
+	bInAttackRange(false),
+	WalkSpeed(130.f),
+	RunSpeed(400.f),
+	NonBattleWalkSpeed(170.f),
+	CombatState(ECombatState::ECS_Unoccupied),
+	bIsBattleMode(false),
+	bIsSprint(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -70,11 +79,15 @@ void AEnemy::BeginPlay()
 
 void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (bIsBattleMode)return;
 	if (OtherActor == nullptr)return;
 
 	auto Character = Cast<AMeleeCharacter>(OtherActor);
 	if (Character) {
-		EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
+		if (EnemyAIController) {
+			Target = Character;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
+		}
 	}
 }
 
@@ -105,6 +118,17 @@ void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		if (EnemyAIController) {
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), false);
 		}
+	}
+}
+
+void AEnemy::ChangeBattleMode()
+{
+	bIsBattleMode = !bIsBattleMode;
+
+	GetCharacterMovement()->MaxWalkSpeed = (bIsBattleMode ? WalkSpeed : NonBattleWalkSpeed);
+
+	if (EnemyAIController) {
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsBattleMode"), bIsBattleMode);
 	}
 }
 

@@ -14,4 +14,13 @@ void UKnightAnimInstance::InitializeAnimationProperties()
 void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 {
 	Super::UpdateAnimationProperties(DeltaTime);
+
+	if (DarkKnight == nullptr) {
+		DarkKnight = Cast<ADarkKnight>(TryGetPawnOwner());
+	}
+
+	if (DarkKnight) {
+		bIsBattleMode = DarkKnight->GetBattleMode();
+		bIsSprint = DarkKnight->GetSprinting();
+	}
 }
