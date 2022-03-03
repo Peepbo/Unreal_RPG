@@ -17,6 +17,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+#include "GameFramework/Actor.h"
+
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
 	BaseTurnRate(45.f),
@@ -37,13 +39,12 @@ AMeleeCharacter::AMeleeCharacter() :
 	bPressedSprintButton(false),
 	bPressedRollButton(false),
 	bPressedSubAttackButton(false),
-	BeforeAttackLerpSpeed(0.1f),
+	BeforeAttackRotateSpeed(0.1f),
 	bIsBeforeAttackRotate(false),
 	bIsLeftRotate(false),
 	bIsBattleMode(false),
 	bIsChargedAttack(false),
 	bShouldChargedAttack(false),
-	bIsAttackCheckTime(false),
 	RollRequiredStamina(10.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -189,7 +190,6 @@ void AMeleeCharacter::CheckComboAttack()
 	if ((bShouldChargedAttack || bShouldComboAttack) && 
 		(ReadyToChargedAttackMontage && ChargedAttackMontage))
 	{
-		// fix later : 스테미나 양이 정해지면 수정
 		if (bShouldChargedAttack && 
 			ST - EquippedWeapon->GetChargedAttackRequiredStamina() >= 0.f) {
 			ResetAttack();
@@ -404,30 +404,51 @@ void AMeleeCharacter::SaveDegree()
 {
 	// 게임 패드 스틱의 방향
 	const FVector2D ThumbstickAxis{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
-	const float ThumbstickYaw{ UKismetMathLibrary::DegAtan2(ThumbstickAxis.Y, ThumbstickAxis.X) };
-	const FRotator ThumbstickRotator{ 0,ThumbstickYaw,0 };
+	const float ThumbstickDegree{ UKismetMathLibrary::DegAtan2(ThumbstickAxis.Y, ThumbstickAxis.X) };
+	const FRotator ThumbstickRot{ 0,ThumbstickDegree,0 };
 
-	// 컨트롤러 방향 (카메라 정면 방향)
-	const FRotator ControllerRotator{ 0,GetControlRotation().Yaw,0 };
+	// 정면 방향
+	const FRotator ControllerRot{ 0,GetControlRotation().Yaw,0 };
 
-	// 만약 패드 스틱을 조작하지 않았을 땐 Rotation을 저장할 필요가 없다.
-	if (ThumbstickAxis.X == 0.f, ThumbstickAxis.Y == 0.f) {
+	// 만약 패드 스틱을 조작하지 않았을 땐 Rotation을 저장할 필요가 없다. 어차피 각도가 같아 회전할 필요가 없기 때문
+	if (ThumbstickAxis.X == 0.f && ThumbstickAxis.Y == 0.f) {
 		return;
 	}
 
 	// 이외의 경우는 Rotation을 저장해야 한다.
 	bIsBeforeAttackRotate = true;
 
-	// 두 방향을 혼합하여 플레이어가 최종적으로 가리켜야될 방향을 저장한다.
-	// 카메라의 정면과 캐릭터의 정면이 서로 일치하지 않을 수 있어 아래와 같이 Compose하여 최종 월드 방향을 구해야 한다.
-	SaveRotator = UKismetMathLibrary::ComposeRotators(ThumbstickRotator, ControllerRotator);
+	/*
+	* 일단 한 번에 회전할 수 있는 최대 각도는 90도로 지정한다.
+	* 90도를 넘어서지 않으면 정면 각도 + 스틱 각도의 결과를 rotation에 저장한다.
+	* 90도가 넘어서면 좌, 우를 확인하여 플레이어 각도 +-90도의 rotation을 저장한다.
+	*/
 
-	// 캐릭터의 Rotator보다 
-	if (GetActorRotation().Yaw < SaveRotator.Yaw) {
-		bIsLeftRotate = false;
+	// ControllerRot, ThumbstickRot을 결합하여 '정면이 기준일 때' 스틱의 회전을 구한다.
+	const FRotator ComposeRot = UKismetMathLibrary::ComposeRotators(ControllerRot, ThumbstickRot);
+	// 회전으로 정규화된 방향을 구한다.
+	const FVector ComposeDirection = UKismetMathLibrary::Normal(ComposeRot.Vector());
+
+	// Dot Product를 사용하여 액터의 정면과 각도 차이가 얼마나 나는지 확인한다. (값의 범위 : -1 ~ 1)
+	const float DotProductValue{ UKismetMathLibrary::Dot_VectorVector(GetActorForwardVector(), ComposeDirection) };
+	// 0보다 클 때, 각도가 0~90 내로 차이가 날 때
+	if (DotProductValue >= 0.f) {
+		// 정면 회전과 스틱 회전을 결합하여 최종 회전을 구한다.
+		SaveRotator = UKismetMathLibrary::ComposeRotators(ControllerRot, ThumbstickRot);
 	}
+
+	// 0보다 작을 때, 각도가 90~180 내로 차이가 날 때 (최대 허용 각도를 90도로 제한함)
 	else {
-		bIsLeftRotate = true;
+		// 이제는 Cross Product를 사용하여 최단 회전 방향이 왼쪽인지 오른쪽인지 구한다.
+		const FVector CrossProductValue{ UKismetMathLibrary::Cross_VectorVector(GetActorForwardVector(), ComposeDirection) };
+
+		// Z에 저장된 값이 음수면 왼쪽이 최단 회전 방향, 양수면 오른쪽이 최단 회전 방향이 된다.
+		if (CrossProductValue.Z < 0.f) {
+			SaveRotator = UKismetMathLibrary::ComposeRotators(GetActorRotation(), { 0,-90.f,0 });
+		}
+		else {
+			SaveRotator = UKismetMathLibrary::ComposeRotators(GetActorRotation(), { 0,+90.f,0 });
+		}
 	}
 }
 
@@ -439,15 +460,8 @@ void AMeleeCharacter::BeginAttackRotate(float DeltaTime)
 		return;
 	}
 
-	// 액터의 방향을 바꾼다.
-	SetActorRotation(
-		// Lerp를 사용하여 SaveRotator까지 회전을 한다.
-		UKismetMathLibrary::RLerp(
-			GetActorRotation(),
-			SaveRotator,
-			BeforeAttackLerpSpeed * DeltaTime,
-			true)
-	);
+	// InterpTo를 사용하여 일정한 속도로 회전을 진행한다.
+	SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), SaveRotator, DeltaTime, BeforeAttackRotateSpeed));
 }
 
 void AMeleeCharacter::PressedBattleModeChange()
@@ -521,16 +535,23 @@ void AMeleeCharacter::EndChargedAttack()
 
 void AMeleeCharacter::StartAttackCheckTime()
 {
-	bIsAttackCheckTime = true;
+	// 0.005f 마다 함수를 호출함.
+	GetWorldTimerManager().SetTimer(
+		AttackCheckTimer,
+		this,
+		&AMeleeCharacter::TracingAttackSphere,
+		0.005f,
+		true);
 }
 
 void AMeleeCharacter::EndAttackCheckTime()
 {
-	bIsAttackCheckTime = false;
+	GetWorldTimerManager().ClearTimer(AttackCheckTimer);
 }
 
-void AMeleeCharacter::SphereTraceAttack()
+void AMeleeCharacter::TracingAttackSphere()
 {
+	/* 아이템의 TopSocket과 BottomSocket의 위치를 받아온다. */
 	const FVector TopSocketLoc{ EquippedWeapon->GetItemMesh()->GetSocketLocation("TopSocket") };
 	const FVector BottomSocketLoc{ EquippedWeapon->GetItemMesh()->GetSocketLocation("BottomSocket") };
 
@@ -550,12 +571,18 @@ void AMeleeCharacter::SphereTraceAttack()
 		true
 	);
 
+	// Hit이 되었을 때
 	if (bHit) {
+		// Actor가 nullptr이 아니면
 		if (HitResult.Actor != nullptr) {
+			// 한 번 AEnemy로 Cast를 시도해본다.
 			auto Enemy = Cast<AEnemy>(HitResult.Actor);
 
+			// Enemy로 Cast가 성공적으로 됬을 때
 			if (Enemy) {
+				// Enemy가 데미지를 입을 수 있는 상태라면
 				if (Enemy->GetDamageState() == EDamageState::EDS_Unoccupied) {
+					// 상태 초기화 함수를 리셋 델리게이트에 넣고, 몬스터에 피해를 가한다.
 					EnemyDamageTypeResetDelegate.AddUFunction(Enemy, FName("ResetDamageState"));
 
 					UGameplayStatics::ApplyDamage(
@@ -587,10 +614,6 @@ void AMeleeCharacter::Tick(float DeltaTime)
 
 	if (bIsBeforeAttackRotate) {
 		BeginAttackRotate(DeltaTime);
-	}
-
-	if (bIsAttackCheckTime) {
-		SphereTraceAttack();
 	}
 }
 

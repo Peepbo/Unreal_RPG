@@ -135,13 +135,17 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndChargedAttack();
 
+	/* 공격 검사를 시작하는 함수 */
 	UFUNCTION(BlueprintCallable)
 	void StartAttackCheckTime();
+	/* 공격 검사를 종료하는 함수 */
 	UFUNCTION(BlueprintCallable)
 	void EndAttackCheckTime();
 
-	void SphereTraceAttack();
+	/* SphereTraceSingle을 사용하여 검사 후, Hit 정보를 바탕으로 데미지를 준다. */
+	void TracingAttackSphere();
 
+	/* 공격 시 스태미나를 사용할 때 호출되는 함수, 누를 때가 아닌 공격 검사가 시작될 때 호출됨 */
 	UFUNCTION(BlueprintCallable)
 	void UseStaminaToAttack();
 
@@ -268,11 +272,13 @@ private:
 
 	/* 회전(공격 전) 속도 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float BeforeAttackLerpSpeed;
+	float BeforeAttackRotateSpeed;
 
+	/* 전투 모드인지 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bIsBattleMode;
 
+	/* 차지 준비, 공격 몽타주 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* ReadyToChargedAttackMontage;
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -280,12 +286,14 @@ private:
 
 	/* 강 공격인지 아닌지, 해당 변수의 상태에 따라 데미지 적용 값이 바뀐다. */
 	bool bIsChargedAttack;
+	/* 다음 공격이 강 공격인지 아닌지, 콤보가 유지됬는데 강 공격이면 강 공격 함수를 호출한다. */
 	bool bShouldChargedAttack;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Combat, meta = (AllowPrivateAccess = "true"))
-	bool bIsAttackCheckTime;
-
+	/* 구르기에 필요한 스태미나 */
 	float RollRequiredStamina;
+	
+	/* 공격 충돌 확인 타이머, 타이머가 작동되면 특정 딜레이(=0.005f) 마다 저장된 함수를 호출함 */
+	FTimerHandle AttackCheckTimer;
 
 public:
 
