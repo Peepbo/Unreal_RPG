@@ -24,7 +24,7 @@ public:
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	class AMeleeCharacter* MeleeCharacter;
+	class APlayerCharacter* PlayerCharacter;
 
 
 };
