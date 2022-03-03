@@ -18,7 +18,9 @@ AMeleeCharacter::AMeleeCharacter() :
 	HP(100.f),
 	MaximumHP(100.f),
 	AD(0.f),
-	MaximumWalkSpeed(500.f)
+	MaximumWalkSpeed(500.f),
+	bDying(false),
+	CombatState(ECombatState::ECS_Unoccupied)
 {
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;

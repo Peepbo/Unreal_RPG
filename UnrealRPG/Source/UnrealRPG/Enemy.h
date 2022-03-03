@@ -3,13 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "MeleeCharacter.h"
 #include "DamageState.h"
-#include "CombatState.h"
 #include "Enemy.generated.h"
 
 UCLASS()
-class UNREALRPG_API AEnemy : public ACharacter
+class UNREALRPG_API AEnemy : public AMeleeCharacter
 {
 	GENERATED_BODY()
 
@@ -56,24 +55,13 @@ protected:
 protected:
 	class AEnemyAIController* EnemyAIController;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		bool bIsBattleMode;
-
-	float WalkSpeed;
-	float RunSpeed;
-	float NonBattleWalkSpeed;
-	ECombatState CombatState;
+	float BattleWalkSpeed;
+	float BattleRunSpeed;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
-		class AMeleeCharacter* Target;
+		class APlayerCharacter* Target;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
-	float HP;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
-	float MaximumHP;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool bDying;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EDamageState DamageState;
 

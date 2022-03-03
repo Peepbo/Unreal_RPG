@@ -7,22 +7,15 @@
 #include "EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
-#include "MeleeCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Weapon.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "PlayerCharacter.h"
 
 // Sets default values
 AEnemy::AEnemy() :
-	HP(100.f),
-	MaximumHP(100.f),
-	bDying(false),
 	bInAttackRange(false),
-	WalkSpeed(130.f),
-	RunSpeed(400.f),
-	NonBattleWalkSpeed(170.f),
-	CombatState(ECombatState::ECS_Unoccupied),
-	bIsBattleMode(false),
+	BattleWalkSpeed(130.f),
+	BattleRunSpeed(400.f),
 	bIsSprint(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -35,6 +28,9 @@ AEnemy::AEnemy() :
 	CombatRangeSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphere"));
 	CombatRangeSphere->SetupAttachment(GetRootComponent());
 	CombatRangeSphere->ComponentTags.Add(TEXT("CombatRange"));
+
+	MaximumWalkSpeed = 170.f;
+	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 }
 
 // Called when the game starts or when spawned
@@ -82,7 +78,7 @@ void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	if (bIsBattleMode)return;
 	if (OtherActor == nullptr)return;
 
-	auto Character = Cast<AMeleeCharacter>(OtherActor);
+	auto Character = Cast<APlayerCharacter>(OtherActor);
 	if (Character) {
 		if (EnemyAIController) {
 			Target = Character;
@@ -95,9 +91,9 @@ void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 {
 	if (OtherActor == nullptr)return;
 
-	auto MeleeCharacter = Cast<AMeleeCharacter>(OtherActor);
+	auto Character = Cast<APlayerCharacter>(OtherActor);
 
-	if (MeleeCharacter) {
+	if (Character) {
 		bInAttackRange = true;
 
 		if (EnemyAIController) {
@@ -110,9 +106,9 @@ void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 {
 	if (OtherActor == nullptr)return;
 
-	auto MeleeCharacter = Cast<AMeleeCharacter>(OtherActor);
+	auto Character = Cast<APlayerCharacter>(OtherActor);
 
-	if (MeleeCharacter) {
+	if (Character) {
 		bInAttackRange = false;
 
 		if (EnemyAIController) {
@@ -125,7 +121,7 @@ void AEnemy::ChangeBattleMode()
 {
 	bIsBattleMode = !bIsBattleMode;
 
-	GetCharacterMovement()->MaxWalkSpeed = (bIsBattleMode ? WalkSpeed : NonBattleWalkSpeed);
+	GetCharacterMovement()->MaxWalkSpeed = (bIsBattleMode ? BattleWalkSpeed : MaximumWalkSpeed);
 
 	if (EnemyAIController) {
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsBattleMode"), bIsBattleMode);

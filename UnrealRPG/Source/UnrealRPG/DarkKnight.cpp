@@ -4,7 +4,7 @@
 #include "DarkKnight.h"
 #include "KnightAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "MeleeCharacter.h"
+#include "PlayerCharacter.h"
 #include "EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -19,11 +19,11 @@ void ADarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	WalkSpeed = 130.f;
-	RunSpeed = 400.f;
-	NonBattleWalkSpeed = 170.f;
+	BattleWalkSpeed = 130.f;
+	BattleRunSpeed = 400.f;
+	MaximumWalkSpeed = 170.f;
 
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (AnimInst) {
@@ -41,7 +41,7 @@ void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	if (bIsBattleMode)return;
 	if (OtherActor == nullptr)return;
 
-	auto Character = Cast<AMeleeCharacter>(OtherActor);
+	auto Character = Cast<APlayerCharacter>(OtherActor);
 	if (Character) {
 		bShouldDrawWeapon = false;
 

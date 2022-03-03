@@ -42,6 +42,11 @@ protected:
 	/* 전투 모드인지 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool bIsBattleMode;
+
+	/* 죽었는지 */
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bDying;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
