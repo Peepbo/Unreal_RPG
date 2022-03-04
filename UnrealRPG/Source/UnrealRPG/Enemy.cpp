@@ -145,15 +145,10 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (bDying)return DamageAmount;
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	DamageState = EDamageState::EDS_invincibility;
-	if (HP - DamageAmount > 0.f) {
-		HP -= DamageAmount;
-	}
-	else {
-		HP = 0.f;
-		bDying = true;
-
+	if (bDying) {
 		HideHealthBar();
 	}
 

@@ -43,7 +43,26 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void PlayAttackMontage();
-	//virtual void ChangeBattleMode() override;
+
+	UFUNCTION(BlueprintCallable)
+	void SaveTargetRotator();
+
+	UFUNCTION(BlueprintCallable)
+	void StartRotate();
+
+	UFUNCTION(BlueprintCallable)
+	void StopRotate();
+
+	UFUNCTION(BlueprintCallable)
+	void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
+
+	void TracingAttackSphere();
+
+	UFUNCTION(BlueprintCallable)
+	void StartAttackCheckTime();
+
+	UFUNCTION(BlueprintCallable)
+	void EndAttackCheckTime();
 
 private:
 
@@ -57,12 +76,30 @@ private:
 	
 	bool bShouldDrawWeapon;
 	// spd 130/400
+	// atk 20
 
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
 		FVector EnemyDir;
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
 		FVector EnemyToTargetDir;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	FRotator LastSaveRotate;
+
+	int32 AttackIndex;
+	int32 LastAttackIndex;
+
+	bool bIsRotate;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float InterpSpeed;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USkeletalMeshComponent* WeaponMesh;
+
+	FTimerHandle AttackCheckTimer;
+
+	bool bAttackable;
 
 public:
 	// Called every frame

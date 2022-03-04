@@ -39,3 +39,18 @@ void AMeleeCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
+float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (bDying)return DamageAmount;
+
+	if (HP - DamageAmount > 0.f) {
+		HP -= DamageAmount;
+	}
+	else {
+		HP = 0.f;
+		bDying = true;
+	}
+
+	return DamageAmount;
+}
