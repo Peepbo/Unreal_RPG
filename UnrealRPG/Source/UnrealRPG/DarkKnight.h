@@ -41,6 +41,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StartDraw();
 
+	UFUNCTION(BlueprintCallable)
+	void PlayAttackMontage();
 	//virtual void ChangeBattleMode() override;
 
 private:

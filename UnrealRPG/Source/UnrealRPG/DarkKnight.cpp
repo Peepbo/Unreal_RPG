@@ -67,6 +67,13 @@ void ADarkKnight::StartDraw()
 	}
 }
 
+void ADarkKnight::PlayAttackMontage()
+{
+	if (AttackMontage.Num() != 0 && AttackMontage[0]) {
+		AnimInstance->Montage_Play(AttackMontage[0]);
+	}
+}
+
 void ADarkKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
