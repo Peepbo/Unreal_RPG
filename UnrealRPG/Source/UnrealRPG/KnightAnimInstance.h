@@ -25,8 +25,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	class ADarkKnight* DarkKnight;
 	//class AEnemy* Enemy;
-
-
-public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Movement, meta = (AllowPrivateAccess = "true"))
+	float WalkDirection;
 
 };

@@ -9,6 +9,7 @@
 /**
  * 
  */
+
 UCLASS()
 class UNREALRPG_API ADarkKnight : public AEnemy
 {
@@ -64,6 +65,22 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndAttackCheckTime();
 
+	UFUNCTION(BlueprintCallable)
+	void ChangeCombatState(ECombatState NextCombatState);
+
+	UFUNCTION(BlueprintCallable)
+	void FaceOff(int32 NextWalkDirection);
+
+	UFUNCTION(BlueprintCallable)
+	void EndFaceOff();
+
+	void ChangeLerpDirection();
+
+	UFUNCTION(BlueprintCallable)
+	void StartRestTimer();
+
+	void EndRestTimer();
+
 private:
 
 	class UKnightAnimInstance* AnimInstance;
@@ -101,7 +118,23 @@ private:
 
 	bool bAttackable;
 
+	/* -1 : left, 0 : forward, 1 : right */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float WalkDirection;
+
+	FTimerHandle WalkDirectionLerpTimer;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float DirectionLerpSpeed;
+
+	FTimerHandle RestTimer;
+
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+public:
+	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
+
 };

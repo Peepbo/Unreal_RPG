@@ -22,5 +22,7 @@ void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 	if (DarkKnight) {
 		bIsBattleMode = DarkKnight->GetBattleMode();
 		bIsSprint = DarkKnight->GetSprinting();
+
+		WalkDirection = DarkKnight->GetWalkDirection();
 	}
 }

@@ -17,7 +17,9 @@ ADarkKnight::ADarkKnight() :
 	LastAttackIndex(0),
 	bIsRotate(false),
 	InterpSpeed(5.f),
-	bAttackable(true)
+	bAttackable(true),
+	WalkDirection(0.f),
+	DirectionLerpSpeed(1.f)
 {
 
 }
@@ -83,6 +85,8 @@ void ADarkKnight::PlayAttackMontage()
 		if (AttackMontage.IsValidIndex(AttackIndex) && AttackMontage[AttackIndex]) {
 			AnimInstance->Montage_Play(AttackMontage[AttackIndex]);
 			LastAttackIndex = AttackIndex;
+
+			UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
 		}
 	}
 
@@ -180,6 +184,63 @@ void ADarkKnight::EndAttackCheckTime()
 	GetWorldTimerManager().ClearTimer(AttackCheckTimer);
 
 	bAttackable = true;
+}
+
+void ADarkKnight::ChangeCombatState(ECombatState NextCombatState)
+{
+	CombatState = NextCombatState;
+}
+
+void ADarkKnight::FaceOff(int32 NextWalkDirection)
+{
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+
+	WalkDirection = NextWalkDirection;
+}
+
+void ADarkKnight::EndFaceOff()
+{
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+	// Start Timer
+	GetWorldTimerManager().SetTimer(
+		WalkDirectionLerpTimer,
+		this,
+		&ADarkKnight::ChangeLerpDirection,
+		0.005f,
+		true);
+}
+
+void ADarkKnight::ChangeLerpDirection()
+{
+	if (UKismetMathLibrary::EqualEqual_FloatFloat(WalkDirection, 0.f)) {
+		WalkDirection = 0.f;
+		GetWorldTimerManager().ClearTimer(WalkDirectionLerpTimer);
+		return;
+	}
+
+	WalkDirection = UKismetMathLibrary::Lerp(WalkDirection, 0.f, DirectionLerpSpeed);
+}
+
+void ADarkKnight::StartRestTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		RestTimer,
+		this,
+		&ADarkKnight::EndRestTimer,
+		1.5f,
+		false);
+}
+
+void ADarkKnight::EndRestTimer()
+{
+	if (EnemyAIController->GetBlackboardComponent()->GetValueAsBool(TEXT("InAttackRange"))) {
+		ChangeCombatState(ECombatState::ECS_Unoccupied);
+	}
+	else {
+		ChangeCombatState(ECombatState::ECS_Chase);
+		EnemyAIController->GetBlackboardComponent()->SetValueAsInt(TEXT("ActionIndex"), 1);
+	}
 }
 
 void ADarkKnight::Tick(float DeltaTime)
