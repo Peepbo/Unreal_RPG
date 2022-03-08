@@ -45,6 +45,8 @@ void ADarkKnight::BeginPlay()
 	}
 
 	AttackIndex = FMath::RandRange(0, AttackMontage.Num() - 1);
+
+	ChangeEnemySize(EEnemySize::EES_Medium);
 }
 
 void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

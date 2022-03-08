@@ -17,3 +17,13 @@ enum class ECombatState : uint8
 	ECS_Chase UMETA(DisplayName = "Chase"),
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };
+
+UENUM(BlueprintType)
+enum class EEnemySize : uint8
+{
+	EES_Small UMETA(DisplayName = "Small"),
+	EES_Medium UMETA(DisplayName = "Medium"),
+	EES_Large UMETA(DisplayName = "Large"),
+
+	EES_MAX UMETA(DisplayName = "DefaultMax")
+};

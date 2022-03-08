@@ -10,13 +10,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "PlayerCharacter.h"
+#include "Components/WidgetComponent.h"
 
 // Sets default values
 AEnemy::AEnemy() :
 	bInAttackRange(false),
 	BattleWalkSpeed(130.f),
 	BattleRunSpeed(400.f),
-	bIsSprint(false)
+	bIsSprint(false),
+	EnemySize(EEnemySize::EES_MAX)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,6 +33,11 @@ AEnemy::AEnemy() :
 
 	MaximumWalkSpeed = 170.f;
 	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
+
+	LockOnWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidget"));
+	LockOnWidget->SetupAttachment(GetMesh(), TEXT("Hips"));
+	LockOnWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	LockOnWidget->SetDrawSize({ 18.f,18.f });
 }
 
 // Called when the game starts or when spawned
@@ -125,6 +132,24 @@ void AEnemy::ChangeBattleMode()
 
 	if (EnemyAIController) {
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsBattleMode"), bIsBattleMode);
+	}
+}
+
+void AEnemy::ChangeEnemySize(EEnemySize Size)
+{
+	EnemySize = Size;
+
+	switch (EnemySize)
+	{
+	case EEnemySize::EES_Small:
+		LockOnMinimumPitchValue = -30.f;
+		break;
+	case EEnemySize::EES_Medium:
+		LockOnMinimumPitchValue = -20.f;
+		break;
+	case EEnemySize::EES_Large:
+		LockOnMinimumPitchValue = -10.f;
+		break;
 	}
 }
 

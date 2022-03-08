@@ -24,6 +24,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void HideHealthBar();
 
+	/* 탐색 시아 (범위 안에 들어오면 전투가 활성화된다.) */
 	UFUNCTION()
 	virtual void AgroSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
@@ -33,6 +34,7 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	/* 공격 시작 범위 */
 	UFUNCTION()
 		void CombatRangeOverlap(
 			UPrimitiveComponent* OverlappedComponent,
@@ -42,6 +44,7 @@ protected:
 			bool bFromSweep,
 			const FHitResult& SweepResult);
 
+	/* 공격 범위 벗어남 */
 	UFUNCTION()
 		void CombatRangeEndOverlap(
 			UPrimitiveComponent* OverlappedComponent,
@@ -49,40 +52,63 @@ protected:
 			UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex);
 
+	/* non-battle에서 battle로, 혹은 battle에서 non-battle로 */
 	UFUNCTION(BlueprintCallable)
 		void ChangeBattleMode();
+
+	/* 캐릭터의 크기를 변경하는 함수 (LockOn에 필요) */
+	void ChangeEnemySize(EEnemySize Size);
 
 protected:
 	class AEnemyAIController* EnemyAIController;
 
+	/* 전투 이동속도 관련 변수 */
 	float BattleWalkSpeed;
 	float BattleRunSpeed;
 
+	/* 플레이어를 저장하는 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
-		class APlayerCharacter* Target;
+	class APlayerCharacter* Target;
 
 private:
+	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EDamageState DamageState;
 
+	/* AI관련 행동을 저장하는 트리 */
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
 	class UBehaviorTree* BehaviorTree;
 
+	/* 정찰 지점1 */
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
 	FVector PatrolPoint;
 
+	/* 정찰 지점2 */
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
 	FVector PatrolPoint2;
 
+	/* 적(플레이어) 인식 콜라이더 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Combat, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* AgroSphere;
 
+	/* 공격 콜라이더 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Combat, meta = (AllowPrivateAccess = "true"))
 	USphereComponent* CombatRangeSphere;
 
+	/* 공격 범위안에 들어왔는지 */
 	bool bInAttackRange;
-
+	/* 달리기 상태인지 */
 	bool bIsSprint;
+
+	/* 락온되는 위치 및 이미지를 포함하는 위젯 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Combat, meta = (AllowPrivateAccess = "true"))
+	class UWidgetComponent* LockOnWidget;
+
+	/* 몬스터 크기를 대략적으로 나타내는 enum 변수 */
+	EEnemySize EnemySize;
+
+	/* 락온 시 최소 Pitch값을 나타내는 변수, 크기에 따라 달라짐 */
+	float LockOnMinimumPitchValue;
 
 public:
 	// Called every frame
@@ -101,4 +127,6 @@ public:
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
+	FORCEINLINE UWidgetComponent* GetLockOnWidget() const { return LockOnWidget; }
+	FORCEINLINE float GetMinimumLockOnPitchValue() const { return LockOnMinimumPitchValue; }
 };

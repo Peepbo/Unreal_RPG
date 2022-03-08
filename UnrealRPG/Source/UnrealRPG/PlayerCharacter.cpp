@@ -17,6 +17,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Actor.h"
+#include "Components/WidgetComponent.h"
 
 APlayerCharacter::APlayerCharacter() :
 	BaseTurnRate(45.f),
@@ -33,7 +34,8 @@ APlayerCharacter::APlayerCharacter() :
 	bIsBeforeAttackRotate(false),
 	bIsChargedAttack(false),
 	bShouldChargedAttack(false),
-	RollRequiredStamina(10.f)
+	RollRequiredStamina(10.f),
+	bLockOn(false)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -81,6 +83,10 @@ void APlayerCharacter::BeginPlay()
 			AnimInstance = PlayerAnimInst;
 		}
 	}
+
+	/* 락온에 필요한 정보를 미리 만들어둠 */
+	TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+	TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody));
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -115,6 +121,8 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::TurnAtRate(float Rate)
 {
+	if (bLockOn)return;
+
 	// 이번 프레임에 이동해야될 Yaw 각도를 구함
 	// deg/sec * sec/frame
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
@@ -122,9 +130,25 @@ void APlayerCharacter::TurnAtRate(float Rate)
 
 void APlayerCharacter::LookUpAtRate(float Rate)
 {
+	if (bLockOn)return;
+
 	// 이번 프레임에 이동해야될 Pitch 각도를 구함
 	// deg/sec * sec/frame
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::TurnAtRateInMouse(float Rate)
+{
+	if (bLockOn)return;
+
+	AddControllerYawInput(Rate);
+}
+
+void APlayerCharacter::LookUpAtRateInMouse(float Rate)
+{
+	if (bLockOn)return;
+
+	AddControllerPitchInput(Rate);
 }
 
 void APlayerCharacter::Attack(int32 MontageIndex)
@@ -592,12 +616,128 @@ void APlayerCharacter::UseStaminaToAttack()
 	}
 }
 
+void APlayerCharacter::PressedLockOn()
+{
+	if (bLockOn) {
+		bLockOn = false;
+		LockOnWidgetData->SetVisibility(false);
+		LockOnWidgetData = nullptr;
+	}
+	else {
+		TArray<AActor*> OutActors;
+
+		UKismetSystemLibrary::SphereOverlapActors(
+			this,
+			GetActorLocation(),
+			1500.f,
+			TraceObjectTypes,
+			AEnemy::StaticClass(),
+			{ this },
+			OutActors);
+
+		if (OutActors.Num() > 0) {
+
+			const AEnemy* LockOnTarget{ GetNearestEnemyWithLockOn(OutActors) };
+
+			if (LockOnTarget) {
+				LockOnWidgetData = LockOnTarget->GetLockOnWidget();
+				MinimumLockOnPitchValue = LockOnTarget->GetMinimumLockOnPitchValue();
+			}
+		}
+	}
+
+	if (LockOnWidgetData) {
+		bLockOn = true;
+		LockOnWidgetData->SetVisibility(true);
+	}
+}
+
+AEnemy* APlayerCharacter::GetNearestEnemyWithLockOn(const TArray<AActor*> Actors)
+{
+	AEnemy* OutputEnemy{ nullptr };
+	float LastDistance{ 0.f };
+
+	for (AActor* Actor : Actors) {
+
+		// 카메라 정면과 50도 이상 떨어져있는지 검사한다.
+		const FVector PlayerToEnemyDirection{
+			UKismetMathLibrary::Normal(Actor->GetActorLocation() - GetActorLocation()) };
+
+		const FRotator ControlRot{ 0.f,GetControlRotation().Yaw,0.f };
+		const FVector ControlForward{ UKismetMathLibrary::Normal(ControlRot.Vector()) };
+
+		const float DotProductValue{
+			UKismetMathLibrary::Dot_VectorVector(
+				PlayerToEnemyDirection,
+				ControlForward) };
+
+		// 라디안 값을 디그리 값으로 바꿔준다.
+		const float ValueToDegree{ UKismetMathLibrary::DegAcos(DotProductValue) };
+
+		// 카메라 정면으로 부터 좌, 우 50도내에 있는 경우
+		if (ValueToDegree <= 50.f) {
+			AEnemy* NowEnemy{ Cast<AEnemy>(Actor) };
+
+			const float NowDistance{
+				UKismetMathLibrary::Vector_Distance(
+					Actor->GetActorLocation(),
+					GetActorLocation()) };
+
+			// 이미 선택된 적이 있으면
+			if (OutputEnemy) {
+
+				// 이전 정보, 현재 정보 중 더 가까운 적을 타겟팅한다.
+				if (NowDistance < LastDistance) {
+					OutputEnemy = NowEnemy;
+					LastDistance = NowDistance;
+				}
+			}
+			// 선택된 적이 없으면
+			else {
+				OutputEnemy = NowEnemy;
+				LastDistance = NowDistance;
+			}
+		}
+	}
+
+	return OutputEnemy;
+}
+
+void APlayerCharacter::RotateCameraByLockOn()
+{
+	FVector LockOnEnemyLoc{ LockOnWidgetData->GetComponentLocation() };
+	LockOnEnemyLoc.Z -= 280.f;
+
+	FRotator LookRotator{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LockOnEnemyLoc) };
+
+	// 너무 가까워 지면 보기가 힘들 수 있어 Pitch 최소 값을 clamp로 제한한다.
+	LookRotator.Pitch = UKismetMathLibrary::ClampAngle(LookRotator.Pitch, MinimumLockOnPitchValue, 15.f);
+
+	// Roll은 고정하고 Pitch와 Yaw만 이동한다.
+	const FRotator FixLookRotator{
+		LookRotator.Pitch,
+		LookRotator.Yaw,
+		GetActorRotation().Roll };
+
+	// RLerp를 사용해 카메라를 부드럽게 전환시킨다.
+	GetController()->SetControlRotation(
+		UKismetMathLibrary::RLerp(
+			GetControlRotation(),
+			FixLookRotator,
+			0.04f,
+			true));
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	if (bIsBeforeAttackRotate) {
 		BeginAttackRotate(DeltaTime);
+	}
+
+	if (bLockOn) {
+		RotateCameraByLockOn();
 	}
 }
 
@@ -610,8 +750,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("TurnRate", this, &APlayerCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &APlayerCharacter::LookUpAtRate);
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::TurnAtRateInMouse);
+	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUpAtRateInMouse);
 
 	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &APlayerCharacter::PressedAttack);
 	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &APlayerCharacter::ReleasedAttack);
@@ -626,6 +766,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Pressed, this, &APlayerCharacter::PressedChargedAttack);
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Released, this, &APlayerCharacter::ReleasedChargedAttack);
+
+	PlayerInputComponent->BindAction("LockOnButton", IE_Pressed, this, &APlayerCharacter::PressedLockOn);
 }
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

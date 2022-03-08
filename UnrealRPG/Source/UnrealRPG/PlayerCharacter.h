@@ -43,6 +43,11 @@ protected:
 	*/
 	void LookUpAtRate(float Rate);
 
+	/* 위의 TurnAtRate와 동일 (마우스 전용) */
+	void TurnAtRateInMouse(float Rate);
+	/* 위의 LookUpAtRate와 동일 (마우스 전용) */
+	void LookUpAtRateInMouse(float Rate);
+
 	/* 공격 함수 */
 	void Attack(int32 MontageIndex = 0);
 	void SubAttack();
@@ -149,6 +154,15 @@ protected:
 	/* 공격 시 스태미나를 사용할 때 호출되는 함수, 누를 때가 아닌 공격 검사가 시작될 때 호출됨 */
 	UFUNCTION(BlueprintCallable)
 		void UseStaminaToAttack();
+
+	/* 강 공격 버튼 관련 함수 */
+	void PressedLockOn();
+
+	/* 락온에 해당하는 적들 중 가장 가까운 적을 반환함, 해당하는 적이 없으면 nullptr 반환 */
+	class AEnemy* GetNearestEnemyWithLockOn(const TArray<AActor*> Actors);
+
+	/* 락온 위치로 카메라를 회전하는 함수, (RLerp 사용) */
+	void RotateCameraByLockOn();
 
 public:
 	// Called every frame
@@ -272,6 +286,17 @@ private:
 
 	/* 공격 충돌 확인 타이머, 타이머가 작동되면 특정 딜레이(=0.005f) 마다 저장된 함수를 호출함 */
 	FTimerHandle AttackCheckTimer;
+
+	/* 락온 상태인지 아닌지 */
+	bool bLockOn;
+
+	/* 락온 시 visible이 켜져야되는 위젯, 해당 위젯의 월드 위치를 카메라(컨트롤러)가 lookAt함 */
+	class UWidgetComponent* LockOnWidgetData;
+	/* 최소 Pitch 값, 몬스터 크기에 따라 달라지는 값(원활한 전투 시야를 위해 추가함) */
+	float MinimumLockOnPitchValue;
+
+	/* SphereOverlapActors에 필요한 Array (락온 전용), 미리 캐쉬해둠 */
+	TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
 
 public:
 };
