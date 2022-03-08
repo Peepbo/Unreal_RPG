@@ -173,6 +173,9 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	UFUNCTION(BlueprintCallable)
+	float GetWalkDirectionValue();
+
 private:
 	/* 카메라를 달아 놓을 카메라 팔 추가 (카메라와 캐릭터 사이에 일정 거리를 두기위해 만든 컴포넌트) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -288,6 +291,7 @@ private:
 	FTimerHandle AttackCheckTimer;
 
 	/* 락온 상태인지 아닌지 */
+	UPROPERTY(VisibleAnywhere,Category=Combat,meta=(AllowPrivateAccess="true"))
 	bool bLockOn;
 
 	/* 락온 시 visible이 켜져야되는 위젯, 해당 위젯의 월드 위치를 카메라(컨트롤러)가 lookAt함 */
@@ -299,4 +303,5 @@ private:
 	TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
 
 public:
+	FORCEINLINE bool GetLockOn() const { return bLockOn; }
 };

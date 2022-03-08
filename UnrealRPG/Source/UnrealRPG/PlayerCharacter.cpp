@@ -622,6 +622,9 @@ void APlayerCharacter::PressedLockOn()
 		bLockOn = false;
 		LockOnWidgetData->SetVisibility(false);
 		LockOnWidgetData = nullptr;
+
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
 	else {
 		TArray<AActor*> OutActors;
@@ -647,6 +650,7 @@ void APlayerCharacter::PressedLockOn()
 	}
 
 	if (LockOnWidgetData) {
+		bIsBattleMode = true;
 		bLockOn = true;
 		LockOnWidgetData->SetVisibility(true);
 	}
@@ -776,4 +780,28 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	return DamageAmount;
+}
+
+float APlayerCharacter::GetWalkDirectionValue()
+{
+	if (!bLockOn)return 0.f;
+
+	const FVector2D ThumbstickAxis{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
+	const float ThumbstickDegree{ UKismetMathLibrary::DegAtan2(ThumbstickAxis.Y, ThumbstickAxis.X) };
+
+	if (UKismetMathLibrary::InRange_FloatFloat(ThumbstickDegree, -100.f, -80.f)) {
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		return -1;
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(ThumbstickDegree, 80.f, 100.f)) {
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		return 1;
+	}
+	else {
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		return 0.f;
+	}
 }

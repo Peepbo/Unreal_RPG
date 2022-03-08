@@ -33,5 +33,11 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		// 전투 모드 상태인지 확인한다.
 		bIsBattleMode = PlayerCharacter->GetBattleMode();
+
+		// 락온 상태인지 확인한다.
+		bLockOn = PlayerCharacter->GetLockOn();
+
+		// 캐릭터의 좌, 우 이동 값을 읽어온다. (음수 : 왼쪽, 양수 : 오른쪽)
+		WalkDirectionValue = PlayerCharacter->GetWalkDirectionValue();
 	}
 }
