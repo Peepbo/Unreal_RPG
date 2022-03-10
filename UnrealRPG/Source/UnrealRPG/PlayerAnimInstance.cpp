@@ -39,5 +39,10 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		// 캐릭터의 좌, 우 이동 값을 읽어온다. (음수 : 왼쪽, 양수 : 오른쪽)
 		WalkDirectionValue = PlayerCharacter->GetWalkDirectionValue();
+
+		// 캐릭터의 움직임 방향을 읽어온다.
+		MoveValue = PlayerCharacter->GetThumStickAxisForce();
+
+		bIsMove = (MoveValue.Size() == 0.f);
 	}
 }

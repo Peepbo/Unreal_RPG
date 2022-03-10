@@ -35,7 +35,9 @@ APlayerCharacter::APlayerCharacter() :
 	bIsChargedAttack(false),
 	bShouldChargedAttack(false),
 	RollRequiredStamina(10.f),
-	bLockOn(false)
+	bLockOn(false),
+	MoveValue(0.f, 0.f),
+	DeffenceAngle(30.f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -72,9 +74,13 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	EquipWeapon(SpawnDefaultWeapon());
-	EquippedWeapon->SetCharacter(this);
+	if (EquippedWeapon) {
+		EquippedWeapon->SetCharacter(this);
+	}
 	EquipShield(SpawnDefaultShield());
-	EquippedShield->SetCharacter(this);
+	if (EquippedShield) {
+		EquippedShield->SetCharacter(this);
+	}
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (AnimInst) {
@@ -84,7 +90,7 @@ void APlayerCharacter::BeginPlay()
 		}
 	}
 
-	/* 락온에 필요한 정보를 미리 만들어둠 */
+	/* 락온에 필요한 트레이스 타입 정보를 미리 만들어둠 */
 	TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
 	TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody));
 }
@@ -100,6 +106,7 @@ void APlayerCharacter::MoveForward(float Value)
 		// 어느쪽이 전방인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
 
+		MoveValue.Y = Value;
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -115,6 +122,7 @@ void APlayerCharacter::MoveRight(float Value)
 		// 어느쪽이 우측인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
 
+		MoveValue.X = Value;
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -306,11 +314,31 @@ void APlayerCharacter::Roll()
 	if (GetCharacterMovement()->IsFalling())return;
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 
-	if (AnimInstance && RollMontage) {
+	if (AnimInstance && RollMontage && RollBackMontage) {
 		ST -= RollRequiredStamina;
 
-		// 구르기 모션을 재생하고 상태를 바꾼다.
-		AnimInstance->Montage_Play(RollMontage);
+		// 구르기 모션을 재생하기 전 몇가지 확인해야 한다.
+		// 방향키가 눌렸는지 안눌렸는지, 방향키가 어느곳을 가리키는지
+
+		const FVector2D ThumbStickAxis{ GetThumbStickAxis() };
+
+		// 방향키가 눌리지 않았으면 캐릭터의 반대 방향으로 구르면 된다.
+
+		// 방향키가 눌러져 있으면 해당 방향으로 회전하고 구르기를 실행한다.
+		if (!ThumbStickAxis.IsZero()) {
+			const float ThumbStickDegree{ GetThumbStickDegree() };
+			const FRotator ThumbStickRotator{ 0,ThumbStickDegree,0 };
+			const FRotator ControllerRotator{ 0,GetControlRotation().Yaw,0 };
+			const FRotator CombRotator{ UKismetMathLibrary::ComposeRotators(ThumbStickRotator,ControllerRotator) };
+			SetActorRotation(CombRotator);
+
+			AnimInstance->Montage_Play(RollMontage);
+		}
+		else {
+			AnimInstance->Montage_Play(RollBackMontage);
+		}
+
+		// 상태를 바꾼다.
 		CombatState = ECombatState::ECS_Roll;
 	}
 }
@@ -412,8 +440,8 @@ void APlayerCharacter::EndSubAttack()
 void APlayerCharacter::SaveDegree()
 {
 	// 게임 패드 스틱의 방향
-	const FVector2D ThumbstickAxis{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
-	const float ThumbstickDegree{ UKismetMathLibrary::DegAtan2(ThumbstickAxis.Y, ThumbstickAxis.X) };
+	const FVector2D ThumbstickAxis{ GetThumbStickAxis() };
+	const float ThumbstickDegree{ GetThumbStickDegree() };
 	const FRotator ThumbstickRot{ 0,ThumbstickDegree,0 };
 
 	// 정면 방향
@@ -777,6 +805,28 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (bDying)return DamageAmount;
+
+	if (CombatState == ECombatState::ECS_Guard) {
+		// 각도가 -DeffenceAngle,+DeffenceAngle 사이인지 구한다.
+		
+		// 필요한 방향 벡터 : forward, playerToHitPoint
+		const FVector PlayerForward{ GetActorForwardVector() };
+		const FVector PlayerToHitPoint{ UKismetMathLibrary::Normal(LastHitPoint - GetActorLocation()) };
+		const float DotProductResult{ UKismetMathLibrary::Dot_VectorVector(PlayerForward,PlayerToHitPoint) };
+		const float DegreeDifference{ UKismetMathLibrary::DegAcos(DotProductResult) };
+
+		UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
+
+		if (DegreeDifference <= DeffenceAngle) {
+			// 스태미나를 일정 수치 깎고 가드 성공 애니메이션을 실행한다.
+			UE_LOG(LogTemp, Warning, TEXT("Guard!"));
+
+			return DamageAmount;
+		}
+	}
+	// 데미지 적용
+	UE_LOG(LogTemp, Warning, TEXT("Damaged!"));
+
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	return DamageAmount;
@@ -786,8 +836,7 @@ float APlayerCharacter::GetWalkDirectionValue()
 {
 	if (!bLockOn)return 0.f;
 
-	const FVector2D ThumbstickAxis{ GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
-	const float ThumbstickDegree{ UKismetMathLibrary::DegAtan2(ThumbstickAxis.Y, ThumbstickAxis.X) };
+	const float ThumbstickDegree{ GetThumbStickDegree() };
 
 	if (UKismetMathLibrary::InRange_FloatFloat(ThumbstickDegree, -100.f, -80.f)) {
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;
@@ -804,4 +853,15 @@ float APlayerCharacter::GetWalkDirectionValue()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		return 0.f;
 	}
+}
+
+const FVector2D APlayerCharacter::GetThumbStickAxis()
+{
+	return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
+}
+
+const float APlayerCharacter::GetThumbStickDegree()
+{
+	const FVector2D ThumbStickAxis{ GetThumbStickAxis() };
+	return UKismetMathLibrary::DegAtan2(ThumbStickAxis.Y, ThumbStickAxis.X);
 }

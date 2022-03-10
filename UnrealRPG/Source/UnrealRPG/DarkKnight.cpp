@@ -19,7 +19,8 @@ ADarkKnight::ADarkKnight() :
 	InterpSpeed(5.f),
 	bAttackable(true),
 	WalkDirection(0.f),
-	DirectionLerpSpeed(1.f)
+	DirectionLerpSpeed(1.f),
+	bVisibleTraceSphere(false)
 {
 
 }
@@ -147,8 +148,7 @@ void ADarkKnight::TracingAttackSphere()
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		{ this },
-		//EDrawDebugTrace::ForDuration,
-		EDrawDebugTrace::None,
+		bVisibleTraceSphere? EDrawDebugTrace::ForDuration: EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -158,6 +158,9 @@ void ADarkKnight::TracingAttackSphere()
 			auto Player = Cast<APlayerCharacter>(HitResult.Actor);
 	
 			if (Player) {
+				// attack point를 플레이어한테 전달
+				Player->SetHitPoint(HitResult.Location);
+
 				UGameplayStatics::ApplyDamage(
 					Player,
 					AD,

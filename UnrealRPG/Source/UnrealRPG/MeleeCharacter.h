@@ -47,7 +47,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bDying;
 
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

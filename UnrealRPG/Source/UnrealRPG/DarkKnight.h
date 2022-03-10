@@ -129,6 +129,8 @@ private:
 
 	FTimerHandle RestTimer;
 
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bVisibleTraceSphere;
 
 public:
 	// Called every frame

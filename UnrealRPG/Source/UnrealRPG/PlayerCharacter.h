@@ -177,6 +177,10 @@ public:
 	float GetWalkDirectionValue();
 
 private:
+	const FVector2D GetThumbStickAxis();
+	const float GetThumbStickDegree();
+
+private:
 	/* 카메라를 달아 놓을 카메라 팔 추가 (카메라와 캐릭터 사이에 일정 거리를 두기위해 만든 컴포넌트) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
@@ -233,6 +237,9 @@ private:
 	/* 구르기 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* RollMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* RollBackMontage;
+	
 
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */ // fix umelee -> uplayer
 	class UPlayerAnimInstance* AnimInstance;
@@ -302,6 +309,17 @@ private:
 	/* SphereOverlapActors에 필요한 Array (락온 전용), 미리 캐쉬해둠 */
 	TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
 
+	FVector2D MoveValue;
+	FVector LastHitPoint;
+
+	// test variable
+	UPROPERTY(EditDefaultsOnly, Category=Combat,meta=(AllowPrivateAccess = "true"))
+	float DeffenceAngle;
+
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
+	FORCEINLINE FVector2D GetMoveValue() const { return MoveValue; }
+	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
+	/* 방어 시 필요한 정보를 Enemy한테 전달받는다 */
+	FORCEINLINE void SetHitPoint(const FVector HitPoint) { LastHitPoint = HitPoint; }
 };
