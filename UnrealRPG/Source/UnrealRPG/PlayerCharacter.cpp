@@ -37,7 +37,18 @@ APlayerCharacter::APlayerCharacter() :
 	RollRequiredStamina(10.f),
 	bLockOn(false),
 	MoveValue(0.f, 0.f),
-	DeffenceAngle(30.f)
+	bIsShieldImpact(false),
+	LockOnAxis(0),
+	Combo1Name(TEXT("Combo1")),
+	Combo2Name(TEXT("Combo2")),
+	Combo3Name(TEXT("Combo3")),
+	StopAttackMontageBlendOutValue(0.25f),
+	MaximumAttackIndex(3),
+	KickDamage(5.f),
+	WeaponTopSocketName(TEXT("TopSocket")),
+	WeaponBottomSocketName(TEXT("BottomSocket")),
+	KickFootSocketName(TEXT("foot_r")),
+	KickStamina(5.f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -98,6 +109,9 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::MoveForward(float Value)
 {
 	if (CombatState == ECombatState::ECS_Attack)return;
+	if (CombatState == ECombatState::ECS_Roll)return;
+	if (CombatState == ECombatState::ECS_Impact)return;
+	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
 
 	if (Controller && Value != 0.f) {
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -114,6 +128,9 @@ void APlayerCharacter::MoveForward(float Value)
 void APlayerCharacter::MoveRight(float Value)
 {
 	if (CombatState == ECombatState::ECS_Attack)return;
+	if (CombatState == ECombatState::ECS_Roll)return;
+	if (CombatState == ECombatState::ECS_Impact)return;
+	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
 
 	if (Controller && Value != 0.f) {
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -165,9 +182,10 @@ void APlayerCharacter::Attack(int32 MontageIndex)
 	// 공격 시작
 	bShouldComboAttack = false;
 
-	if (AnimInstance && AttackMontages.IsValidIndex(MontageIndex) && AttackMontages[MontageIndex])
-	{
-		AnimInstance->Montage_Play(AttackMontages[MontageIndex]);
+	if (AnimInstance && AttackMontage) {
+		if (MontageIndex == 0) {
+			AnimInstance->Montage_Play(AttackMontage);
+		}
 	}
 
 	CombatState = ECombatState::ECS_Attack;
@@ -188,11 +206,34 @@ void APlayerCharacter::PressedAttack()
 	// 최초 공격
 	if (CombatState == ECombatState::ECS_Unoccupied &&
 		EquippedWeapon &&
-		ST >= EquippedWeapon->GetAttackRequiredStamina()) {
+		AnimInstance &&
+		!AnimInstance->Montage_IsPlaying(AttackMontage)) {
+		
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
 
-		Attack();
+		const FVector2D ThumbAxis{ GetThumbStickAxis() };
+
+		if (ST >= EquippedWeapon->GetAttackRequiredStamina()) {
+			AttackCombo = 1;
+
+			// 질주 상태가 아니라면 기본 공격 실행
+			if (GetThumbStickAxis().Size() < 0.75f) {
+				Attack();
+			}
+			// 질주 상태라면 대쉬 공격 실행
+			else {
+				if (DashAttackMontage) {
+					DashAttack();
+				}
+			}
+		}
+		// 스테미나가 충분하지 않으면 발차기 공격
+		else {
+			if (KickAttackMontage) {
+				KickAttack();
+			}
+		}
 	}
 }
 
@@ -203,11 +244,12 @@ void APlayerCharacter::ReleasedAttack()
 
 void APlayerCharacter::CheckComboAttack()
 {
-	AttackCombo++;
-
+	// 일반 공격 혹은 강 공격을 눌렀을 때
 	if ((bShouldChargedAttack || bShouldComboAttack) &&
-		(ReadyToChargedAttackMontage && ChargedAttackMontage))
+		AnimInstance &&
+		(ReadyToChargedAttackMontage && ChargedAttackMontage && KickAttackMontage))
 	{
+		// 강 공격을 선택했고 스테미나가 충분할 때 강 공격 실행
 		if (bShouldChargedAttack &&
 			ST - EquippedWeapon->GetChargedAttackRequiredStamina() >= 0.f) {
 			ResetAttack();
@@ -216,12 +258,25 @@ void APlayerCharacter::CheckComboAttack()
 
 			return;
 		}
+		// 일반 공격을 선택했고 스테미나가 충분할 때 일반 공격 실행
 		else if (bShouldComboAttack &&
-			AttackCombo < AttackMontages.Num() &&
-			AttackMontages[AttackCombo] &&
-			ST - EquippedWeapon->GetAttackRequiredStamina() >= 0.f) {
-			Attack(AttackCombo);
+			ST - EquippedWeapon->GetAttackRequiredStamina() >= 0.f &&
+			AttackCombo < MaximumAttackIndex) {
+			
+			AttackCombo++;
+			// AttackMontage가 play되지 않았다면 Attack montage를 실행 
+			// (강 공격->공격, 대쉬 공격->공격) 와 같은 경우 Montage가 실행되어야 한다.
+			if (!AnimInstance->Montage_IsPlaying(AttackMontage)) {
+				Attack();
+				// 연계시 첫 번째 공격은 건너뛰고 두번 째 공격부터 시작한다.
+				AnimInstance->Montage_JumpToSection(Combo2Name, AttackMontage);
+			}
 
+			return;
+		}
+		// 이 경우 일반 공격 혹은 강 공격을 선택했으나 스테미나가 부족해서 공격이 불가능할 때 킥을 날림
+		else if (AttackCombo < MaximumAttackIndex) {
+			AnimInstance->Montage_Play(KickAttackMontage);
 			return;
 		}
 	}
@@ -234,6 +289,11 @@ void APlayerCharacter::EndAttack()
 	ResetAttack();
 
 	StartStaminaRecoveryDelayTimer();
+
+	// AttackMontage가 실행중이였다면 멈춘다.
+	if (AnimInstance->Montage_IsPlaying(AttackMontage)) {
+		AnimInstance->Montage_Stop(StopAttackMontageBlendOutValue, AttackMontage);
+	}
 }
 
 void APlayerCharacter::CheckComboTimer()
@@ -326,12 +386,15 @@ void APlayerCharacter::Roll()
 
 		// 방향키가 눌러져 있으면 해당 방향으로 회전하고 구르기를 실행한다.
 		if (!ThumbStickAxis.IsZero()) {
+			FRotator ComposeRot{};
+
 			const float ThumbStickDegree{ GetThumbStickDegree() };
 			const FRotator ThumbStickRotator{ 0,ThumbStickDegree,0 };
 			const FRotator ControllerRotator{ 0,GetControlRotation().Yaw,0 };
-			const FRotator CombRotator{ UKismetMathLibrary::ComposeRotators(ThumbStickRotator,ControllerRotator) };
-			SetActorRotation(CombRotator);
 
+			ComposeRot = UKismetMathLibrary::ComposeRotators(ThumbStickRotator, ControllerRotator);
+
+			SetActorRotation(ComposeRot);
 			AnimInstance->Montage_Play(RollMontage);
 		}
 		else {
@@ -371,7 +434,7 @@ void APlayerCharacter::ReleasedRoll()
 void APlayerCharacter::RecoverStamina()
 {
 	if (ST + 1.f < MaximumST) {
-		ST += 0.1f;
+		ST += 0.2f;
 	}
 	else {
 		ST = MaximumST;
@@ -413,7 +476,7 @@ void APlayerCharacter::PressedSubAttack()
 	bIsBattleMode = true;
 	bPressedSubAttackButton = true;
 
-	if (CombatState == ECombatState::ECS_Unoccupied) {
+	if (CombatState == ECombatState::ECS_Unoccupied && ST >= 10.f) {
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
 
@@ -533,7 +596,7 @@ void APlayerCharacter::ReleasedChargedAttack()
 void APlayerCharacter::PrepareChargedAttack()
 {
 	// 해당 함수는 Weapon이 존재해야 호출될 수 있는 함수임 (PressedChargedAttack에서 검사함)
-	CombatState = ECombatState::ECS_Interaction;
+	CombatState = ECombatState::ECS_NonMovingInteraction;
 	bShouldChargedAttack = false;
 
 	StopStaminaRecoveryTimer();
@@ -570,15 +633,39 @@ void APlayerCharacter::EndChargedAttack()
 	StartStaminaRecoveryDelayTimer();
 }
 
-void APlayerCharacter::StartAttackCheckTime()
+void APlayerCharacter::StartAttackCheckTime(bool bWeaponAttack)
 {
-	// 0.005f 마다 함수를 호출함.
-	GetWorldTimerManager().SetTimer(
-		AttackCheckTimer,
-		this,
-		&APlayerCharacter::TracingAttackSphere,
-		0.005f,
-		true);
+	FTimerDelegate RespawnDelegate;
+	if (bWeaponAttack) {
+		RespawnDelegate.BindUFunction(
+			this,
+			FName("TracingAttackSphere"),
+			true,
+			(bIsChargedAttack ? EquippedWeapon->GetWeaponChargedDamage() : EquippedWeapon->GetWeaponDamage()),
+			WeaponTopSocketName,
+			WeaponBottomSocketName);
+
+		GetWorldTimerManager().SetTimer(
+			AttackCheckTimer,
+			RespawnDelegate,
+			0.005f,
+			true);
+	}
+	else {
+		RespawnDelegate.BindUFunction(
+			this, 
+			FName("TracingAttackSphere"),
+			false,
+			KickDamage,
+			KickFootSocketName,
+			KickFootSocketName);
+
+		GetWorldTimerManager().SetTimer(
+			AttackCheckTimer,
+			RespawnDelegate,
+			0.005f,
+			true);
+	}
 }
 
 void APlayerCharacter::EndAttackCheckTime()
@@ -586,11 +673,18 @@ void APlayerCharacter::EndAttackCheckTime()
 	GetWorldTimerManager().ClearTimer(AttackCheckTimer);
 }
 
-void APlayerCharacter::TracingAttackSphere()
+void APlayerCharacter::TracingAttackSphere(bool bWeaponAttack, float Damage, FName StartSocket, FName EndSocket)
 {
-	/* 아이템의 TopSocket과 BottomSocket의 위치를 받아온다. */
-	const FVector TopSocketLoc{ EquippedWeapon->GetItemMesh()->GetSocketLocation("TopSocket") };
-	const FVector BottomSocketLoc{ EquippedWeapon->GetItemMesh()->GetSocketLocation("BottomSocket") };
+	FVector TopSocketLoc{};
+	FVector BottomSocketLoc{};
+	if (bWeaponAttack) {
+		TopSocketLoc = EquippedWeapon->GetItemMesh()->GetSocketLocation(StartSocket);
+		BottomSocketLoc = EquippedWeapon->GetItemMesh()->GetSocketLocation(EndSocket);
+	}
+	else {
+		TopSocketLoc = GetMesh()->GetSocketLocation(StartSocket);
+		BottomSocketLoc = GetMesh()->GetSocketLocation(EndSocket);
+	}
 
 	FHitResult HitResult;
 	// SphereTraceSingle로 원을 그리고 원에 겹치는 오브젝트를 HitResult에 담는다.
@@ -602,8 +696,7 @@ void APlayerCharacter::TracingAttackSphere()
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		{ this },
-		//EDrawDebugTrace::ForDuration,
-		EDrawDebugTrace::None,
+		bVisibleTraceSphere ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -624,29 +717,50 @@ void APlayerCharacter::TracingAttackSphere()
 
 					UGameplayStatics::ApplyDamage(
 						Enemy,
-						(bIsChargedAttack ? EquippedWeapon->GetWeaponChargedDamage() : EquippedWeapon->GetWeaponDamage()),
+						Damage,
 						GetController(),
 						this,
 						UDamageType::StaticClass());
+
+					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
+					if (Enemy->GetBloodParticle()) {
+						UGameplayStatics::SpawnEmitterAtLocation(
+							GetWorld(),
+							Enemy->GetBloodParticle(),
+							HitResult.Location);
+					}
 				}
 			}
 		}
 	}
 }
 
-void APlayerCharacter::UseStaminaToAttack()
+void APlayerCharacter::UseStaminaToAttack(bool bWeaponAttack)
 {
-	if (bIsChargedAttack) {
-		ST -= EquippedWeapon->GetChargedAttackRequiredStamina();
+	// 일반 공격, 강 공격
+	if (bWeaponAttack) {
+		if (bIsChargedAttack) {
+			ST -= EquippedWeapon->GetChargedAttackRequiredStamina();
+		}
+		else {
+			ST -= EquippedWeapon->GetAttackRequiredStamina();
+		}
 	}
+	// kick
 	else {
-		ST -= EquippedWeapon->GetAttackRequiredStamina();
+		if (ST >= KickStamina) {
+			ST -= KickStamina;
+		}
+		else {
+			ST = 0.f;
+		}
 	}
 }
 
 void APlayerCharacter::PressedLockOn()
 {
 	if (bLockOn) {
+		// 락온 취소
 		bLockOn = false;
 		LockOnWidgetData->SetVisibility(false);
 		LockOnWidgetData = nullptr;
@@ -655,6 +769,7 @@ void APlayerCharacter::PressedLockOn()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
 	else {
+		// 락온 선택 시도
 		TArray<AActor*> OutActors;
 
 		UKismetSystemLibrary::SphereOverlapActors(
@@ -670,6 +785,7 @@ void APlayerCharacter::PressedLockOn()
 
 			const AEnemy* LockOnTarget{ GetNearestEnemyWithLockOn(OutActors) };
 
+			// 락온된 타겟이 있으면 설정
 			if (LockOnTarget) {
 				LockOnWidgetData = LockOnTarget->GetLockOnWidget();
 				MinimumLockOnPitchValue = LockOnTarget->GetMinimumLockOnPitchValue();
@@ -681,6 +797,9 @@ void APlayerCharacter::PressedLockOn()
 		bIsBattleMode = true;
 		bLockOn = true;
 		LockOnWidgetData->SetVisibility(true);
+
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
 }
 
@@ -760,6 +879,30 @@ void APlayerCharacter::RotateCameraByLockOn()
 			true));
 }
 
+void APlayerCharacter::EndShieldImpact()
+{
+	bIsShieldImpact = false;
+}
+
+void APlayerCharacter::EndDamageInpact()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void APlayerCharacter::DashAttack()
+{
+	bShouldComboAttack = false;
+	AnimInstance->Montage_Play(DashAttackMontage);
+	CombatState = ECombatState::ECS_Attack;
+}
+
+void APlayerCharacter::KickAttack()
+{
+	bShouldComboAttack = false;
+	AnimInstance->Montage_Play(KickAttackMontage);
+	CombatState = ECombatState::ECS_Attack;
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -806,7 +949,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 {
 	if (bDying)return DamageAmount;
 
-	if (CombatState == ECombatState::ECS_Guard) {
+	if (EquippedShield && CombatState == ECombatState::ECS_Guard) {
 		// 각도가 -DeffenceAngle,+DeffenceAngle 사이인지 구한다.
 		
 		// 필요한 방향 벡터 : forward, playerToHitPoint
@@ -817,42 +960,43 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 
 		UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
 
-		if (DegreeDifference <= DeffenceAngle) {
-			// 스태미나를 일정 수치 깎고 가드 성공 애니메이션을 실행한다.
-			UE_LOG(LogTemp, Warning, TEXT("Guard!"));
+		if (DegreeDifference <= EquippedShield->GetDefenceDegree()) {
+			if (ST >= (DamageAmount / 2)) {
+				// 스태미나를 일정 수치 깎는다.
+				ST -= (DamageAmount / 2);
 
-			return DamageAmount;
+				bIsShieldImpact = true;
+
+				return DamageAmount;
+			}
+			else {
+				// 가드로 막을 수 없는 공격이면 가드를 취소하고 스태미나를 0으로 만든다.
+				ST = 0.f;
+				EndSubAttack();
+			}
 		}
 	}
-	// 데미지 적용
-	UE_LOG(LogTemp, Warning, TEXT("Damaged!"));
 
+	// 피해 몽타주 실행하기
+	//if (AnimInstance && ImpactMontages.Num() > 0) {
+	//	const int32 RandomIndex{ UKismetMathLibrary::RandomInteger(ImpactMontages.Num()) };
+	//
+	//	if (ImpactMontages[RandomIndex]) {
+	//		AnimInstance->Montage_Play(ImpactMontages[RandomIndex]);
+	//	}
+	//}
+
+	if (CombatState == ECombatState::ECS_Attack) {
+		ResetAttack();
+	}
+
+	// AnimInstance에서 CombatState를 가져가 Impact 상태를 비교한다. (Impact 상태 시 AnimBP에서 Impact 상태 실행)
+	CombatState = ECombatState::ECS_Impact;
+
+	// 데미지 적용
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	return DamageAmount;
-}
-
-float APlayerCharacter::GetWalkDirectionValue()
-{
-	if (!bLockOn)return 0.f;
-
-	const float ThumbstickDegree{ GetThumbStickDegree() };
-
-	if (UKismetMathLibrary::InRange_FloatFloat(ThumbstickDegree, -100.f, -80.f)) {
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		return -1;
-	}
-	else if (UKismetMathLibrary::InRange_FloatFloat(ThumbstickDegree, 80.f, 100.f)) {
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		return 1;
-	}
-	else {
-		GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		return 0.f;
-	}
 }
 
 const FVector2D APlayerCharacter::GetThumbStickAxis()

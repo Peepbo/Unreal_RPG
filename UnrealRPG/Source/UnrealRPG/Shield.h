@@ -27,6 +27,9 @@ struct FShieldDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMesh* ShieldMesh;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DefenceDegree;
+
 	UPROPERTY(EditDefaultsOnly)
 	float ShieldScale;
 };
@@ -48,4 +51,8 @@ private:
 
 	/* 아이템 이름, 아이콘, 모델은 AItem에 정의되어있음 */
 	float ShieldDefence;
+	/* 방패가 막을 수 있는 각도 */
+	float DefenceDegree;
+public:
+	FORCEINLINE float GetDefenceDegree() const { return DefenceDegree; }
 };

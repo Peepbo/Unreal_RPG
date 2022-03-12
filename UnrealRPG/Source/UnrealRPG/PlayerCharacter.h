@@ -143,17 +143,18 @@ protected:
 
 	/* 공격 검사를 시작하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void StartAttackCheckTime();
+		void StartAttackCheckTime(bool bWeaponAttack = true);
 	/* 공격 검사를 종료하는 함수 */
 	UFUNCTION(BlueprintCallable)
 		void EndAttackCheckTime();
 
 	/* SphereTraceSingle을 사용하여 검사 후, Hit 정보를 바탕으로 데미지를 준다. */
-	void TracingAttackSphere();
+	UFUNCTION()
+	void TracingAttackSphere(bool bWeaponAttack, float Damage, FName StartSocket, FName EndSocket);
 
 	/* 공격 시 스태미나를 사용할 때 호출되는 함수, 누를 때가 아닌 공격 검사가 시작될 때 호출됨 */
 	UFUNCTION(BlueprintCallable)
-		void UseStaminaToAttack();
+		void UseStaminaToAttack(bool bWeaponAttack = true);
 
 	/* 강 공격 버튼 관련 함수 */
 	void PressedLockOn();
@@ -164,6 +165,20 @@ protected:
 	/* 락온 위치로 카메라를 회전하는 함수, (RLerp 사용) */
 	void RotateCameraByLockOn();
 
+	/* bIsShieldImpact을 false로 바꾸는 함수 */
+	UFUNCTION(BlueprintCallable)
+	void EndShieldImpact();
+
+	/* impact state를 끝내는 함수 */
+	UFUNCTION(BlueprintCallable)
+	void EndDamageInpact();
+
+	/* 대쉬 공격 */
+	void DashAttack();
+
+	/* 발차기 공격 */
+	void KickAttack();
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -173,11 +188,10 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	UFUNCTION(BlueprintCallable)
-	float GetWalkDirectionValue();
-
 private:
+	/* ThumbStick의 Axis를 가져온다. */
 	const FVector2D GetThumbStickAxis();
+	/* ThumbStick의 Degree를 가져온다. */
 	const float GetThumbStickDegree();
 
 private:
@@ -204,10 +218,11 @@ private:
 	FTimerHandle ComboTimer;
 
 	/* true: 연속 공격 진행, false: 연속 공격 종료 */
+	UPROPERTY(VisibleAnywhere, Category=Combat,meta=(AllowPrivateAccess ="true"))
 	bool bShouldComboAttack;
 
 	/* 콤보 상황 */
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		int32 AttackCombo;
 
 	/* Steminar */
@@ -232,7 +247,7 @@ private:
 
 	/* 공격 몽타주 모음 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		TArray<UAnimMontage*> AttackMontages;
+		UAnimMontage* AttackMontage;
 
 	/* 구르기 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -291,6 +306,8 @@ private:
 	/* 다음 공격이 강 공격인지 아닌지, 콤보가 유지됬는데 강 공격이면 강 공격 함수를 호출한다. */
 	bool bShouldChargedAttack;
 
+	bool bIsReadyToChargedAttack;
+
 	/* 구르기에 필요한 스태미나 */
 	float RollRequiredStamina;
 
@@ -300,6 +317,9 @@ private:
 	/* 락온 상태인지 아닌지 */
 	UPROPERTY(VisibleAnywhere,Category=Combat,meta=(AllowPrivateAccess="true"))
 	bool bLockOn;
+
+	/* 락온 상태일 때 -1,0,+1 (왼쪽 ,그 외, 오른쪽) */
+	int32 LockOnAxis;
 
 	/* 락온 시 visible이 켜져야되는 위젯, 해당 위젯의 월드 위치를 카메라(컨트롤러)가 lookAt함 */
 	class UWidgetComponent* LockOnWidgetData;
@@ -312,9 +332,49 @@ private:
 	FVector2D MoveValue;
 	FVector LastHitPoint;
 
-	// test variable
-	UPROPERTY(EditDefaultsOnly, Category=Combat,meta=(AllowPrivateAccess = "true"))
-	float DeffenceAngle;
+	bool bIsShieldImpact;
+
+	/* 피해 몽타주 모음 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TArray<UAnimMontage*> ImpactMontages;
+
+	/* 공격 몽타주의 Section 이름 */
+	FName Combo1Name;
+	FName Combo2Name;
+	FName Combo3Name;
+
+	/* AttackMontage를 강제로 종료할 때 BlendOutValue */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float StopAttackMontageBlendOutValue;
+
+	/* DashAttack의 몽타주 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DashAttackMontage;
+
+	/* AttackMontage의 최대 검사 횟수 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	int32 MaximumAttackIndex;
+
+	/* 발차기 몽타주 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* KickAttackMontage;
+
+	/* 발차기 데미지 */
+	float KickDamage;
+
+	/* 무기의 TopSocketName, 공격 검사 시 필요 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FName WeaponTopSocketName;
+	/* 무기의 BottomSocketName, 공격 검사 시 필요 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FName WeaponBottomSocketName;
+	
+	/* 발차기의 Socket, 발차기 공격 검사 시 필요 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FName KickFootSocketName;
+
+	/* 발차기 소모 스태미나 */
+	float KickStamina;
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
@@ -322,4 +382,6 @@ public:
 	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
 	/* 방어 시 필요한 정보를 Enemy한테 전달받는다 */
 	FORCEINLINE void SetHitPoint(const FVector HitPoint) { LastHitPoint = HitPoint; }
+	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
+	FORCEINLINE bool GetShiledImpact() const { return bIsShieldImpact; }
 };

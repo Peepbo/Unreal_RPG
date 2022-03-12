@@ -122,11 +122,12 @@ public:
 	FORCEINLINE EDamageState GetDamageState() const { return DamageState; }
 
 	UFUNCTION()
-	void ResetDamageState() { DamageState = EDamageState::EDS_Unoccupied; }
+	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
 
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 	FORCEINLINE bool GetSprinting() const { return bIsSprint; }
+	FORCEINLINE void SetSprinting(bool IsSprint) { bIsSprint = IsSprint; }
 	FORCEINLINE UWidgetComponent* GetLockOnWidget() const { return LockOnWidget; }
 	FORCEINLINE float GetMinimumLockOnPitchValue() const { return LockOnMinimumPitchValue; }
 };

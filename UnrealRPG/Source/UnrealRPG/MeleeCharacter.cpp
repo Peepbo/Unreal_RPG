@@ -20,7 +20,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	AD(0.f),
 	MaximumWalkSpeed(500.f),
 	bDying(false),
-	CombatState(ECombatState::ECS_Unoccupied)
+	CombatState(ECombatState::ECS_Unoccupied),
+	bVisibleTraceSphere(false)
 {
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
@@ -43,6 +44,10 @@ void AMeleeCharacter::Tick(float DeltaTime)
 float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (bDying)return DamageAmount;
+
+	//if (BloodParticle) {
+	//	DamageEvent.
+	//}
 
 	if (HP - DamageAmount > 0.f) {
 		HP -= DamageAmount;

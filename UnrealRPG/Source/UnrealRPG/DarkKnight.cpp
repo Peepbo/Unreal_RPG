@@ -19,8 +19,7 @@ ADarkKnight::ADarkKnight() :
 	InterpSpeed(5.f),
 	bAttackable(true),
 	WalkDirection(0.f),
-	DirectionLerpSpeed(1.f),
-	bVisibleTraceSphere(false)
+	DirectionLerpSpeed(1.f)
 {
 
 }
@@ -245,6 +244,17 @@ void ADarkKnight::EndRestTimer()
 	else {
 		ChangeCombatState(ECombatState::ECS_Chase);
 		EnemyAIController->GetBlackboardComponent()->SetValueAsInt(TEXT("ActionIndex"), 1);
+	}
+}
+
+void ADarkKnight::ChangeSprinting(bool IsSprinting)
+{
+	SetSprinting(IsSprinting);
+	if (IsSprinting) {
+		GetCharacterMovement()->MaxWalkSpeed = BattleRunSpeed;
+	}
+	else {
+		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 	}
 }
 

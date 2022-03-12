@@ -37,12 +37,15 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		// 락온 상태인지 확인한다.
 		bLockOn = PlayerCharacter->GetLockOn();
 
-		// 캐릭터의 좌, 우 이동 값을 읽어온다. (음수 : 왼쪽, 양수 : 오른쪽)
-		WalkDirectionValue = PlayerCharacter->GetWalkDirectionValue();
-
 		// 캐릭터의 움직임 방향을 읽어온다.
 		MoveValue = PlayerCharacter->GetThumStickAxisForce();
 
 		bIsMove = (MoveValue.Size() == 0.f);
+
+		bIsShieldImpact = PlayerCharacter->GetShiledImpact();
+		
+		bIsDamageImpact = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Impact);
+
+		bRoll = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Roll);
 	}
 }

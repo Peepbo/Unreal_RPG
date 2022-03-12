@@ -10,7 +10,9 @@ enum class ECombatState : uint8
 
 	// Player State
 	ECS_Roll UMETA(DisplayName = "Roll"),
-	ECS_Interaction UMETA(DisplayName = "Interaction"),
+	ECS_Impact UMETA(DisplayName = "Impact"),
+	ECS_MovableInteraction UMETA(DisplayName = "Movable Interaction"),
+	ECS_NonMovingInteraction UMETA(DisplayName = "Non-Moving Interaction"),
 
 	// Enemy State
 	ECS_FaceOff UMETA(DisplayName = "FaceOff"),

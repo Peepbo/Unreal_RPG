@@ -31,6 +31,7 @@ void AShield::OnConstruction(const FTransform& Transform)
 			ItemMesh->SetRelativeScale3D(ShiledSize);
 
 			ShieldDefence = ShieldDataRow->ShieldDefence;
+			DefenceDegree = ShieldDataRow->DefenceDegree;
 		}
 	}
 }

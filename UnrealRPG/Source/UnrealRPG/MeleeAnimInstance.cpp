@@ -8,13 +8,13 @@
 
 void UMeleeAnimInstance::InitializeAnimationProperties()
 {
-	Character = Cast<ACharacter>(TryGetPawnOwner());
+	Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
 }
 
 void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 {
 	if (Character == nullptr) {
-		Character = Cast<ACharacter>(TryGetPawnOwner());
+		Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
 	}
 
 	if (Character) {
@@ -34,6 +34,7 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 			bIsAccelerating = false;
 		}
 
+		bAttack = Character->GetAttacking();
 		//bIsSprint = Character->GetSprinting();
 
 		//bIsGuard = Character->GetGuarding();

@@ -47,6 +47,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bDying;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* BloodParticle;
+
+	/* 공격 시 TraceSphere를 시각화할지 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bVisibleTraceSphere;
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -55,8 +63,9 @@ protected:
 private:
 
 public:
-
+	
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
+	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }
 };

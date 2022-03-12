@@ -54,8 +54,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bReadyToBattle;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bAttack;
+
 private:
-	class ACharacter* Character;
+	class AMeleeCharacter* Character;
 
 public:
 	FORCEINLINE float GetSpeed() const { return Speed; }
