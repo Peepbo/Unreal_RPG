@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MeleeCharacter.h"
-#include "DamageState.h"
+#include "RPGTypes.h"
 #include "Enemy.generated.h"
 
 UCLASS()
@@ -119,8 +119,6 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	FORCEINLINE EDamageState GetDamageState() const { return DamageState; }
-
 	UFUNCTION()
 	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
 
@@ -130,4 +128,6 @@ public:
 	FORCEINLINE void SetSprinting(bool IsSprint) { bIsSprint = IsSprint; }
 	FORCEINLINE UWidgetComponent* GetLockOnWidget() const { return LockOnWidget; }
 	FORCEINLINE float GetMinimumLockOnPitchValue() const { return LockOnMinimumPitchValue; }
+	
+	FORCEINLINE bool DamageableState() const { return DamageState == EDamageState::EDS_Unoccupied; }
 };

@@ -48,9 +48,11 @@ float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	//if (BloodParticle) {
 	//	DamageEvent.
 	//}
+	UE_LOG(LogTemp, Warning, TEXT("TakeDamage 호출"));
 
 	if (HP - DamageAmount > 0.f) {
 		HP -= DamageAmount;
+		UE_LOG(LogTemp, Warning, TEXT("HP가 깎임"));
 	}
 	else {
 		HP = 0.f;

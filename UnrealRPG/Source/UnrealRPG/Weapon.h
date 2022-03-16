@@ -5,8 +5,7 @@
 #include "CoreMinimal.h"
 #include "Item.h"
 #include "Engine/DataTable.h"
-#include "WeaponType.h"
-
+#include "RPGTypes.h"
 #include "Weapon.generated.h"
 
 /**
@@ -25,10 +24,13 @@ struct FWeaponDataTable : public FTableRowBase
 	EWeaponType WeaponType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float WeaponDamage;
+	float NormalDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float WeaponChargedDamage;
+	float ChargedDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DashDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UTexture2D* WeaponIcon;
@@ -36,23 +38,11 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMesh* WeaponMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float AttackRequiredStamina;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float ChargedAttackRequiredStamina;
-
 	UPROPERTY(EditDefaultsOnly)
 	float WeaponScale;
 
 	UPROPERTY(EditDefaultsOnly)
 	float WeaponLocationZ;
-
-	//UPROPERTY(EditDefaultsOnly)
-	//FVector WeaponCollsionLocation;
-
-	//UPROPERTY(EditDefaultsOnly)
-	//FVector WeaponCollsionScale;
 };
 
 UCLASS()
@@ -62,42 +52,44 @@ class UNREALRPG_API AWeapon : public AItem
 public:
 	AWeapon();
 
-	virtual void Tick(float DeltaTime) override;
-
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
+
+public:
+	void InitAttackData(EWeaponAttackType Type, bool bDebugVisible);
+
+private:
+	float GetDamage(EWeaponAttackType AttackType);
+
+	bool WeaponTraceSingle(bool bDebugVisible, FHitResult& OutHit);
+
+	UFUNCTION()
+	void SwingWeapon(bool bDebugVisible);
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	UDataTable* WeaponDataTable;
 
 	// 아이템 이름, 아이콘, 모델은 AItem에 있음
-	// 그외 type, damage 등을 정의함
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	EWeaponType WeaponType;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	float WeaponDamage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	float WeaponChargedDamage;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	//class UBoxComponent* WeaponCollision;
+	float NormalDamage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	float AttackRequiredStamina;
+	float ChargedDamage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	float ChargedAttackRequiredStamina;
+	float DashDamage;
 
-	float WeaponLocationZ;
+	FName WeaponTopSocketName;
+	FName WeaponBottomSocketName;
+
+	FTimerDelegate AttackDelegate;
+
+	EWeaponAttackType AttackType;
 
 public:
-	//FORCEINLINE UBoxComponent* GetWeaponCollision() const { return WeaponCollision; }
-	FORCEINLINE float GetWeaponDamage() const { return WeaponDamage; }
-	FORCEINLINE float GetWeaponChargedDamage() const { return WeaponChargedDamage; }
-	
-	FORCEINLINE float GetAttackRequiredStamina() const { return AttackRequiredStamina; }
-	FORCEINLINE float GetChargedAttackRequiredStamina() const { return ChargedAttackRequiredStamina; }
-	FORCEINLINE void ChangeWeaponHandleLocation() { ItemMesh->SetRelativeLocation(FVector(0, 0, WeaponLocationZ)); }
+	FORCEINLINE FTimerDelegate GetAttackDelegate() { return AttackDelegate; }
 };

@@ -3,11 +3,17 @@
 
 #include "Weapon.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Enemy.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerCharacter.h"
+//
 
-AWeapon::AWeapon()
+AWeapon::AWeapon() :
+	WeaponTopSocketName(TEXT("TopSocket")),
+	WeaponBottomSocketName(TEXT("BottomSocket")),
+	AttackType(EWeaponAttackType::EWAT_Normal)
 {
-	//WeaponCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Weapon Box"));
-	//WeaponCollision->SetupAttachment(GetRootComponent());
 }
 
 void AWeapon::OnConstruction(const FTransform& Transform)
@@ -27,40 +33,111 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("TwoHandSword"), TEXT(""));
 			break;
 		}
-		//
-		// 	UPROPERTY(EditDefaultsOnly)
-		//float WeaponScale;
-		//
-		//
-		//FVector WeaponCollsionLocation;
-		//
-		//
-		//FVector WeaponCollsionScale;
-		//
+
 		if (WeaponDataRow) {
 			ItemName = WeaponDataRow->WeaponName;
 			ItemIcon = WeaponDataRow->WeaponIcon;
 			ItemMesh->SetSkeletalMesh(WeaponDataRow->WeaponMesh);
 			WeaponType = WeaponDataRow->WeaponType;
-			WeaponDamage = WeaponDataRow->WeaponDamage;
-			WeaponChargedDamage = WeaponDataRow->WeaponChargedDamage;
-			AttackRequiredStamina = WeaponDataRow->AttackRequiredStamina;
-			ChargedAttackRequiredStamina = WeaponDataRow->ChargedAttackRequiredStamina;
+			NormalDamage = WeaponDataRow->NormalDamage;
+			ChargedDamage = WeaponDataRow->ChargedDamage;
+			DashDamage = WeaponDataRow->DashDamage;
 
 			const float WeaponScalar{ WeaponDataRow->WeaponScale };
 			const FVector WeaponSize{ WeaponScalar ,WeaponScalar ,WeaponScalar };
 			ItemMesh->SetWorldScale3D(WeaponSize);
-			WeaponLocationZ = WeaponDataRow->WeaponLocationZ;
-
-			//WeaponCollision->Location
-			//WeaponCollision->SetRelativeLocation(WeaponDataRow->WeaponCollsionLocation);
-			//WeaponCollision->SetRelativeScale3D(WeaponDataRow->WeaponCollsionScale);
+			ItemMesh->SetRelativeLocation(FVector(0, 0, WeaponDataRow->WeaponLocationZ));
 		}
 	}
 }
 
-void AWeapon::Tick(float DeltaTime)
+float AWeapon::GetDamage(EWeaponAttackType Type)
 {
-	Super::Tick(DeltaTime);
+	switch (Type)
+	{
+	case EWeaponAttackType::EWAT_Normal:
+		return NormalDamage;
+	case EWeaponAttackType::EWAT_Charged:
+		return ChargedDamage;
+	case EWeaponAttackType::EWAT_Dash:
+		return DashDamage;
+	}
 
+	UE_LOG(LogTemp, Warning, TEXT("AttackType Not Found"));
+	return 0.0f;
+}
+
+void AWeapon::InitAttackData(EWeaponAttackType Type, bool bDebugVisible)
+{
+	AttackType = Type;
+
+	AttackDelegate.Unbind();
+	AttackDelegate.BindUFunction(
+		this,
+		FName("SwingWeapon"),
+		bDebugVisible);
+}
+
+bool AWeapon::WeaponTraceSingle(bool bDebugVisible, FHitResult& OutHit)
+{
+	const FVector TopSocketLoc{ ItemMesh->GetSocketLocation(WeaponTopSocketName) };
+	const FVector BottomSocketLoc{ ItemMesh->GetSocketLocation(WeaponBottomSocketName) };
+
+	const bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		this,
+		BottomSocketLoc,
+		TopSocketLoc,
+		50.f,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		{ Character },
+		bDebugVisible? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
+		OutHit,
+		true
+	);
+
+	return bHit;
+}
+
+void AWeapon::SwingWeapon(bool bDebugVisible)
+{
+	FHitResult HitResult;
+	const bool bHit{ WeaponTraceSingle(bDebugVisible,HitResult) };
+	const float Damage{ GetDamage(AttackType) };
+
+	// Hit이 되었을 때
+	if (bHit) {
+		// Actor가 nullptr이 아니면
+		if (HitResult.Actor != nullptr) {
+			// 한 번 AEnemy로 Cast를 시도해본다.
+			auto Enemy = Cast<AEnemy>(HitResult.Actor);
+
+			// Enemy로 Cast가 성공적으로 됬을 때
+			if (Enemy) {
+				// Enemy가 데미지를 입을 수 있는 상태라면
+				if (Enemy->DamageableState()) {
+					// 상태 초기화 함수를 리셋 델리게이트에 넣고, 몬스터에 피해를 가한다.
+					
+					if (Character) {
+						Character->AddFunctionToDamageTypeResetDelegate(Enemy, FName("ResetDamageState"));
+					}
+
+					UGameplayStatics::ApplyDamage(
+						Enemy,
+						Damage,
+						CharacterController,
+						Character,
+						UDamageType::StaticClass());
+
+					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
+					if (Enemy->GetBloodParticle()) {
+						UGameplayStatics::SpawnEmitterAtLocation(
+							GetWorld(),
+							Enemy->GetBloodParticle(),
+							HitResult.Location);
+					}
+				}
+			}
+		}
+	}
 }

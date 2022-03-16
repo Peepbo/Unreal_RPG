@@ -169,9 +169,13 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Enemy TakeDamage call"));
 	if (bDying)return DamageAmount;
+
+	UE_LOG(LogTemp, Warning, TEXT("Enemy Super(MeleeCharacter) TakeDamage call"));
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
+	UE_LOG(LogTemp, Warning, TEXT("Enemy Change DamageState"));
 	DamageState = EDamageState::EDS_invincibility;
 	if (bDying) {
 		HideHealthBar();

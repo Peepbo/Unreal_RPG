@@ -2,6 +2,14 @@
 
 
 #include "Shield.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Enemy.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerCharacter.h"
+
+AShield::AShield() 
+{
+}
 
 void AShield::OnConstruction(const FTransform& Transform)
 {
@@ -12,7 +20,7 @@ void AShield::OnConstruction(const FTransform& Transform)
 
 	if (ShieldTableObject) {
 		FShieldDataTable* ShieldDataRow = nullptr;
-		switch (ShieldTier)
+		switch (ShieldItemNumber)
 		{
 		case 1:
 			ShieldDataRow = ShieldTableObject->FindRow<FShieldDataTable>(FName("1"),TEXT(""));
@@ -32,6 +40,78 @@ void AShield::OnConstruction(const FTransform& Transform)
 
 			ShieldDefence = ShieldDataRow->ShieldDefence;
 			DefenceDegree = ShieldDataRow->DefenceDegree;
+			AttackDamage = ShieldDataRow->AttackDamage;
+		}
+	}
+}
+
+void AShield::InitPushShiledData(bool bDebugVisible)
+{
+	ShieldDelegate.Unbind();
+	ShieldDelegate.BindUFunction(
+		this,
+		FName("PushShield"),
+		bDebugVisible);
+}
+
+bool AShield::ShieldTraceSingle(bool bDebugVisible, FHitResult& OutHit)
+{
+	const FVector ShieldSocketLoc{ ItemMesh->GetSocketLocation(ShieldSocketName) };
+
+	const bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		this,
+		ShieldSocketLoc,
+		ShieldSocketLoc,
+		50.f,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		{ Character },
+		bDebugVisible ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
+		OutHit,
+		true
+	);
+	
+	return bHit;
+}
+
+void AShield::PushShield(bool bDebugVisible)
+{
+	FHitResult HitResult;
+	const bool bHit{ ShieldTraceSingle(bDebugVisible, HitResult) };
+	
+	// Hit이 되었을 때
+	if (bHit) {
+		// Actor가 nullptr이 아니면
+		if (HitResult.Actor != nullptr) {
+			// 한 번 AEnemy로 Cast를 시도해본다.
+			auto Enemy = Cast<AEnemy>(HitResult.Actor);
+
+			// Enemy로 Cast가 성공적으로 됬을 때
+			if (Enemy) {
+				// Enemy가 데미지를 입을 수 있는 상태라면
+				if (Enemy->DamageableState()) {
+					// 상태 초기화 함수를 리셋 델리게이트에 넣고, 몬스터에 피해를 가한다.
+					
+					if (Character) {
+						Character->AddFunctionToDamageTypeResetDelegate(Enemy, FName("ResetDamageState"));
+					}
+
+					UGameplayStatics::ApplyDamage(
+						Enemy,
+						AttackDamage,
+						CharacterController,
+						this,
+						UDamageType::StaticClass());
+
+					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
+					if (Enemy->GetBloodParticle()) {
+						UGameplayStatics::SpawnEmitterAtLocation(
+							GetWorld(),
+							Enemy->GetBloodParticle(),
+							HitResult.Location);
+					}
+				}
+			}
 		}
 	}
 }

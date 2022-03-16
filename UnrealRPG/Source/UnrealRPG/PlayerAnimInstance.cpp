@@ -47,5 +47,9 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsDamageImpact = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Impact);
 
 		bRoll = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Roll);
+
+		LastRollMoveValue = PlayerCharacter->GetLastRollMoveValue();
+
+		bBackDodge = PlayerCharacter->GetBackDodge();
 	}
 }

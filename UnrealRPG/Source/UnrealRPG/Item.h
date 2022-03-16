@@ -28,8 +28,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UFUNCTION()
+	virtual void SetCharacter(class APlayerCharacter* Char);
 
 protected:
 	/* 아이템 이름 */
@@ -48,12 +48,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties", meta = (AllowPrivateAccess = "true"))
 	UTexture2D* ItemIcon;
 
-private:
-
 	/* 플레이어 포인터 */
-	class AMeleeCharacter* Character;
+	APlayerCharacter* Character;
+
+	AController* CharacterController;
 
 public:
-	FORCEINLINE void SetCharacter(AMeleeCharacter* Char) { Character = Char; }
-	FORCEINLINE USkeletalMeshComponent* GetItemMesh() const { return ItemMesh; }
+	//FORCEINLINE USkeletalMeshComponent* GetItemMesh() const { return ItemMesh; }
 };

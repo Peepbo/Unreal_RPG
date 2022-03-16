@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "CombatState.h"
+#include "RPGTypes.h"
 
 #include "MeleeCharacter.generated.h"
 

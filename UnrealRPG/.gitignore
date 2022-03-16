@@ -80,7 +80,13 @@ Content/ParagonAurora/*
 Content/ParagonKwang/*
 
 # Weapon Asset
-Content/Weapon_Pack
+Content/Weapon_Pack/*
 
 # Animation Asset
 Content/SwordAnimationPack/*
+Content/ARPG_Warrior/*
+Content/BossAnimationsPack/*
+Content/SwordAnimationPack/*
+
+# Others
+Content/_Game/Map/Level1/*

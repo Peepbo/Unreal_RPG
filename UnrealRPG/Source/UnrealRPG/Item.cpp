@@ -2,6 +2,7 @@
 
 
 #include "Item.h"
+#include "PlayerCharacter.h"
 
 // Sets default values
 AItem::AItem():
@@ -10,7 +11,7 @@ AItem::AItem():
 	ItemType(EItemType::EIT_MAX)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	ItemMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ItemMesh"));
 	SetRootComponent(ItemMesh);
@@ -23,10 +24,9 @@ void AItem::BeginPlay()
 	
 }
 
-// Called every frame
-void AItem::Tick(float DeltaTime)
+void AItem::SetCharacter(APlayerCharacter* Char)
 {
-	Super::Tick(DeltaTime);
-
+	Character = Char;
+	CharacterController = Char->GetController();
 }
 
