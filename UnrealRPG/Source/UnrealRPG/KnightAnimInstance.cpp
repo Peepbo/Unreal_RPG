@@ -24,5 +24,7 @@ void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsSprint = DarkKnight->GetSprinting();
 
 		WalkDirection = DarkKnight->GetWalkDirection();
+
+		bTurnInPlace = DarkKnight->GetTurnInPlace();
 	}
 }

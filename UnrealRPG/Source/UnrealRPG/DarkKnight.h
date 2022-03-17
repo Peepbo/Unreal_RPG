@@ -74,8 +74,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndFaceOff();
 
-	void ChangeLerpDirection();
-
 	UFUNCTION(BlueprintCallable)
 	void StartRestTimer();
 
@@ -109,7 +107,7 @@ private:
 	int32 AttackIndex;
 	int32 LastAttackIndex;
 
-	bool bIsRotate;
+	bool bTurnInPlace;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float InterpSpeed;
@@ -132,11 +130,14 @@ private:
 
 	FTimerHandle RestTimer;
 
+	UPROPERTY(EditDefaultsOnly, Category = Rotate, meta = (AllowPrivateAccess = "true"))
+	float TurnTime;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 public:
 	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
-
+	FORCEINLINE bool GetTurnInPlace() const { return bTurnInPlace; }
 };

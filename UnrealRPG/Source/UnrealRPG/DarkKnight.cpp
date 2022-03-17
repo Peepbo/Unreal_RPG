@@ -15,11 +15,12 @@ ADarkKnight::ADarkKnight() :
 	bShouldDrawWeapon(true),
 	AttackIndex(0),
 	LastAttackIndex(0),
-	bIsRotate(false),
+	bTurnInPlace(false),
 	InterpSpeed(5.f),
 	bAttackable(true),
 	WalkDirection(0.f),
-	DirectionLerpSpeed(1.f)
+	DirectionLerpSpeed(1.f),
+	TurnTime(1.2f)
 {
 
 }
@@ -47,6 +48,8 @@ void ADarkKnight::BeginPlay()
 	AttackIndex = FMath::RandRange(0, AttackMontage.Num() - 1);
 
 	ChangeEnemySize(EEnemySize::EES_Medium);
+
+	EnemyAIController->GetBlackboardComponent()->SetValueAsFloat(TEXT("TurnTime"), TurnTime);
 }
 
 void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -114,12 +117,18 @@ void ADarkKnight::SaveTargetRotator()
 
 void ADarkKnight::StartRotate()
 {
-	bIsRotate = true;
+	bTurnInPlace = true;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
+
+	//if (!bAttackable) {
+	//	SaveTargetRotator();
+	//}
 }
 
 void ADarkKnight::StopRotate()
 {
-	bIsRotate = false;
+	bTurnInPlace = false;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
 }
 
 void ADarkKnight::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)
@@ -209,17 +218,6 @@ void ADarkKnight::EndFaceOff()
 	WalkDirection = 0.f;
 }
 
-void ADarkKnight::ChangeLerpDirection()
-{
-	if (UKismetMathLibrary::EqualEqual_FloatFloat(WalkDirection, 0.f)) {
-		WalkDirection = 0.f;
-		GetWorldTimerManager().ClearTimer(WalkDirectionLerpTimer);
-		return;
-	}
-
-	WalkDirection = UKismetMathLibrary::Lerp(WalkDirection, 0.f, DirectionLerpSpeed);
-}
-
 void ADarkKnight::StartRestTimer()
 {
 	GetWorldTimerManager().SetTimer(
@@ -232,13 +230,8 @@ void ADarkKnight::StartRestTimer()
 
 void ADarkKnight::EndRestTimer()
 {
-	if (EnemyAIController->GetBlackboardComponent()->GetValueAsBool(TEXT("InAttackRange"))) {
-		ChangeCombatState(ECombatState::ECS_Unoccupied);
-	}
-	else {
-		ChangeCombatState(ECombatState::ECS_Chase);
-		EnemyAIController->GetBlackboardComponent()->SetValueAsInt(TEXT("ActionIndex"), 1);
-	}
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
+	ChangeCombatState(ECombatState::ECS_Unoccupied);
 }
 
 void ADarkKnight::ChangeSprinting(bool IsSprinting)
@@ -256,12 +249,9 @@ void ADarkKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bIsRotate) {
-		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), LastSaveRotate)) {
-			bIsRotate = false;
-		}
-		else {
-			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), LastSaveRotate, DeltaTime, InterpSpeed));
-		}
+	if (GetAttacking() && bTurnInPlace) {
+		const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
+
+		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
 	}
 }

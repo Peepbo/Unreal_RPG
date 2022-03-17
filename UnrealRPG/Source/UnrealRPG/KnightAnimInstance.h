@@ -28,4 +28,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Movement, meta = (AllowPrivateAccess = "true"))
 	float WalkDirection;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Movement, meta = (AllowPrivateAccess = "true"))
+	bool bTurnInPlace;
+
 };
