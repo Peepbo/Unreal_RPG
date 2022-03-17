@@ -69,7 +69,7 @@ protected:
 	void ChangeCombatState(ECombatState NextCombatState);
 
 	UFUNCTION(BlueprintCallable)
-	void FaceOff(int32 NextWalkDirection);
+	void FaceOff(float NextWalkDirection);
 
 	UFUNCTION(BlueprintCallable)
 	void EndFaceOff();

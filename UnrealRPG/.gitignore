@@ -78,6 +78,7 @@ DerivedDataCache/*
 # Character Asset
 Content/ParagonAurora/*
 Content/ParagonKwang/*
+Content/LionKnight/*
 
 # Weapon Asset
 Content/Weapon_Pack/*
@@ -87,6 +88,12 @@ Content/SwordAnimationPack/*
 Content/ARPG_Warrior/*
 Content/BossAnimationsPack/*
 Content/SwordAnimationPack/*
+
+# FX Asset
+Content/FXVarietyPack/*
+Content/FXVillesBloodVFXPack/*
+Content/Realistic_Starter_VFX_Pack_Vol2/*
+Content/RPGEffects/*
 
 # Others
 Content/_Game/Map/Level1/*

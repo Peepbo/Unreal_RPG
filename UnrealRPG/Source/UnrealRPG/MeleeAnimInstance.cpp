@@ -19,8 +19,9 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 	if (Character) {
 		// 캐릭터의 속도를 구함
-		FVector Velocity{ Character->GetVelocity() };
-		Velocity.Z = 0;
+		FVector CharVelocity{ Character->GetVelocity() };
+		CharVelocity.Z = 0;
+		Velocity = { CharVelocity.X,CharVelocity.Y };
 		Speed = Velocity.Size();
 
 		// 캐릭터가 공중에 있는지 확인

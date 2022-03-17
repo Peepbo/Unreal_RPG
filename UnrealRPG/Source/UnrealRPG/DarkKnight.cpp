@@ -195,7 +195,7 @@ void ADarkKnight::ChangeCombatState(ECombatState NextCombatState)
 	CombatState = NextCombatState;
 }
 
-void ADarkKnight::FaceOff(int32 NextWalkDirection)
+void ADarkKnight::FaceOff(float NextWalkDirection)
 {
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
@@ -206,13 +206,7 @@ void ADarkKnight::EndFaceOff()
 {
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
-	// Start Timer
-	GetWorldTimerManager().SetTimer(
-		WalkDirectionLerpTimer,
-		this,
-		&ADarkKnight::ChangeLerpDirection,
-		0.005f,
-		true);
+	WalkDirection = 0.f;
 }
 
 void ADarkKnight::ChangeLerpDirection()
