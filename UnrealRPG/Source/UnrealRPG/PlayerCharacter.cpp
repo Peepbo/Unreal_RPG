@@ -24,6 +24,7 @@ APlayerCharacter::APlayerCharacter() :
 	BaseLookUpRate(45.f),
 	bShouldContinueAttack(false),
 	ComboAttackMontageIndex(0),
+	ChargedComboAttackMontageIndex(0),
 	ST(50.f),
 	MaximumST(50.f),
 	StaminaRecoveryDelayTime(0.3f),
@@ -175,7 +176,7 @@ void APlayerCharacter::LookUpAtRateInMouse(float Rate)
 
 void APlayerCharacter::MainAttack()
 {
-	AnimInstance->Montage_Play(MainAttackMontage);
+	AnimInstance->Montage_Play(MainComboMontages[ComboAttackMontageIndex]);
 	CombatState = ECombatState::ECS_Attack;
 
 	PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
@@ -186,14 +187,6 @@ void APlayerCharacter::SubAttack()
 	if (EquippedShield) {
 		CombatState = ECombatState::ECS_Guard;
 	}
-}
-
-void APlayerCharacter::ComboAttack()
-{
-	AnimInstance->Montage_Play(ComboMontages[ComboAttackMontageIndex]);
-	CombatState = ECombatState::ECS_Attack;
-
-	PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
 }
 
 void APlayerCharacter::PressedAttack()
@@ -210,6 +203,7 @@ void APlayerCharacter::PressedAttack()
 		// 질주 상태가 아니라면 기본 공격
 		if (ThumbAxis.Size() < 0.8f) {
 			MainAttack();
+			ComboAttackMontageIndex++;
 		}
 		// 질주 상태면 대쉬 공격
 		else {
@@ -223,30 +217,28 @@ void APlayerCharacter::ReleasedAttack()
 	bPressedAttackButton = false;
 }
 
-bool APlayerCharacter::CheckComboAttack(bool bNextAttackMain)
+bool APlayerCharacter::CheckComboAttack()
 {
+	// 일반 공격
 	if (bShouldContinueAttack) {
 
 		bShouldContinueAttack = false;
-		if (bNextAttackMain) {
-			// 몽타주를 멈추지만 않으면 된다. (이어져있기 때문)
+
+		if (MainComboMontages.IsValidIndex(ComboAttackMontageIndex) && MainComboMontages[ComboAttackMontageIndex]) {
+			MainAttack();
+			ComboAttackMontageIndex++;
+
 			return true;
 		}
-		// 다음 공격이 콤보 공격이면
-		else {
-			// 콤보 공격이 valid하다면 ComboAttack 호출
-			if (ComboMontages.IsValidIndex(ComboAttackMontageIndex) &&
-				ComboMontages[ComboAttackMontageIndex]) {
+	}
+	// 강 공격
+	else if (bShouldChargedAttack) {
+		bShouldChargedAttack = false;
 
-				UE_LOG(LogTemp, Warning, TEXT("콤보 공격 시작"));
-				ComboAttack();
-				ComboAttackMontageIndex++;
+		if (ChargedComboMontages.IsValidIndex(ChargedComboAttackMontageIndex) && ChargedComboMontages[ChargedComboAttackMontageIndex]) {
+			ChargedAttack();
 
-				return true;
-			}
-			else {
-				UE_LOG(LogTemp, Warning, TEXT("%d 콤보가 존재하지 않음"), ComboAttackMontageIndex);
-			}
+			return true;
 		}
 	}
 
@@ -280,7 +272,7 @@ void APlayerCharacter::StartComboTimer()
 		ComboTimer,
 		this,
 		&APlayerCharacter::CheckComboTimer,
-		0.05f,
+		0.01f,
 		true);
 }
 
@@ -551,28 +543,32 @@ void APlayerCharacter::ReleasedChargedAttack()
 
 void APlayerCharacter::PrepareChargedAttack()
 {
-	// 해당 함수는 Weapon이 존재해야 호출될 수 있는 함수임 (PressedChargedAttack에서 검사함)
-	CombatState = ECombatState::ECS_NonMovingInteraction;
-	bShouldChargedAttack = false;
+	if (ChargedComboMontages[0]) {
+		CombatState = ECombatState::ECS_NonMovingInteraction;
+		bShouldChargedAttack = false;
 
-	StopStaminaRecoveryTimer();
-	// 준비 몽타주 플레이 후 ChargedAttack을 callable로 적용하여 nodify가 호출될 때 함수를 부르면 될듯.
-	if (ReadyToChargedAttackMontage) {
-		AnimInstance->Montage_Play(ReadyToChargedAttackMontage, 1.f);
+		StopStaminaRecoveryTimer();
 
-		WeaponAttackType = EWeaponAttackType::EWAT_Charged;
+		// 준비 몽타주(0번 애니메이션) 플레이
+		ChargedAttack();
 	}
 }
 
 void APlayerCharacter::ChargedAttack()
 {
-	// Montage play?가 좋을듯 어차피 무기마다 애니메이션 속도를 다르게 하려면 필요하니까.
-	if (ChargedAttackMontage) {
-		CombatState = ECombatState::ECS_Attack;
+	const bool bPrepare{ ChargedComboAttackMontageIndex == 0 };
+
+	// 준비 몽타주 차례가 아닐 때
+	if (!bPrepare) {
 		bIsChargedAttack = true;
 
-		AnimInstance->Montage_Play(ChargedAttackMontage, 1.f);
+		CombatState = ECombatState::ECS_Attack;
 	}
+
+	AnimInstance->Montage_Play(ChargedComboMontages[ChargedComboAttackMontageIndex], 1.f);
+
+	WeaponAttackType = EWeaponAttackType::EWAT_Charged;
+	ChargedComboAttackMontageIndex++;
 }
 
 void APlayerCharacter::ResetAttack()
@@ -581,15 +577,11 @@ void APlayerCharacter::ResetAttack()
 
 	// 콤보를 초기화하고, 캐릭터 상태도 바꿔준다.
 	ComboAttackMontageIndex = 0;
+	ChargedComboAttackMontageIndex = 0;
+	bIsChargedAttack = false;
+
 	CombatState = ECombatState::ECS_Unoccupied;
 	PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
-}
-
-void APlayerCharacter::EndChargedAttack()
-{
-	CombatState = ECombatState::ECS_Unoccupied;
-	bIsChargedAttack = false;
-	StartStaminaRecoveryDelayTimer();
 }
 
 void APlayerCharacter::StartAttackCheckTime()

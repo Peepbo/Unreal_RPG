@@ -57,11 +57,10 @@ protected:
 	/* Attack Function */
 	void MainAttack();
 	void SubAttack();
-	void ComboAttack();
 	
 	/* 콤보를 이어나갈지 멈출지 확인하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		bool CheckComboAttack(bool bNextAttackMain);
+		bool CheckComboAttack();
 
 	/* 공격을 멈출 때 호출하는 함수 */
 	UFUNCTION(BlueprintCallable)
@@ -91,9 +90,6 @@ protected:
 		void ChargedAttack();
 
 	void ResetAttack();
-
-	UFUNCTION(BlueprintCallable)
-		void EndChargedAttack();
 
 	/* 공격 검사를 시작하는 함수 */
 	UFUNCTION(BlueprintCallable)
@@ -247,22 +243,15 @@ private:
 	/* Montage Variable */
 	/* 공격 몽타주 모음 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* MainAttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		TArray<UAnimMontage*> ComboMontages;
+		TArray<UAnimMontage*> MainComboMontages;
 
 	/* 구르기 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* RollMontage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* RollBackMontage;
 
-	/* 차지 준비, 공격 몽타주 */
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* ReadyToChargedAttackMontage;
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* ChargedAttackMontage;
+	/* 차지 몽타주 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		TArray<UAnimMontage*> ChargedComboMontages;
 
 	/* 피해 몽타주 모음 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -290,6 +279,9 @@ private:
 	/* 콤보 공격 인덱스 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		int32 ComboAttackMontageIndex;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		int32 ChargedComboAttackMontageIndex;
 
 	/* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트, 여러번 공격되는 것을 방지 */
 	FEnemyDamageTypeResetDelegate EnemyDamageTypeResetDelegate;
