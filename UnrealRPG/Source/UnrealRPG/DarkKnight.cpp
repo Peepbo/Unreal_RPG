@@ -87,17 +87,25 @@ void ADarkKnight::StartDraw()
 void ADarkKnight::PlayAttackMontage()
 {
 	if (AnimInstance) {
-		if (AttackMontage.IsValidIndex(AttackIndex) && AttackMontage[AttackIndex]) {
-			AnimInstance->Montage_Play(AttackMontage[AttackIndex]);
-			LastAttackIndex = AttackIndex;
+		if (GetSprinting() && SprintAttackMontage) {
+			AnimInstance->Montage_Play(SprintAttackMontage);
+			SetSprinting(false);
 
-			UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
+			UE_LOG(LogTemp, Warning, TEXT("Play Sprint Attack Montage"));
 		}
-	}
+		else {
+			if (AttackMontage.IsValidIndex(AttackIndex) && AttackMontage[AttackIndex]) {
+				AnimInstance->Montage_Play(AttackMontage[AttackIndex]);
+				LastAttackIndex = AttackIndex;
 
-	AttackIndex++;
-	if (AttackMontage.Num() == AttackIndex) {
-		AttackIndex = 0;
+				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
+			}
+
+			AttackIndex++;
+			if (AttackMontage.Num() == AttackIndex) {
+				AttackIndex = 0;
+			}
+		}
 	}
 }
 

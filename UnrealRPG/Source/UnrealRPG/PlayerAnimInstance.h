@@ -21,6 +21,9 @@ public:
 	virtual void InitializeAnimationProperties() override;
 
 	virtual void UpdateAnimationProperties(float DeltaTime) override;
+
+	UFUNCTION(BlueprintCallable)
+	void ChooseStopFoot();
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -28,6 +31,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bLockOn;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	FVector PlayerForward;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	FVector2D MoveValue;
@@ -49,4 +55,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bBackDodge;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FootStep, meta = (AllowPrivateAccess = "true"))
+	float LastFootCurveValue;
+
+	FName CurveName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FootStep, meta = (AllowPrivateAccess = "true"))
+	bool bIsRightFootStop;
 };

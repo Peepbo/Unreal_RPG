@@ -133,6 +133,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Rotate, meta = (AllowPrivateAccess = "true"))
 	float TurnTime;
 
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* SprintAttackMontage;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

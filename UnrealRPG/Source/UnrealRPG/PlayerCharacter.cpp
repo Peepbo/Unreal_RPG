@@ -30,7 +30,7 @@ APlayerCharacter::APlayerCharacter() :
 	bPressedSprintButton(false),
 	bPressedRollButton(false),
 	bPressedSubAttackButton(false),
-	BeforeAttackRotateSpeed(0.1f),
+	BeforeAttackRotateSpeed(10.f),
 	bIsBeforeAttackRotate(false),
 	bIsChargedAttack(false),
 	bShouldChargedAttack(false),
@@ -51,13 +51,14 @@ APlayerCharacter::APlayerCharacter() :
 	// 카메라 붐 생성 및 특정 값 초기화
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.f;
+	CameraBoom->TargetArmLength = 500.f;
 	// 폰이 회전할 때 카메라 붐도 같이 회전합니다.
 	CameraBoom->bUsePawnControlRotation = true;
 
 	// 카메라 생성
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->SetRelativeLocation({ 0.f,0.f,20.f });
 	// 폰이 회전할 때 카메라는 회전하지 않습니다. (카메라 붐이 움직이므로 카메라를 움직일 필요x)
 	FollowCamera->bUsePawnControlRotation = false;
 
@@ -279,7 +280,7 @@ void APlayerCharacter::StartComboTimer()
 		ComboTimer,
 		this,
 		&APlayerCharacter::CheckComboTimer,
-		0.1f,
+		0.05f,
 		true);
 }
 
@@ -755,10 +756,12 @@ void APlayerCharacter::EndDamageInpact()
 
 void APlayerCharacter::DashAttack()
 {
-	bShouldContinueAttack = false;
-	AnimInstance->Montage_Play(DashAttackMontage);
-	CombatState = ECombatState::ECS_Attack;
-	WeaponAttackType = EWeaponAttackType::EWAT_Dash;
+	if (DashAttackMontage) {
+		bShouldContinueAttack = false;
+		AnimInstance->Montage_Play(DashAttackMontage);
+		CombatState = ECombatState::ECS_Attack;
+		WeaponAttackType = EWeaponAttackType::EWAT_Dash;
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)

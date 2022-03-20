@@ -11,6 +11,9 @@ void UPlayerAnimInstance::InitializeAnimationProperties()
 	Super::InitializeAnimationProperties();
 
 	PlayerCharacter = Cast<APlayerCharacter>(TryGetPawnOwner());
+	LastFootCurveValue = 0.f;
+	CurveName = TEXT("WalkStop");
+	bIsRightFootStop = true;
 }
 
 void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
@@ -40,7 +43,9 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		// 캐릭터의 움직임 방향을 읽어온다.
 		MoveValue = PlayerCharacter->GetThumStickAxisForce();
 
-		bIsMove = (MoveValue.Size() == 0.f);
+		PlayerForward = PlayerCharacter->GetActorForwardVector();
+
+		bIsMove = (MoveValue.Size() != 0.f);
 
 		bIsShieldImpact = PlayerCharacter->GetShiledImpact();
 		
@@ -51,5 +56,13 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		LastRollMoveValue = PlayerCharacter->GetLastRollMoveValue();
 
 		bBackDodge = PlayerCharacter->GetBackDodge();
+
+		LastFootCurveValue = GetCurveValue(CurveName);
 	}
+}
+
+void UPlayerAnimInstance::ChooseStopFoot()
+{
+	const bool bIsLeft{ UKismetMathLibrary::InRange_FloatFloat(LastFootCurveValue, 1.f, 2.f) };
+	bIsRightFootStop = !bIsLeft;
 }
