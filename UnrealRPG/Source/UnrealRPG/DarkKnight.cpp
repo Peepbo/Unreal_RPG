@@ -60,16 +60,22 @@ void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 
 	auto Character = Cast<APlayerCharacter>(OtherActor);
 	if (Character) {
-		bShouldDrawWeapon = false;
+		OverlapCharacter = Character;
 
-		if (EnemyAIController) {
-			Target = Character;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
-
-			StartDraw();
-		}
+		// 타이머를 돌리는 이유? beginOverlap은 한번만 작동하므로 적이 overlap상태일 때 조건에 맞지 않으면 영영 캐릭터를 찾지 못하게 된다.
+		// 고로 타이머를 돌려 특정 딜레이 마다 조건을 검사한다.
+		GetWorldTimerManager().SetTimer(
+			SearchTimer,
+			this,
+			&ADarkKnight::FindCharacter,
+			0.05f,
+			true);
 	}
+}
 
+void ADarkKnight::AgroSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	GetWorldTimerManager().ClearTimer(SearchTimer);
 }
 
 void ADarkKnight::StartDraw()
@@ -127,10 +133,6 @@ void ADarkKnight::StartRotate()
 {
 	bTurnInPlace = true;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
-
-	//if (!bAttackable) {
-	//	SaveTargetRotator();
-	//}
 }
 
 void ADarkKnight::StopRotate()
@@ -253,6 +255,36 @@ void ADarkKnight::ChangeSprinting(bool IsSprinting)
 	}
 }
 
+void ADarkKnight::FindCharacter()
+{
+	// 캐릭터가 전방 160도 안에 있는지 확인한다. (dot product)
+	FVector ActorForward{ GetActorForwardVector() };
+	ActorForward.Z = 0.f;
+
+	FVector ActorToCharacter{ OverlapCharacter->GetActorLocation() - GetActorLocation() };
+	ActorToCharacter.Z = 0.f;
+	ActorToCharacter = UKismetMathLibrary::Normal(ActorToCharacter);
+
+	float DotRadian{ UKismetMathLibrary::Dot_VectorVector(ActorForward, ActorToCharacter) };
+	float DotDegree{ UKismetMathLibrary::DegAcos(DotRadian) };
+	// 전방 160도면 -80~+80 사이 (dot product는 어차피 -가 나오질 않으므로 80이하인지 검사)
+	const bool bFind{ DotDegree <= 80.f };
+
+	if (bFind) {
+		if (EnemyAIController) {
+			GetWorldTimerManager().ClearTimer(SearchTimer);
+			ChangeColliderSetting(true);
+
+			bShouldDrawWeapon = false;
+
+			Target = OverlapCharacter;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), OverlapCharacter);
+
+			StartDraw();
+		}
+	}
+}
+
 void ADarkKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -262,4 +294,30 @@ void ADarkKnight::Tick(float DeltaTime)
 
 		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
 	}
+}
+
+float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (!bDying) {
+		UE_LOG(LogTemp, Warning, TEXT("DarkKnight Damaged!"));
+
+		if (bShouldDrawWeapon) {
+			APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser);
+			if (Player && EnemyAIController) {
+				GetWorldTimerManager().ClearTimer(SearchTimer);
+				ChangeColliderSetting(true);
+
+				bShouldDrawWeapon = false;
+
+				Target = Player;
+				EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
+
+				StartDraw();
+			}
+		}
+	}
+
+	return DamageAmount;
 }

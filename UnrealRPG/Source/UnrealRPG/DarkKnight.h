@@ -39,6 +39,12 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult) override;
 
+	virtual void AgroSphereEndOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex) override;
+
 	UFUNCTION(BlueprintCallable)
 	void StartDraw();
 
@@ -81,6 +87,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeSprinting(bool IsSprinting);
+
+	void FindCharacter();
 
 private:
 
@@ -136,9 +144,15 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* SprintAttackMontage;
 
+	FTimerHandle SearchTimer;
+
+	APlayerCharacter* OverlapCharacter;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 public:
 	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }

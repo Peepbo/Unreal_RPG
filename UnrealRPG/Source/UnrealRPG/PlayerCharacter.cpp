@@ -741,9 +741,10 @@ void APlayerCharacter::EndShieldImpact()
 	bIsShieldImpact = false;
 }
 
-void APlayerCharacter::EndDamageInpact()
+void APlayerCharacter::EndDamageImpact()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
+	//AnimInstance->Montage_Stop()
 }
 
 void APlayerCharacter::DashAttack()

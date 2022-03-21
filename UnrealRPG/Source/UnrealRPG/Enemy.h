@@ -34,6 +34,13 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	UFUNCTION()
+		virtual void AgroSphereEndOverlap(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex);
+
 	/* 공격 시작 범위 */
 	UFUNCTION()
 		void CombatRangeOverlap(
@@ -58,6 +65,9 @@ protected:
 
 	/* 캐릭터의 크기를 변경하는 함수 (LockOn에 필요) */
 	void ChangeEnemySize(EEnemySize Size);
+
+	/* 비 전투/전투 콜라이더 세팅 전환 함수 */
+	void ChangeColliderSetting(bool bBattle);
 
 protected:
 	class AEnemyAIController* EnemyAIController;
@@ -113,9 +123,6 @@ private:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 

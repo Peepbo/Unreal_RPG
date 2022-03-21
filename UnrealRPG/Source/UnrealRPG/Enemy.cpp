@@ -46,9 +46,12 @@ void AEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	AgroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::AgroSphereOverlap);
+	AgroSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::AgroSphereEndOverlap);
 
 	CombatRangeSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatRangeOverlap);
 	CombatRangeSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatRangeEndOverlap);
+	// 플레이어를 찾게 되면 activate 해준다.
+	CombatRangeSphere->Deactivate();
 
 	const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
 	const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
@@ -92,6 +95,10 @@ void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
 		}
 	}
+}
+
+void AEnemy::AgroSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
 }
 
 void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -153,17 +160,22 @@ void AEnemy::ChangeEnemySize(EEnemySize Size)
 	}
 }
 
+void AEnemy::ChangeColliderSetting(bool bBattle)
+{
+	if (bBattle) {
+		AgroSphere->Deactivate();
+		CombatRangeSphere->Activate();
+	}
+	else {
+		AgroSphere->Activate();
+		CombatRangeSphere->Deactivate();
+	}
+}
+
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-}
-
-// Called to bind functionality to input
-void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 
