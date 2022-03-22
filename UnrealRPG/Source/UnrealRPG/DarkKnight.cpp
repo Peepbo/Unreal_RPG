@@ -20,7 +20,8 @@ ADarkKnight::ADarkKnight() :
 	bAttackable(true),
 	WalkDirection(0.f),
 	DirectionLerpSpeed(1.f),
-	TurnTime(1.2f)
+	TurnTime(1.2f),
+	bMove(false)
 {
 
 }

@@ -154,6 +154,8 @@ private:
 	/* true: 왼쪽, false: 오른쪽 */
 	bool bTurnLeft;
 
+	bool bMove;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -165,4 +167,7 @@ public:
 	FORCEINLINE bool GetTurnInPlace() const { return bTurnInPlace; }
 	FORCEINLINE void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
+	UFUNCTION(BlueprintCallable)
+	void SetMove(bool bNextBool) { bMove = bNextBool; }
+	FORCEINLINE bool GetMove() const { return bMove; }
 };

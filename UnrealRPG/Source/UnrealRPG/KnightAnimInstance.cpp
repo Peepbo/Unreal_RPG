@@ -31,5 +31,15 @@ void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bTurnInPlace = DarkKnight->GetTurnInPlace();
 
 		bTurnLeft = DarkKnight->GetTurnLeft();
+
+		if (DarkKnight->GetMove()) {
+			MoveValue = 0.5f;
+			if (DarkKnight->GetSprinting()) {
+				MoveValue = 1.f;
+			}
+		}
+		else {
+			MoveValue = 0.f;
+		}
 	}
 }
