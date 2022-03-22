@@ -95,6 +95,8 @@ void ADarkKnight::StartDraw()
 void ADarkKnight::PlayAttackMontage()
 {
 	if (AnimInstance) {
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+
 		if (GetSprinting() && SprintAttackMontage) {
 			AnimInstance->Montage_Play(SprintAttackMontage);
 			SetSprinting(false);
@@ -244,6 +246,8 @@ void ADarkKnight::EndRestTimer()
 {
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
 	ChangeCombatState(ECombatState::ECS_Unoccupied);
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
 
 void ADarkKnight::ChangeSprinting(bool IsSprinting)
@@ -316,7 +320,16 @@ void ADarkKnight::Tick(float DeltaTime)
 	if (GetAttacking() && bTurnInPlace) {
 		const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
 
-		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
+		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) {
+			bTurnInPlace = false;
+			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+			UE_LOG(LogTemp, Warning, TEXT("LookAtYaw almost same"), LookRot.Yaw);
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("LookAtYaw : %f"), LookRot.Yaw);
+
+			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
+		}
 	}
 }
 
