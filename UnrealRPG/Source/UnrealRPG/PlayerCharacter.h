@@ -158,7 +158,7 @@ protected:
 	/* Damage Function */
 	/* impact state를 끝내는 함수 */
 	UFUNCTION(BlueprintCallable)
-	void EndDamageInpact();
+	void EndDamageImpact();
 
 public:
 	// Called every frame

@@ -50,6 +50,7 @@ void ADarkKnight::BeginPlay()
 	ChangeEnemySize(EEnemySize::EES_Medium);
 
 	EnemyAIController->GetBlackboardComponent()->SetValueAsFloat(TEXT("TurnTime"), TurnTime);
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bFirstPatrol"), true);
 }
 
 void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -274,6 +275,8 @@ void ADarkKnight::FindCharacter()
 		if (EnemyAIController) {
 			GetWorldTimerManager().ClearTimer(SearchTimer);
 			ChangeColliderSetting(true);
+			
+			StopRotate();
 
 			bShouldDrawWeapon = false;
 
@@ -283,6 +286,26 @@ void ADarkKnight::FindCharacter()
 			StartDraw();
 		}
 	}
+}
+
+float ADarkKnight::GetDegreeForwardToTarget()
+{
+	if (Target == nullptr)return 0.f;
+
+	const FVector ActorForward{ GetActorForwardVector() };
+	const FVector ActorToTarget{ UKismetMathLibrary::Normal(Target->GetActorLocation() - GetActorLocation()) };
+	const FVector2D ActorForward2D{ ActorForward };
+	const FVector2D ActorToTarget2D{ ActorToTarget };
+
+	const float DotProductRadian{ UKismetMathLibrary::DotProduct2D(ActorForward2D,ActorToTarget2D) };
+	float ResultDegree{ UKismetMathLibrary::DegAcos(DotProductRadian) };
+
+	const float CrossProduct{ UKismetMathLibrary::CrossProduct2D(ActorForward2D,ActorToTarget2D) };
+	if (CrossProduct < 0.f) {
+		ResultDegree = -(ResultDegree);
+	}
+
+	return ResultDegree;
 }
 
 void ADarkKnight::Tick(float DeltaTime)

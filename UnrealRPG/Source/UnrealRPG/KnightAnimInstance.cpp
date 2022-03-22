@@ -3,6 +3,7 @@
 
 #include "KnightAnimInstance.h"
 #include "DarkKnight.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UKnightAnimInstance::InitializeAnimationProperties()
 {
@@ -25,6 +26,10 @@ void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		WalkDirection = DarkKnight->GetWalkDirection();
 
+		bWalkDirectionZero = UKismetMathLibrary::NearlyEqual_FloatFloat(WalkDirection, 0.f);
+
 		bTurnInPlace = DarkKnight->GetTurnInPlace();
+
+		bTurnLeft = DarkKnight->GetTurnLeft();
 	}
 }

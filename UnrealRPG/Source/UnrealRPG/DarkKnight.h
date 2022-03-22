@@ -90,6 +90,9 @@ protected:
 
 	void FindCharacter();
 
+	UFUNCTION(BlueprintCallable)
+	float GetDegreeForwardToTarget();
+
 private:
 
 	class UKnightAnimInstance* AnimInstance;
@@ -148,6 +151,9 @@ private:
 
 	APlayerCharacter* OverlapCharacter;
 
+	/* true: 왼쪽, false: 오른쪽 */
+	bool bTurnLeft;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -157,4 +163,6 @@ public:
 public:
 	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
 	FORCEINLINE bool GetTurnInPlace() const { return bTurnInPlace; }
+	FORCEINLINE void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
+	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
 };
