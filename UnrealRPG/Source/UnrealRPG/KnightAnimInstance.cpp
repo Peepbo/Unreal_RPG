@@ -32,6 +32,8 @@ void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bTurnLeft = DarkKnight->GetTurnLeft();
 
+		bShouldDrawWeapon = DarkKnight->ShouldDrawWeapon();
+
 		if (DarkKnight->GetMove()) {
 			MoveValue = 0.5f;
 			if (DarkKnight->GetSprinting()) {

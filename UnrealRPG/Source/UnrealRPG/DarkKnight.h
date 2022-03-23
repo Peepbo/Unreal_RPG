@@ -49,6 +49,9 @@ protected:
 	void StartDraw();
 
 	UFUNCTION(BlueprintCallable)
+	void EndDraw();
+
+	UFUNCTION(BlueprintCallable)
 	void PlayAttackMontage();
 
 	UFUNCTION(BlueprintCallable)
@@ -93,6 +96,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	float GetDegreeForwardToTarget();
 
+	virtual void EndDamageImpact() override;
+
 private:
 
 	class UKnightAnimInstance* AnimInstance;
@@ -104,8 +109,6 @@ private:
 	UAnimMontage* DrawMontage;
 	
 	bool bShouldDrawWeapon;
-	// spd 130/400
-	// atk 20
 
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
 		FVector EnemyDir;
@@ -168,4 +171,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetMove(bool bNextBool) { bMove = bNextBool; }
 	FORCEINLINE bool GetMove() const { return bMove; }
+
+	FORCEINLINE bool ShouldDrawWeapon() const { return bShouldDrawWeapon; }
 };

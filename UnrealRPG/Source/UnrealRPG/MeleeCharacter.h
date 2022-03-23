@@ -31,7 +31,7 @@ protected:
 	/* Damage Function */
 	/* impact state를 끝내는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void EndDamageImpact();
+		virtual void EndDamageImpact();
 
 protected:
 	/* 캐릭터의 상태 */

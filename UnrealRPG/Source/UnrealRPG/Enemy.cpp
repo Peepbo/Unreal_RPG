@@ -21,7 +21,8 @@ AEnemy::AEnemy() :
 	bIsSprint(false),
 	EnemySize(EEnemySize::EES_MAX),
 	bLockOnEnemy(false),
-	bRestTime(false)
+	bRestTime(false),
+	bAvoidImpactState(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -197,7 +198,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	if (bDying)return DamageAmount;
 
 	// Attack이 아니거나 Attack Rest Time일 경우 Impact로 바뀐다.
-	if (CombatState != ECombatState::ECS_Attack || bRestTime) {
+	if (!bAvoidImpactState && (CombatState != ECombatState::ECS_Attack || bRestTime)) {
 		CombatState = ECombatState::ECS_Impact;
 	}
 

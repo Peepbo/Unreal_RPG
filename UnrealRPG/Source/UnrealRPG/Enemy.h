@@ -83,6 +83,8 @@ protected:
 
 	bool bRestTime;
 
+	bool bAvoidImpactState;
+
 	/* 플레이어를 저장하는 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
 	class APlayerCharacter* Target;

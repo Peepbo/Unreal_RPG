@@ -87,6 +87,12 @@ void ADarkKnight::StartDraw()
 	}
 }
 
+void ADarkKnight::EndDraw()
+{
+	// 강제로 Impact State를 막았던 설정을 되돌려놓는다.
+	bAvoidImpactState = false;
+}
+
 void ADarkKnight::PlayAttackMontage()
 {
 	if (AnimInstance) {
@@ -312,6 +318,23 @@ float ADarkKnight::GetDegreeForwardToTarget()
 	return ResultDegree;
 }
 
+void ADarkKnight::EndDamageImpact()
+{
+	Super::EndDamageImpact();
+
+	if (bShouldDrawWeapon) {
+		if (Target && EnemyAIController) {
+			GetWorldTimerManager().ClearTimer(SearchTimer);
+			ChangeColliderSetting(true);
+		
+			bShouldDrawWeapon = false;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Target);
+		
+			StartDraw();
+		}
+	}
+}
+
 void ADarkKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -333,23 +356,16 @@ float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	if (!bDying) {
-		UE_LOG(LogTemp, Warning, TEXT("DarkKnight Damaged!"));
+	UE_LOG(LogTemp, Warning, TEXT("DarkKnight Damaged!"));
 
-		if (bShouldDrawWeapon) {
-			APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser);
-			if (Player && EnemyAIController) {
-				GetWorldTimerManager().ClearTimer(SearchTimer);
-				ChangeColliderSetting(true);
+	if (!bDying && bShouldDrawWeapon) {
+		GetWorldTimerManager().ClearTimer(SearchTimer);
+		APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser);
+		Target = Player;
 
-				bShouldDrawWeapon = false;
-
-				Target = Player;
-				EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
-
-				StartDraw();
-			}
-		}
+		// 강제로 ImpactState로 전환되는 것을 막는다. (데미지는 들어감)
+		// Non-Battle Impact, DrawAnimation 모두 끝나면 false로 바뀐다.
+		bAvoidImpactState = true;
 	}
 
 	return DamageAmount;
