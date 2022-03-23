@@ -198,6 +198,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		float BaseLookUpRate;
 
+	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		float LockOnCameraSpeed;
+
 
 	/* Button Variable */
 	/* 공격 버튼이 눌렸는지 안눌렸는지 */

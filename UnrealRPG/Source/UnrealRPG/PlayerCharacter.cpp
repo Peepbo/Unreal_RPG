@@ -44,7 +44,8 @@ APlayerCharacter::APlayerCharacter() :
 	LastRollMoveValue(0.f, 0.f),
 	bBackDodge(false),
 	PlayerAttackType(EPlayerAttackType::EPAT_Weapon),
-	WeaponAttackType(EWeaponAttackType::EWAT_Normal)
+	WeaponAttackType(EWeaponAttackType::EWAT_Normal),
+	LockOnCameraSpeed(0.04f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -732,7 +733,7 @@ void APlayerCharacter::RotateCameraByLockOn()
 		UKismetMathLibrary::RLerp(
 			GetControlRotation(),
 			FixLookRotator,
-			0.04f,
+			LockOnCameraSpeed,
 			true));
 }
 

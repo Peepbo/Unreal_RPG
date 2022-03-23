@@ -30,12 +30,7 @@ void ADarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BattleWalkSpeed = 130.f;
-	BattleRunSpeed = 400.f;
-	MaximumWalkSpeed = 170.f;
 	AD = 20.f;
-
-	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (AnimInst) {
@@ -323,11 +318,8 @@ void ADarkKnight::Tick(float DeltaTime)
 		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) {
 			bTurnInPlace = false;
 			GetCharacterMovement()->bUseControllerDesiredRotation = true;
-			UE_LOG(LogTemp, Warning, TEXT("LookAtYaw almost same"), LookRot.Yaw);
 		}
 		else {
-			UE_LOG(LogTemp, Warning, TEXT("LookAtYaw : %f"), LookRot.Yaw);
-
 			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
 		}
 	}
