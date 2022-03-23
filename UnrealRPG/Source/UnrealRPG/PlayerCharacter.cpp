@@ -623,6 +623,9 @@ void APlayerCharacter::PressedLockOn()
 		LockOnWidgetData->SetVisibility(false);
 		LockOnWidgetData = nullptr;
 
+		EnemyLockOnResetDelegate.ExecuteIfBound();
+		EnemyLockOnResetDelegate.Unbind();
+
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
@@ -641,10 +644,13 @@ void APlayerCharacter::PressedLockOn()
 
 		if (OutActors.Num() > 0) {
 
-			const AEnemy* LockOnTarget{ GetNearestEnemyWithLockOn(OutActors) };
+			AEnemy* LockOnTarget{ GetNearestEnemyWithLockOn(OutActors) };
 
 			// 락온된 타겟이 있으면 설정
 			if (LockOnTarget) {
+				LockOnTarget->SetLockOn(true);
+				EnemyLockOnResetDelegate.BindUFunction(LockOnTarget, FName("ResetLockOn"));
+
 				LockOnWidgetData = LockOnTarget->GetLockOnWidget();
 				MinimumLockOnPitchValue = LockOnTarget->GetMinimumLockOnPitchValue();
 			}
@@ -851,6 +857,14 @@ void APlayerCharacter::AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const
 	EnemyDamageTypeResetDelegate.AddUFunction(Enemy, FunctionName);
 	UE_LOG(LogTemp, Warning, TEXT("데미지리셋함수 추가, %d"));
 	
+}
+
+void APlayerCharacter::ResetLockOn()
+{
+	// 락온 상태면 락온을 풀어준다.
+	if (bLockOn) {
+		PressedLockOn();
+	}
 }
 
 const FVector2D APlayerCharacter::GetThumbStickLocalAxis()

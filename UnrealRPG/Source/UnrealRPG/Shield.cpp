@@ -110,6 +110,12 @@ void AShield::PushShield(bool bDebugVisible)
 							Enemy->GetBloodParticle(),
 							HitResult.Location);
 					}
+
+					// 방금 일격으로 락온된 몬스터가 사망했다면
+					if (Enemy->GetDying() && Enemy->GetLockOn()) {
+						// KillEnemy를 호출하여 Lock-On과 같은 특수 상호작용을 리셋한다.
+						Character->ResetLockOn();
+					}
 				}
 			}
 		}

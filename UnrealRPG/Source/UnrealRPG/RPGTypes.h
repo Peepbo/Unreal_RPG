@@ -2,6 +2,8 @@
 
 DECLARE_MULTICAST_DELEGATE(FEnemyDamageTypeResetDelegate);
 
+DECLARE_DELEGATE(FEnemyLockOnResetDelegate);
+
 UENUM(BlueprintType)
 enum class EPlayerAttackType : uint8
 {

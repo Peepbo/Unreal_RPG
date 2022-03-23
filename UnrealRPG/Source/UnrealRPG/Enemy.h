@@ -69,6 +69,9 @@ protected:
 	/* 비 전투/전투 콜라이더 세팅 전환 함수 */
 	void ChangeColliderSetting(bool bBattle);
 
+	UFUNCTION(BlueprintCallable)
+		void Die();
+
 protected:
 	class AEnemyAIController* EnemyAIController;
 
@@ -120,6 +123,11 @@ private:
 	/* 락온 시 최소 Pitch값을 나타내는 변수, 크기에 따라 달라짐 */
 	float LockOnMinimumPitchValue;
 
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DeathMontage;
+
+	bool bLockOnEnemy;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -128,6 +136,8 @@ public:
 
 	UFUNCTION()
 	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
+	UFUNCTION()
+	void ResetLockOn() { bLockOnEnemy = false; }
 
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
@@ -137,4 +147,6 @@ public:
 	FORCEINLINE float GetMinimumLockOnPitchValue() const { return LockOnMinimumPitchValue; }
 	
 	FORCEINLINE bool DamageableState() const { return DamageState == EDamageState::EDS_Unoccupied; }
+	FORCEINLINE bool GetLockOn() const { return bLockOnEnemy; }
+	FORCEINLINE void SetLockOn(bool NextBool) { bLockOnEnemy = NextBool; }
 };

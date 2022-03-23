@@ -60,6 +60,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bAttack;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bDying;
+
 private:
 	class AMeleeCharacter* Character;
 

@@ -36,10 +36,7 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		}
 
 		bAttack = Character->GetAttacking();
-		//bIsSprint = Character->GetSprinting();
 
-		//bIsGuard = Character->GetGuarding();
-
-		//bIsBattleMode = Character->GetBattleMode();
+		bDying = Character->GetDying();
 	}
 }

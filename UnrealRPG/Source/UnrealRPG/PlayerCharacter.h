@@ -172,6 +172,9 @@ public:
 	/* 델리게이트에 Enemy의 데미지 타입 초기화 함수를 넣는다 */
 	void AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName);
 
+	/* Lock-On된 Enemy를 죽었을 때 호출되는 함수 */
+	void ResetLockOn();
+
 private:
 	/* ThumbStick의 Axis를 가져온다. (local direction) */
 	const FVector2D GetThumbStickLocalAxis();
@@ -288,6 +291,9 @@ private:
 
 	/* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트, 여러번 공격되는 것을 방지 */
 	FEnemyDamageTypeResetDelegate EnemyDamageTypeResetDelegate;
+
+	/* Enemy의 LockOn Reset함수를 담을 델리게이트, 대상이 죽었을 때 락온된 대상인지 검사하여 락온을 리셋 */
+	FEnemyLockOnResetDelegate EnemyLockOnResetDelegate;
 
 	/* 공격 전 회전을 할 지 */
 	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))

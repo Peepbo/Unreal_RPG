@@ -67,5 +67,6 @@ public:
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
+	FORCEINLINE bool GetDying() const { return bDying; }
 	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }
 };

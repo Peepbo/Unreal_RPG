@@ -11,6 +11,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "PlayerCharacter.h"
 #include "Components/WidgetComponent.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -18,7 +19,8 @@ AEnemy::AEnemy() :
 	BattleWalkSpeed(130.f),
 	BattleRunSpeed(400.f),
 	bIsSprint(false),
-	EnemySize(EEnemySize::EES_MAX)
+	EnemySize(EEnemySize::EES_MAX),
+	bLockOnEnemy(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -78,6 +80,7 @@ void AEnemy::BeginPlay()
 	if (EnemyAIController) {
 		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
 		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint2"), WorldPatrolPoint2);
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), false);
 
 		EnemyAIController->RunBehaviorTree(BehaviorTree);
 	}
@@ -172,6 +175,14 @@ void AEnemy::ChangeColliderSetting(bool bBattle)
 	}
 }
 
+void AEnemy::Die()
+{
+	// RagDoll로 바꿔준다.
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
@@ -191,6 +202,12 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	DamageState = EDamageState::EDS_invincibility;
 	if (bDying) {
 		HideHealthBar();
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), true);
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && DeathMontage) {
+			AnimInstance->Montage_Play(DeathMontage);
+		}
 	}
 
 	return DamageAmount;
