@@ -229,6 +229,8 @@ void ADarkKnight::EndFaceOff()
 
 void ADarkKnight::StartRestTimer()
 {
+	bRestTime = true;
+
 	GetWorldTimerManager().SetTimer(
 		RestTimer,
 		this,
@@ -239,6 +241,8 @@ void ADarkKnight::StartRestTimer()
 
 void ADarkKnight::EndRestTimer()
 {
+	bRestTime = false;
+
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
 	ChangeCombatState(ECombatState::ECS_Unoccupied);
 

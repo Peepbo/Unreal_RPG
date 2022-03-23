@@ -21,7 +21,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	MaximumWalkSpeed(500.f),
 	bDying(false),
 	CombatState(ECombatState::ECS_Unoccupied),
-	bVisibleTraceSphere(false)
+	bVisibleTraceSphere(false),
+	bIsShieldImpact(false)
 {
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
@@ -45,9 +46,6 @@ float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 {
 	if (bDying)return DamageAmount;
 
-	//if (BloodParticle) {
-	//	DamageEvent.
-	//}
 	UE_LOG(LogTemp, Warning, TEXT("TakeDamage 호출"));
 
 	if (HP - DamageAmount > 0.f) {
@@ -60,4 +58,14 @@ float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	}
 
 	return DamageAmount;
+}
+
+void AMeleeCharacter::EndShieldImpact()
+{
+	bIsShieldImpact = false;
+}
+
+void AMeleeCharacter::EndDamageImpact()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
 }

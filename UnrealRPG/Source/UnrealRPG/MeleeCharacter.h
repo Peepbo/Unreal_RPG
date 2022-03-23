@@ -21,6 +21,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+
+	/* Shield Function */
+	/* bIsShieldImpact을 false로 바꾸는 함수 */
+	UFUNCTION(BlueprintCallable)
+		void EndShieldImpact();
+
+
+	/* Damage Function */
+	/* impact state를 끝내는 함수 */
+	UFUNCTION(BlueprintCallable)
+		void EndDamageImpact();
+
 protected:
 	/* 캐릭터의 상태 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -54,6 +66,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bVisibleTraceSphere;
 
+
+	/* Shield Variable */
+	bool bIsShieldImpact;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -66,6 +82,9 @@ public:
 	
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
+	FORCEINLINE bool GetImpacting() const { return CombatState == ECombatState::ECS_Impact; }
+	FORCEINLINE bool GetShiledImpact() const { return bIsShieldImpact; }
+	FORCEINLINE void SetShiledImpact(bool NextBool) { bIsShieldImpact = NextBool; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 	FORCEINLINE bool GetDying() const { return bDying; }
 	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }

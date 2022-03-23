@@ -38,5 +38,9 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bAttack = Character->GetAttacking();
 
 		bDying = Character->GetDying();
+
+		bIsShieldImpact = Character->GetShiledImpact();
+
+		bIsDamageImpact = Character->GetImpacting();
 	}
 }

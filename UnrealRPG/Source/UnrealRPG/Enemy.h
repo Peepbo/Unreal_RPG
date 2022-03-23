@@ -75,9 +75,13 @@ protected:
 protected:
 	class AEnemyAIController* EnemyAIController;
 
-	/* 전투 이동속도 관련 변수 */
+	/* 전투 이동속도 관련 변수 (RootMotion을 사용하지 않는 Enemy가 사용) */
 	float BattleWalkSpeed;
 	float BattleRunSpeed;
+
+	FTimerHandle RestTimer;
+
+	bool bRestTime;
 
 	/* 플레이어를 저장하는 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))

@@ -20,7 +20,8 @@ AEnemy::AEnemy() :
 	BattleRunSpeed(400.f),
 	bIsSprint(false),
 	EnemySize(EEnemySize::EES_MAX),
-	bLockOnEnemy(false)
+	bLockOnEnemy(false),
+	bRestTime(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -194,6 +195,11 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 {
 	UE_LOG(LogTemp, Warning, TEXT("Enemy TakeDamage call"));
 	if (bDying)return DamageAmount;
+
+	// Attack이 아니거나 Attack Rest Time일 경우 Impact로 바뀐다.
+	if (CombatState != ECombatState::ECS_Attack || bRestTime) {
+		CombatState = ECombatState::ECS_Impact;
+	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Enemy Super(MeleeCharacter) TakeDamage call"));
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);

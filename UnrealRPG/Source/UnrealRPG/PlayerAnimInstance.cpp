@@ -47,9 +47,9 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bIsMove = (MoveValue.Size() != 0.f);
 
-		bIsShieldImpact = PlayerCharacter->GetShiledImpact();
-		
-		bIsDamageImpact = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Impact);
+		//bIsShieldImpact = PlayerCharacter->GetShiledImpact();
+		//
+		//bIsDamageImpact = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Impact);
 
 		bRoll = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Roll);
 

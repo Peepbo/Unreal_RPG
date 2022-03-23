@@ -149,16 +149,7 @@ protected:
 	void RotateCameraByLockOn();
 
 
-	/* Shield Function */
-	/* bIsShieldImpact을 false로 바꾸는 함수 */
-	UFUNCTION(BlueprintCallable)
-	void EndShieldImpact();
 
-
-	/* Damage Function */
-	/* impact state를 끝내는 함수 */
-	UFUNCTION(BlueprintCallable)
-	void EndDamageImpact();
 
 public:
 	// Called every frame
@@ -325,9 +316,6 @@ private:
 
 	EWeaponAttackType WeaponAttackType;
 
-	/* Shield Variable */
-	bool bIsShieldImpact;
-
 
 	/* Stamina Variable */
 	/* 스태미나 회복 지연 시간, 일반 상태에서 회복 상태로 바뀌는 시간 */
@@ -371,7 +359,6 @@ public:
 	/* 방어 시 필요한 정보를 Enemy한테 전달받는다 */
 	FORCEINLINE void SetHitPoint(const FVector HitPoint) { LastHitPoint = HitPoint; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
-	FORCEINLINE bool GetShiledImpact() const { return bIsShieldImpact; }
 
 	FORCEINLINE FVector2D GetLastRollMoveValue() const { return LastRollMoveValue; }
 	FORCEINLINE bool GetBackDodge() const { return bBackDodge; }

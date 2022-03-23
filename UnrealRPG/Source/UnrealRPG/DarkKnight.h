@@ -139,8 +139,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float DirectionLerpSpeed;
 
-	FTimerHandle RestTimer;
-
 	UPROPERTY(EditDefaultsOnly, Category = Rotate, meta = (AllowPrivateAccess = "true"))
 	float TurnTime;
 

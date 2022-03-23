@@ -38,7 +38,6 @@ APlayerCharacter::APlayerCharacter() :
 	RollRequiredStamina(10.f),
 	bLockOn(false),
 	MoveValue(0.f, 0.f),
-	bIsShieldImpact(false),
 	StopAttackMontageBlendOutValue(0.25f),
 	MaximumAttackIndex(1),
 	LastRollMoveValue(0.f, 0.f),
@@ -743,17 +742,6 @@ void APlayerCharacter::RotateCameraByLockOn()
 			true));
 }
 
-void APlayerCharacter::EndShieldImpact()
-{
-	bIsShieldImpact = false;
-}
-
-void APlayerCharacter::EndDamageImpact()
-{
-	CombatState = ECombatState::ECS_Unoccupied;
-	//AnimInstance->Montage_Stop()
-}
-
 void APlayerCharacter::DashAttack()
 {
 	if (DashAttackMontage) {
@@ -827,7 +815,8 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 				// 스태미나를 일정 수치 깎는다.
 				ST -= (DamageAmount / 2);
 
-				bIsShieldImpact = true;
+				SetShiledImpact(true);
+				//bIsShieldImpact = true;
 
 				return DamageAmount;
 			}
