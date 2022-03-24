@@ -83,7 +83,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndFaceOff();
 
-	UFUNCTION(BlueprintCallable)
 	void StartRestTimer();
 
 	void EndRestTimer();
@@ -97,6 +96,12 @@ protected:
 	float GetDegreeForwardToTarget();
 
 	virtual void EndDamageImpact() override;
+
+	UFUNCTION(BlueprintCallable)
+		void StartAttack();
+
+	UFUNCTION(BlueprintCallable)
+		void EndAttack();
 
 private:
 

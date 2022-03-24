@@ -96,7 +96,7 @@ void ADarkKnight::EndDraw()
 void ADarkKnight::PlayAttackMontage()
 {
 	if (AnimInstance) {
-		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		//GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
 		if (GetSprinting() && SprintAttackMontage) {
 			AnimInstance->Montage_Play(SprintAttackMontage);
@@ -252,7 +252,7 @@ void ADarkKnight::EndRestTimer()
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
 	ChangeCombatState(ECombatState::ECS_Unoccupied);
 
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	//GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
 
 void ADarkKnight::ChangeSprinting(bool IsSprinting)
@@ -335,6 +335,21 @@ void ADarkKnight::EndDamageImpact()
 	}
 }
 
+void ADarkKnight::StartAttack()
+{
+	ChangeCombatState(ECombatState::ECS_Attack);
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+}
+
+void ADarkKnight::EndAttack()
+{
+	EnemyAIController->ClearFocus(EAIFocusPriority::Gameplay);
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	StartRestTimer();
+}
+
 void ADarkKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -344,7 +359,7 @@ void ADarkKnight::Tick(float DeltaTime)
 
 		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) {
 			bTurnInPlace = false;
-			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+			//GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		}
 		else {
 			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
