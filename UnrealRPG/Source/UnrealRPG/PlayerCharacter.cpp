@@ -200,14 +200,32 @@ void APlayerCharacter::PressedAttack()
 
 		const FVector2D ThumbAxis{ GetThumbStickLocalAxis() };
 
-		// 질주 상태가 아니라면 기본 공격
-		if (ThumbAxis.Size() < 0.8f) {
-			MainAttack();
-			ComboAttackMontageIndex++;
+		// 1. lock-on  
+		if (bLockOn) {
+			if (ThumbAxis.Size() < 0.8f) {
+				MainAttack();
+				ComboAttackMontageIndex++;
+			}
+			else {
+				// Axis Size가 0.8f보다 크면서 전방 50도(-25,+25)를 가르킬 때 대쉬 공격
+				const float ThumbAbsDegree{ UKismetMathLibrary::Abs(GetThumbStickDegree()) };
+				if (ThumbAbsDegree <= 25.f) {
+					DashAttack();
+				}
+			}
 		}
-		// 질주 상태면 대쉬 공격
+
+		// 2. normal
 		else {
-			DashAttack();
+			// 질주 상태(0.8f~1.f)가 아니라면 기본 공격
+			if (ThumbAxis.Size() < 0.8f) {
+				MainAttack();
+				ComboAttackMontageIndex++;
+			}
+			// 질주 상태면 대쉬 공격
+			else {
+				DashAttack();
+			}
 		}
 	}
 }
