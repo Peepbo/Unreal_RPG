@@ -359,7 +359,6 @@ void ADarkKnight::Tick(float DeltaTime)
 
 		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) {
 			bTurnInPlace = false;
-			//GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		}
 		else {
 			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
