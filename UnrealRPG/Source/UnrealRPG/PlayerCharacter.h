@@ -105,10 +105,12 @@ protected:
 	/* 기본 장비 생성 */
 	class AWeapon* SpawnDefaultWeapon();
 	class AShield* SpawnDefaultShield();
+	class APotion* SpawnDefaultPotion();
 
 	/* 장비 장착 */
 	void EquipWeapon(AWeapon* Weapon, bool bSwapping = false);
 	void EquipShield(AShield* Shield, bool bSwapping = false);
+	void EquipPotion(APotion* Potion, bool bSwapping = false);
 
 	/* 착용 아이템 아이콘 변경 함수 (블루프린트에서 작성) */
 	UFUNCTION(BlueprintImplementableEvent)
@@ -149,7 +151,18 @@ protected:
 	void RotateCameraByLockOn();
 
 
+	/* Usable Item Function */
+	void PressedUseItem();
 
+	void UseItem();
+
+	void SkipUseItem();
+
+	UFUNCTION(BlueprintCallable)
+	void DrinkPotion();
+
+	UFUNCTION(BlueprintCallable)
+	void EndUseItem();
 
 public:
 	// Called every frame
@@ -163,7 +176,7 @@ public:
 	/* 델리게이트에 Enemy의 데미지 타입 초기화 함수를 넣는다 */
 	void AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName);
 
-	/* Lock-On된 Enemy를 죽었을 때 호출되는 함수 */
+	/* Lock-On을 종료하는 함수 */
 	void ResetLockOn();
 
 private:
@@ -230,11 +243,14 @@ private:
 		float MaximumST;
 
 	/* 플레이어가 착용하고있는 무기 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
 		AWeapon* EquippedWeapon;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
 		AShield* EquippedShield;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
+		APotion* EquippedPotion;
 
 
 	/* Montage Variable */
@@ -261,11 +277,14 @@ private:
 
 	/* Default Item Variable */
 	/* 타입의 안정성을 보장해주는 템플릿 클래스, 기본 무기를 설정하는 곳 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
 		TSubclassOf<AWeapon> DefaultWeaponClass;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
 		TSubclassOf<AShield> DefaultShieldClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
+		TSubclassOf<APotion> DefaultPotionClass;
 
 
 	/* Attack Variable */
@@ -352,6 +371,10 @@ private:
 
 	bool bBackDodge;
 
+
+	/* Usable Item Variable */
+	bool bDrinkingPotion;
+
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
 	FORCEINLINE FVector2D GetMoveValue() const { return MoveValue; }
@@ -362,4 +385,5 @@ public:
 
 	FORCEINLINE FVector2D GetLastRollMoveValue() const { return LastRollMoveValue; }
 	FORCEINLINE bool GetBackDodge() const { return bBackDodge; }
+	FORCEINLINE bool GetDrinking() const { return bDrinkingPotion; }
 };

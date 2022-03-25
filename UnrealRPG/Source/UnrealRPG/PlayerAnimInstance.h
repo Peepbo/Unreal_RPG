@@ -63,4 +63,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FootStep, meta = (AllowPrivateAccess = "true"))
 	bool bIsRightFootStop;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bDrinkingPotion;
 };

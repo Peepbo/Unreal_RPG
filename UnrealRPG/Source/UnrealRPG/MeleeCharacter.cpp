@@ -12,6 +12,7 @@
 #include "MeleeAnimInstance.h"
 #include "Enemy.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -22,7 +23,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	bDying(false),
 	CombatState(ECombatState::ECS_Unoccupied),
 	bVisibleTraceSphere(false),
-	bIsShieldImpact(false)
+	bIsShieldImpact(false),
+	LastHitDirection(0.f,0.f,0.f)
 {
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
@@ -46,11 +48,11 @@ float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 {
 	if (bDying)return DamageAmount;
 
-	UE_LOG(LogTemp, Warning, TEXT("TakeDamage 호출"));
+	const FVector HitDir{ DamageCauser->GetActorLocation() - GetActorLocation() };
+	LastHitDirection = UKismetMathLibrary::Normal(HitDir);
 
 	if (HP - DamageAmount > 0.f) {
 		HP -= DamageAmount;
-		UE_LOG(LogTemp, Warning, TEXT("HP가 깎임"));
 	}
 	else {
 		HP = 0.f;

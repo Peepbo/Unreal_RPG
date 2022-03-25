@@ -70,6 +70,9 @@ protected:
 	/* Shield Variable */
 	bool bIsShieldImpact;
 
+	
+	FVector LastHitDirection;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -88,4 +91,5 @@ public:
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 	FORCEINLINE bool GetDying() const { return bDying; }
 	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }
+	FORCEINLINE FVector GetLastHitDirection() const { return LastHitDirection; }
 };

@@ -8,6 +8,7 @@
 #include "Item.h"
 #include "Weapon.h"
 #include "Shield.h"
+#include "Potion.h"
 #include "PlayerAnimInstance.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Enemy.h"
@@ -18,6 +19,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Actor.h"
 #include "Components/WidgetComponent.h"
+
 
 APlayerCharacter::APlayerCharacter() :
 	BaseTurnRate(45.f),
@@ -44,7 +46,8 @@ APlayerCharacter::APlayerCharacter() :
 	bBackDodge(false),
 	PlayerAttackType(EPlayerAttackType::EPAT_Weapon),
 	WeaponAttackType(EWeaponAttackType::EWAT_Normal),
-	LockOnCameraSpeed(0.04f)
+	LockOnCameraSpeed(0.04f),
+	bDrinkingPotion(false)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -88,7 +91,10 @@ void APlayerCharacter::BeginPlay()
 	EquipShield(SpawnDefaultShield());
 	if (EquippedShield) {
 		EquippedShield->SetCharacter(this);
-
+	}
+	EquipPotion(SpawnDefaultPotion());
+	if (EquippedPotion) {
+		EquippedPotion->SetCharacter(this);
 	}
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
@@ -312,6 +318,14 @@ AShield* APlayerCharacter::SpawnDefaultShield()
 	return nullptr;
 }
 
+APotion* APlayerCharacter::SpawnDefaultPotion()
+{
+	if (DefaultPotionClass) {
+		return GetWorld()->SpawnActor<APotion>(DefaultPotionClass);
+	}
+	return nullptr;
+}
+
 void APlayerCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 {
 	// 무기를 RightHandSocket 위치에 부착한다.
@@ -339,6 +353,19 @@ void APlayerCharacter::EquipShield(AShield* Shield, bool bSwapping)
 
 		// HUD에 연결된 아이템 아이콘을 변경한다. (방패는 왼쪽)
 		UpdateLeftItemIcon();
+	}
+}
+
+void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
+{
+	if (Potion) {
+		const USkeletalMeshSocket* PotionSocket = GetMesh()->GetSocketByName(FName("LeftPotionSocket"));
+		if (PotionSocket) {
+			PotionSocket->AttachActor(Potion, GetMesh());
+		}
+		EquippedPotion = Potion;
+
+		//UpdateIcon
 	}
 }
 
@@ -533,6 +560,12 @@ void APlayerCharacter::BeginAttackRotate(float DeltaTime)
 void APlayerCharacter::PressedBattleModeChange()
 {
 	if (CombatState == ECombatState::ECS_Unoccupied) {
+		//만약 배틀모드가 켜져있는데 락온도 켜져있으면
+		if (bIsBattleMode && bLockOn) {
+			// 락온을 리셋한다.
+			ResetLockOn();
+		}
+
 		bIsBattleMode = !bIsBattleMode;
 	}
 }
@@ -636,15 +669,7 @@ void APlayerCharacter::PressedLockOn()
 {
 	if (bLockOn) {
 		// 락온 취소
-		bLockOn = false;
-		LockOnWidgetData->SetVisibility(false);
-		LockOnWidgetData = nullptr;
-
-		EnemyLockOnResetDelegate.ExecuteIfBound();
-		EnemyLockOnResetDelegate.Unbind();
-
-		GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
+		ResetLockOn();
 	}
 	else {
 		// 락온 선택 시도
@@ -760,6 +785,47 @@ void APlayerCharacter::RotateCameraByLockOn()
 			true));
 }
 
+void APlayerCharacter::PressedUseItem()
+{
+	//if item valid?
+	if (EquippedPotion) {
+		// 특정 액션을 취하고 있지 않을 때만 가능
+		if (CombatState != ECombatState::ECS_Unoccupied)return;
+
+		// 풀피가 아닐 때 사용 (포션)
+		if (!UKismetMathLibrary::EqualEqual_FloatFloat(HP, MaximumHP)) {
+			UseItem();
+		}
+	}
+}
+
+void APlayerCharacter::UseItem()
+{
+	//ChangeState
+	bDrinkingPotion = true;
+	CombatState = ECombatState::ECS_MovableInteraction;
+}
+
+void APlayerCharacter::SkipUseItem()
+{
+	bDrinkingPotion = false;
+	//CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void APlayerCharacter::DrinkPotion()
+{
+	const float NextHP{ HP + EquippedPotion->GetRecoveryAmount() };
+
+	// 체력을 최대 체력을 넘어서지 못하게 한다.
+	HP = (NextHP <= MaximumHP) ? NextHP : MaximumHP;
+}
+
+void APlayerCharacter::EndUseItem()
+{
+	bDrinkingPotion = false;
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
 void APlayerCharacter::DashAttack()
 {
 	if (DashAttackMontage) {
@@ -810,6 +876,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Released, this, &APlayerCharacter::ReleasedChargedAttack);
 
 	PlayerInputComponent->BindAction("LockOnButton", IE_Pressed, this, &APlayerCharacter::PressedLockOn);
+
+	// UseItemButton
+	PlayerInputComponent->BindAction("UseItemButton", IE_Pressed, this, &APlayerCharacter::PressedUseItem);
 }
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -817,40 +886,42 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	if (bDying)return DamageAmount;
 	if (CombatState == ECombatState::ECS_Roll)return DamageAmount;
 
-	if (EquippedShield && CombatState == ECombatState::ECS_Guard) {
+
+	const FVector PlayerForward{ GetActorForwardVector() };
+	const FVector PlayerToHitPoint{ UKismetMathLibrary::Normal(LastHitPoint - GetActorLocation()) };
+	const float DotProductResult{ UKismetMathLibrary::Dot_VectorVector(PlayerForward,PlayerToHitPoint) };
+	const float DegreeDifference{ UKismetMathLibrary::DegAcos(DotProductResult) };
+	UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
+
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Guard:
 		// 각도가 -DeffenceAngle,+DeffenceAngle 사이인지 구한다.
-		
-		// 필요한 방향 벡터 : forward, playerToHitPoint
-		const FVector PlayerForward{ GetActorForwardVector() };
-		const FVector PlayerToHitPoint{ UKismetMathLibrary::Normal(LastHitPoint - GetActorLocation()) };
-		const float DotProductResult{ UKismetMathLibrary::Dot_VectorVector(PlayerForward,PlayerToHitPoint) };
-		const float DegreeDifference{ UKismetMathLibrary::DegAcos(DotProductResult) };
-
-		UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
-
 		if (DegreeDifference <= EquippedShield->GetDefenceDegree()) {
-			if (ST >= (DamageAmount / 2)) {
+			const float HalfDamage{ DamageAmount / 2 };
+			if (ST >= HalfDamage) {
 				// 스태미나를 일정 수치 깎는다.
-				ST -= (DamageAmount / 2);
+				ST -= HalfDamage;
 
 				SetShiledImpact(true);
-				//bIsShieldImpact = true;
 
+				// 데미지를 가드가 모두 받아냈으니 함수를 종료한다.
 				return DamageAmount;
 			}
 			else {
-				// 가드로 막을 수 없는 공격이면 가드를 취소하고 스태미나를 0으로 만든다.
-				ST = 0.f;
+				// 가드로 막을 수 없는 공격이면 가드를 취소한다.
 				EndSubAttack();
 			}
 		}
-	}
-
-	if (CombatState == ECombatState::ECS_Attack) {
+		break;
+	case ECombatState::ECS_Attack:
 		ResetAttack();
+		break;
+	case ECombatState::ECS_MovableInteraction:
+		SkipUseItem();
+		break;
 	}
 
-	// AnimInstance에서 CombatState를 가져가 Impact 상태를 비교한다. (Impact 상태 시 AnimBP에서 Impact 상태 실행)
 	CombatState = ECombatState::ECS_Impact;
 
 	// 데미지 적용
@@ -868,10 +939,16 @@ void APlayerCharacter::AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const
 
 void APlayerCharacter::ResetLockOn()
 {
-	// 락온 상태면 락온을 풀어준다.
-	if (bLockOn) {
-		PressedLockOn();
-	}
+	// 락온 취소
+	bLockOn = false;
+	LockOnWidgetData->SetVisibility(false);
+	LockOnWidgetData = nullptr;
+
+	EnemyLockOnResetDelegate.ExecuteIfBound();
+	EnemyLockOnResetDelegate.Unbind();
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 const FVector2D APlayerCharacter::GetThumbStickLocalAxis()

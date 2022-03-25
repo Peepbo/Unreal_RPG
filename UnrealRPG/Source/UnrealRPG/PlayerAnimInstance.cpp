@@ -47,9 +47,6 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bIsMove = (MoveValue.Size() != 0.f);
 
-		//bIsShieldImpact = PlayerCharacter->GetShiledImpact();
-		//
-		//bIsDamageImpact = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Impact);
 
 		bRoll = (PlayerCharacter->GetCombatState() == ECombatState::ECS_Roll);
 
@@ -58,6 +55,8 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bBackDodge = PlayerCharacter->GetBackDodge();
 
 		LastFootCurveValue = GetCurveValue(CurveName);
+
+		bDrinkingPotion = PlayerCharacter->GetDrinking();
 	}
 }
 
