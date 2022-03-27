@@ -25,13 +25,19 @@ protected:
 	/* Shield Function */
 	/* bIsShieldImpact을 false로 바꾸는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void EndShieldImpact();
+		virtual void EndShieldImpact();
 
 
 	/* Damage Function */
 	/* impact state를 끝내는 함수 */
 	UFUNCTION(BlueprintCallable)
 		virtual void EndDamageImpact();
+
+	void ChangeMoveState(bool bNextMoveSprinting);
+
+	virtual void HardResetSprint();
+
+	void ChangeMaximumSpeedForSmoothSpeed(float DeltaTime);
 
 protected:
 	/* 캐릭터의 상태 */
@@ -51,6 +57,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float MaximumWalkSpeed;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float MaximumSprintSpeed;
+	
+
 	/* 전투 모드인지 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool bIsBattleMode;
@@ -58,6 +68,9 @@ protected:
 	/* 죽었는지 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bDying;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bSprinting;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* BloodParticle;
@@ -81,8 +94,10 @@ public:
 
 private:
 
+	bool ChangeSpeed;
+
 public:
-	
+	FORCEINLINE bool GetSprinting() const { return bSprinting; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 	FORCEINLINE bool GetImpacting() const { return CombatState == ECombatState::ECS_Impact; }

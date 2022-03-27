@@ -22,6 +22,22 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		FVector CharVelocity{ Character->GetVelocity() };
 		CharVelocity.Z = 0;
 		Velocity = { CharVelocity.X,CharVelocity.Y };
+		if (Velocity.Size() > 200.f) {
+			FVector Forward{ Character->GetActorForwardVector() };
+			const FVector2D NormalVelocity{ UKismetMathLibrary::Normal2D(Velocity) };
+			const FVector2D Forward2D{ Forward.X,Forward.Y };
+			const float dot{ UKismetMathLibrary::DegAcos(
+				UKismetMathLibrary::DotProduct2D(
+					Forward2D,
+					NormalVelocity)) };
+			const float Cross{ UKismetMathLibrary::CrossProduct2D(Forward2D, NormalVelocity) };
+			
+			LastRelativeVelocityAngle = dot;
+			if (Cross < 0.f) {
+				LastRelativeVelocityAngle = -LastRelativeVelocityAngle;
+			}
+		}
+
 		Speed = Velocity.Size();
 
 		// 캐릭터가 공중에 있는지 확인
@@ -34,6 +50,8 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		else {
 			bIsAccelerating = false;
 		}
+
+		bIsSprint = Character->GetSprinting();
 
 		bAttack = Character->GetAttacking();
 

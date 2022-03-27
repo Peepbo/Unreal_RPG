@@ -30,8 +30,7 @@ APlayerCharacter::APlayerCharacter() :
 	ST(50.f),
 	MaximumST(50.f),
 	StaminaRecoveryDelayTime(0.3f),
-	bPressedSprintButton(false),
-	bPressedRollButton(false),
+	bPressedRollAndSprintButton(false),
 	bPressedSubAttackButton(false),
 	BeforeAttackRotateSpeed(10.f),
 	bIsBeforeAttackRotate(false),
@@ -40,6 +39,7 @@ APlayerCharacter::APlayerCharacter() :
 	RollRequiredStamina(10.f),
 	bLockOn(false),
 	MoveValue(0.f, 0.f),
+	LastMoveValue(0.f, 0.f),
 	StopAttackMontageBlendOutValue(0.25f),
 	MaximumAttackIndex(1),
 	LastRollMoveValue(0.f, 0.f),
@@ -47,7 +47,9 @@ APlayerCharacter::APlayerCharacter() :
 	PlayerAttackType(EPlayerAttackType::EPAT_Weapon),
 	WeaponAttackType(EWeaponAttackType::EWAT_Normal),
 	LockOnCameraSpeed(0.04f),
-	bDrinkingPotion(false)
+	bDrinkingPotion(false),
+	bCanRoll(true),
+	RollDelay(2.1f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -124,6 +126,7 @@ void APlayerCharacter::MoveForward(float Value)
 		// 어느쪽이 전방인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
 
+		LastMoveValue.Y = MoveValue.Y;
 		MoveValue.Y = Value;
 		AddMovementInput(Direction, Value);
 	}
@@ -143,6 +146,7 @@ void APlayerCharacter::MoveRight(float Value)
 		// 어느쪽이 우측인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
 
+		LastMoveValue.X = MoveValue.X;
 		MoveValue.X = Value;
 		AddMovementInput(Direction, Value);
 	}
@@ -197,7 +201,7 @@ void APlayerCharacter::SubAttack()
 
 void APlayerCharacter::PressedAttack()
 {
-	bIsBattleMode = true;
+	//bIsBattleMode = true;
 	bPressedAttackButton = true;
 
 	if (CombatState == ECombatState::ECS_Unoccupied && EquippedWeapon && AnimInstance) {
@@ -371,21 +375,17 @@ void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
 
 void APlayerCharacter::Roll()
 {
-	if (GetCharacterMovement()->IsFalling())return;
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
-
-	if (AnimInstance && RollBackMontage) {
+	if (AnimInstance) {
 		ST -= RollRequiredStamina;
 
 		const FVector2D ThumbAxis{ GetThumbStickLocalAxis() };
 		if (ThumbAxis.IsNearlyZero()) {
 			bBackDodge = true;
 
-			AnimInstance->Montage_Play(RollBackMontage);
+			//AnimInstance->Montage_Play(RollBackMontage);
 		}
-		else {
-			LastRollMoveValue = GetThumbStickLocalAxis();
-		}
+
+		LastRollMoveValue = GetThumbStickLocalAxis();
 
 		// 상태를 바꾼다.
 		CombatState = ECombatState::ECS_Roll;
@@ -398,24 +398,75 @@ void APlayerCharacter::EndRoll()
 
 	bBackDodge = false;
 	StartStaminaRecoveryDelayTimer();
+
+	GetWorldTimerManager().SetTimer(
+		RollDelayTimer,
+		this,
+		&APlayerCharacter::StopDelayForRoll,
+		0.1f,
+		false,
+		RollDelay);
 }
 
-void APlayerCharacter::PressedRoll()
+void APlayerCharacter::PressedRollAndSprint()
 {
-	bPressedRollButton = true;
+	bPressedRollAndSprintButton = true;
 
-	if (CombatState == ECombatState::ECS_Unoccupied &&
-		ST >= RollRequiredStamina) {
-		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
-		StopStaminaRecoveryTimer();
+	// 구르기와 뛰기는 둘 다 특정 모션을 취하고 있으면 안되고, 공중에 있으면 안된다. 
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (GetCharacterMovement()->IsFalling())return;
+	if (!bCanRoll)return;
+	bCanRoll = false;
 
-		Roll();
+	UE_LOG(LogTemp, Warning, TEXT("롤 앤 스프린트 타이머 시작"));
+
+	// 0.5초 내에 키를 제거했을 때 = 구르기
+	// 0.5초가 지나 Sprint함수를 출력했을 때 = 뛰기
+	GetWorldTimerManager().SetTimer(
+		SprintAndRollPlayTimer,
+		this,
+		&APlayerCharacter::Sprint,
+		0.5f,
+		false,
+		0.5f);
+}
+
+void APlayerCharacter::ReleasedRollAndSprint()
+{
+	bPressedRollAndSprintButton = false;
+
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (GetCharacterMovement()->IsFalling())return;
+
+	// 1. 뛰고 있을 때(sprint)
+	if (GetSprinting()) {
+		EndSprint();
 	}
-}
+	// 2. 일반 상태
+	else {
+		// 아직 타이머가 진행중이면 (0.5초 이내에 키를 놨을 때)
+		if (GetWorldTimerManager().IsTimerActive(SprintAndRollPlayTimer)) {
+			GetWorldTimerManager().ClearTimer(SprintAndRollPlayTimer);
 
-void APlayerCharacter::ReleasedRoll()
-{
-	bPressedRollButton = false;
+			// 몇가지 조건을 비교하고 구르기를 실행한다.
+			/*
+			* 한번 더 검사하는 이유?
+			*	Pressed 호출시 땅에 있었고 특정 모션을 취하지 않았지만
+			*	Released 호출시에 공중에 있거나 특정 모션을 취하면 구르기를 하면 안되기 때문
+			*/
+			if (!GetCharacterMovement()->IsFalling() &&
+				CombatState == ECombatState::ECS_Unoccupied &&
+				ST >= RollRequiredStamina) {
+				GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
+				StopStaminaRecoveryTimer();
+
+				Roll();
+			}
+			else {
+				bCanRoll = true;
+			}
+		}
+	}
 }
 
 void APlayerCharacter::PrepareShieldAttack()
@@ -465,7 +516,7 @@ void APlayerCharacter::ResetDamageState()
 
 void APlayerCharacter::PressedSubAttack()
 {
-	bIsBattleMode = true;
+	//bIsBattleMode = true;
 	bPressedSubAttackButton = true;
 
 	if (CombatState == ECombatState::ECS_Unoccupied && ST >= 10.f) {
@@ -480,7 +531,8 @@ void APlayerCharacter::ReleasedSubAttack()
 {
 	bPressedSubAttackButton = false;
 
-	if (CombatState == ECombatState::ECS_Guard) {
+	if (CombatState == ECombatState::ECS_Guard &&
+		!bIsShieldImpact) {
 		EndSubAttack();
 	}
 }
@@ -557,18 +609,18 @@ void APlayerCharacter::BeginAttackRotate(float DeltaTime)
 	SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), SaveRotator, DeltaTime, BeforeAttackRotateSpeed));
 }
 
-void APlayerCharacter::PressedBattleModeChange()
-{
-	if (CombatState == ECombatState::ECS_Unoccupied) {
-		//만약 배틀모드가 켜져있는데 락온도 켜져있으면
-		if (bIsBattleMode && bLockOn) {
-			// 락온을 리셋한다.
-			ResetLockOn();
-		}
-
-		bIsBattleMode = !bIsBattleMode;
-	}
-}
+//void APlayerCharacter::PressedBattleModeChange()
+//{
+//	if (CombatState == ECombatState::ECS_Unoccupied) {
+//		//만약 배틀모드가 켜져있는데 락온도 켜져있으면
+//		if (bIsBattleMode && bLockOn) {
+//			// 락온을 리셋한다.
+//			ResetLockOn();
+//		}
+//
+//		bIsBattleMode = !bIsBattleMode;
+//	}
+//}
 
 void APlayerCharacter::PressedChargedAttack()
 {
@@ -580,7 +632,7 @@ void APlayerCharacter::PressedChargedAttack()
 
 	// 스태미나 검사
 	// Attack 중에 호출할 수 있으며 마무리 공격처럼 사용할 수 있음.
-	bIsBattleMode = true;
+	//bIsBattleMode = true;
 
 	ResetAttack();
 
@@ -590,6 +642,11 @@ void APlayerCharacter::PressedChargedAttack()
 void APlayerCharacter::ReleasedChargedAttack()
 {
 	bPressedChargedAttackButton = false;
+}
+
+void APlayerCharacter::EndSprint()
+{
+	ChangeMoveState(false);
 }
 
 void APlayerCharacter::PrepareChargedAttack()
@@ -700,7 +757,7 @@ void APlayerCharacter::PressedLockOn()
 	}
 
 	if (LockOnWidgetData) {
-		bIsBattleMode = true;
+		//bIsBattleMode = true;
 		bLockOn = true;
 		LockOnWidgetData->SetVisibility(true);
 
@@ -840,6 +897,10 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (GetSprinting() && GetCharacterMovement()->GetCurrentAcceleration().IsNearlyZero()) {
+		HardResetSprint();
+	}
+
 	if (bIsBeforeAttackRotate) {
 		BeginAttackRotate(DeltaTime);
 	}
@@ -864,13 +925,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("AttackButton", IE_Pressed, this, &APlayerCharacter::PressedAttack);
 	PlayerInputComponent->BindAction("AttackButton", IE_Released, this, &APlayerCharacter::ReleasedAttack);
 
-	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &APlayerCharacter::PressedRoll);
-	PlayerInputComponent->BindAction("Roll", IE_Released, this, &APlayerCharacter::ReleasedRoll);
+	PlayerInputComponent->BindAction("RollAndSprint", IE_Pressed, this, &APlayerCharacter::PressedRollAndSprint);
+	PlayerInputComponent->BindAction("RollAndSprint", IE_Released, this, &APlayerCharacter::ReleasedRollAndSprint);
 
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Pressed, this, &APlayerCharacter::PressedSubAttack);
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &APlayerCharacter::ReleasedSubAttack);
 
-	PlayerInputComponent->BindAction("BattleModeChangeButton", IE_Pressed, this, &APlayerCharacter::PressedBattleModeChange);
+	//PlayerInputComponent->BindAction("BattleModeChangeButton", IE_Pressed, this, &APlayerCharacter::PressedBattleModeChange);
 
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Pressed, this, &APlayerCharacter::PressedChargedAttack);
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Released, this, &APlayerCharacter::ReleasedChargedAttack);
@@ -951,6 +1012,22 @@ void APlayerCharacter::ResetLockOn()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
+void APlayerCharacter::HardResetSprint()
+{
+	Super::HardResetSprint();
+
+	// 스태미나 슬로우를 풀어준다.
+}
+
+void APlayerCharacter::EndShieldImpact()
+{
+	Super::EndShieldImpact();
+
+	if (!bPressedSubAttackButton) {
+		EndSubAttack();
+	}
+}
+
 const FVector2D APlayerCharacter::GetThumbStickLocalAxis()
 {
 	return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
@@ -970,4 +1047,22 @@ const FVector2D APlayerCharacter::GetThumbStickWorldAxis()
 	const FVector2D ComposeDir{ UKismetMathLibrary::Normal(ComposeRot.Vector()) };
 
 	return ComposeDir;
+}
+
+void APlayerCharacter::Sprint()
+{
+	bCanRoll = true;
+
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (GetCharacterMovement()->IsFalling())return;
+
+	if (GetMovementComponent()->Velocity.Size() > 0.f) {
+		ChangeMoveState(true);
+		// 스태미나 속도 늦추기 (차기는 참)
+	}
+}
+
+void APlayerCharacter::StopDelayForRoll()
+{
+	bCanRoll = true;
 }

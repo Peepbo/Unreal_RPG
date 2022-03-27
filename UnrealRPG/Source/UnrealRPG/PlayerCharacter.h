@@ -45,14 +45,15 @@ protected:
 	void PressedSubAttack();
 	void ReleasedSubAttack();
 
-	void PressedRoll();
-	void ReleasedRoll();
+	void PressedRollAndSprint();
+	void ReleasedRollAndSprint();
 
-	void PressedBattleModeChange();
+	//void PressedBattleModeChange();
 
 	void PressedChargedAttack();
 	void ReleasedChargedAttack();
 
+	void EndSprint();
 
 	/* Attack Function */
 	void MainAttack();
@@ -180,12 +181,20 @@ public:
 	void ResetLockOn();
 
 private:
+	virtual void HardResetSprint() override;
+
+	virtual void EndShieldImpact() override;
+
 	/* ThumbStick의 Axis를 가져온다. (local direction) */
 	const FVector2D GetThumbStickLocalAxis();
 	/* ThumbStick의 Degree를 가져온다. */
 	const float GetThumbStickDegree();
 	/* ThumbStick방향과 Controller방향을 혼합한 Axis를 가져온다. (world direction) */
 	const FVector2D GetThumbStickWorldAxis();
+
+	void Sprint();
+
+	void StopDelayForRoll();
 
 private:
 	/* Camera Variable */
@@ -212,8 +221,7 @@ private:
 	/* Button Variable */
 	/* 공격 버튼이 눌렸는지 안눌렸는지 */
 	bool bPressedAttackButton;
-	bool bPressedSprintButton;
-	bool bPressedRollButton;
+	bool bPressedRollAndSprintButton;
 	bool bPressedSubAttackButton;
 	bool bPressedChargedAttackButton;
 
@@ -233,6 +241,10 @@ private:
 
 	/* 공격 충돌 확인 타이머, 타이머가 작동되면 특정 딜레이(=0.005f) 마다 저장된 함수를 호출함 */
 	FTimerHandle AttackCheckTimer;
+
+	FTimerHandle SprintAndRollPlayTimer;
+
+	FTimerHandle RollDelayTimer;
 
 
 	/* Stat Variable */
@@ -257,10 +269,6 @@ private:
 	/* 공격 몽타주 모음 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		TArray<UAnimMontage*> MainComboMontages;
-
-	/* 구르기 몽타주 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* RollBackMontage;
 
 	/* 차지 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -366,10 +374,15 @@ private:
 	class UPlayerAnimInstance* AnimInstance;
 
 	FVector2D MoveValue;
-
+	FVector2D LastMoveValue;
 	FVector2D LastRollMoveValue;
 
 	bool bBackDodge;
+
+	bool bCanRoll;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float RollDelay;
 
 
 	/* Usable Item Variable */
@@ -378,6 +391,7 @@ private:
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
 	FORCEINLINE FVector2D GetMoveValue() const { return MoveValue; }
+	FORCEINLINE FVector2D GetLastMoveValue() const { return LastMoveValue; }
 	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
 	/* 방어 시 필요한 정보를 Enemy한테 전달받는다 */
 	FORCEINLINE void SetHitPoint(const FVector HitPoint) { LastHitPoint = HitPoint; }

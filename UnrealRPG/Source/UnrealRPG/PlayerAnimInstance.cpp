@@ -43,6 +43,8 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		// 캐릭터의 움직임 방향을 읽어온다.
 		MoveValue = PlayerCharacter->GetThumStickAxisForce();
 
+		LastMoveValue = PlayerCharacter->GetLastMoveValue();
+
 		PlayerForward = PlayerCharacter->GetActorForwardVector();
 
 		bIsMove = (MoveValue.Size() != 0.f);
@@ -57,6 +59,7 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		LastFootCurveValue = GetCurveValue(CurveName);
 
 		bDrinkingPotion = PlayerCharacter->GetDrinking();
+
 	}
 }
 
