@@ -21,9 +21,6 @@ public:
 	virtual void InitializeAnimationProperties() override;
 
 	virtual void UpdateAnimationProperties(float DeltaTime) override;
-
-	UFUNCTION(BlueprintCallable)
-	void ChooseStopFoot();
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -39,16 +36,10 @@ private:
 	FVector2D MoveValue;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	FVector2D LastMoveValue;
+	float MoveAngle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bIsMove;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	//bool bIsShieldImpact;
-	//
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	//bool bIsDamageImpact;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bRoll;
@@ -59,14 +50,15 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bBackDodge;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FootStep, meta = (AllowPrivateAccess = "true"))
-	float LastFootCurveValue;
-
-	FName CurveName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FootStep, meta = (AllowPrivateAccess = "true"))
-	bool bIsRightFootStop;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bDrinkingPotion;
+
+
+	/* Fast Path 전용 변수 */
+
+	/* Forward ( angle <= abs(90) || LockOn ), Backward ( angle > abs(90)) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fast Path", meta = (AllowPrivateAccess = "true"))
+	bool bSelectBrakeForward;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fast Path", meta = (AllowPrivateAccess = "true"))
+	bool bSelectJogForward;
 };

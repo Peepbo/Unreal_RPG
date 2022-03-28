@@ -92,6 +92,9 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	/* 캐릭터 정면 상대 속도의 각도 */
+	float GetLastRelativeVelocityAngle();
+
 private:
 
 	bool ChangeSpeed;

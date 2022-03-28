@@ -126,8 +126,8 @@ void APlayerCharacter::MoveForward(float Value)
 		// 어느쪽이 전방인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::X) };
 
-		LastMoveValue.Y = MoveValue.Y;
-		MoveValue.Y = Value;
+		LastMoveValue.X = MoveValue.X;
+		MoveValue.X = Value;
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -146,8 +146,8 @@ void APlayerCharacter::MoveRight(float Value)
 		// 어느쪽이 우측인지 알아내고, 그 방향으로 이동
 		const FVector Direction{ FRotationMatrix{YawRotation}.GetUnitAxis(EAxis::Y) };
 
-		LastMoveValue.X = MoveValue.X;
-		MoveValue.X = Value;
+		LastMoveValue.Y = MoveValue.Y;
+		MoveValue.Y = Value;
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -931,8 +931,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Pressed, this, &APlayerCharacter::PressedSubAttack);
 	PlayerInputComponent->BindAction("SubAttackButton", IE_Released, this, &APlayerCharacter::ReleasedSubAttack);
 
-	//PlayerInputComponent->BindAction("BattleModeChangeButton", IE_Pressed, this, &APlayerCharacter::PressedBattleModeChange);
-
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Pressed, this, &APlayerCharacter::PressedChargedAttack);
 	PlayerInputComponent->BindAction("ChargedAttackButton", IE_Released, this, &APlayerCharacter::ReleasedChargedAttack);
 
@@ -1010,6 +1008,12 @@ void APlayerCharacter::ResetLockOn()
 
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+float APlayerCharacter::GetMoveAngle()
+{
+	const FVector2D Axis{ GetThumStickAxisForce() };
+	return UKismetMathLibrary::DegAtan2(Axis.Y, Axis.X);
 }
 
 void APlayerCharacter::HardResetSprint()

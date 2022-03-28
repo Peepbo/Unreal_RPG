@@ -180,6 +180,8 @@ public:
 	/* Lock-On을 종료하는 함수 */
 	void ResetLockOn();
 
+	float GetMoveAngle();
+
 private:
 	virtual void HardResetSprint() override;
 
@@ -390,8 +392,6 @@ private:
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
-	FORCEINLINE FVector2D GetMoveValue() const { return MoveValue; }
-	FORCEINLINE FVector2D GetLastMoveValue() const { return LastMoveValue; }
 	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
 	/* 방어 시 필요한 정보를 Enemy한테 전달받는다 */
 	FORCEINLINE void SetHitPoint(const FVector HitPoint) { LastHitPoint = HitPoint; }

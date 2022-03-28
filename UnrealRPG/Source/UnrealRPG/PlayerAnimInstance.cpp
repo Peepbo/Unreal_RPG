@@ -11,9 +11,9 @@ void UPlayerAnimInstance::InitializeAnimationProperties()
 	Super::InitializeAnimationProperties();
 
 	PlayerCharacter = Cast<APlayerCharacter>(TryGetPawnOwner());
-	LastFootCurveValue = 0.f;
-	CurveName = TEXT("WalkStop");
-	bIsRightFootStop = true;
+
+	bSelectBrakeForward = true;
+	bSelectJogForward = true;
 }
 
 void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
@@ -28,9 +28,6 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 	if (PlayerCharacter)
 	{
-		// 스프린트 상태인지 확인한다.
-		//bIsSprint = MeleeCharacter->GetSprinting();
-
 		// 가드 상태인지 확인한다.
 		bIsGuard = PlayerCharacter->GetGuarding();
 
@@ -42,8 +39,7 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		// 캐릭터의 움직임 방향을 읽어온다.
 		MoveValue = PlayerCharacter->GetThumStickAxisForce();
-
-		LastMoveValue = PlayerCharacter->GetLastMoveValue();
+		MoveAngle = PlayerCharacter->GetMoveAngle();
 
 		PlayerForward = PlayerCharacter->GetActorForwardVector();
 
@@ -56,15 +52,15 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bBackDodge = PlayerCharacter->GetBackDodge();
 
-		LastFootCurveValue = GetCurveValue(CurveName);
-
 		bDrinkingPotion = PlayerCharacter->GetDrinking();
 
-	}
-}
 
-void UPlayerAnimInstance::ChooseStopFoot()
-{
-	const bool bIsLeft{ UKismetMathLibrary::InRange_FloatFloat(LastFootCurveValue, 1.f, 2.f) };
-	bIsRightFootStop = !bIsLeft;
+		bSelectBrakeForward = (
+			UKismetMathLibrary::Abs(LastRelativeVelocityAngle) <= 90.f ||
+			bLockOn);
+
+		bSelectJogForward = (
+			UKismetMathLibrary::Abs(MoveAngle) <= 90.f ||
+			bLockOn);
+	}
 }

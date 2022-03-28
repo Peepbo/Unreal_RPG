@@ -69,6 +69,33 @@ float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	return DamageAmount;
 }
 
+float AMeleeCharacter::GetLastRelativeVelocityAngle()
+{
+	float ReturnAngle{ 0.f };
+
+	const FVector Forward{ GetActorForwardVector() };
+	const FVector Velocity{ GetCharacterMovement()->Velocity };
+
+	const FVector2D NormalVelocity{ UKismetMathLibrary::Normal2D({Velocity.X,Velocity.Y}) };
+	const FVector2D Forward2D{ Forward.X,Forward.Y };
+
+	// dot 후 radian값을 degree로 변환
+	const float dot{ UKismetMathLibrary::DegAcos(
+		UKismetMathLibrary::DotProduct2D(
+			Forward2D,
+			NormalVelocity)) };
+
+	// 각도가 음수인지 양수인지 판별하기 위해 cross 시도
+	const float Cross{ UKismetMathLibrary::CrossProduct2D(Forward2D, NormalVelocity) };
+
+	ReturnAngle = dot;
+	if (Cross < 0.f) {
+		ReturnAngle = -ReturnAngle;
+	}
+
+	return ReturnAngle;
+}
+
 void AMeleeCharacter::EndShieldImpact()
 {
 	bIsShieldImpact = false;

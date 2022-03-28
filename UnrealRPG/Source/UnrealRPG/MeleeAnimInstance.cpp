@@ -9,6 +9,8 @@
 void UMeleeAnimInstance::InitializeAnimationProperties()
 {
 	Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
+
+	LastRelativeVelocityAngle = 0.f;
 }
 
 void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
@@ -22,20 +24,15 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		FVector CharVelocity{ Character->GetVelocity() };
 		CharVelocity.Z = 0;
 		Velocity = { CharVelocity.X,CharVelocity.Y };
+
+		if (!Character->GetAttacking()) {
+			AttackExclusionVelocity = Velocity;
+			AttackExclusionSpeed = AttackExclusionVelocity.Size();
+		}
+
+		// 일정 속도 이상이여야 Brake 애니메이션을 호출하기 위해 속도 최소값(200.f)을 지정함
 		if (Velocity.Size() > 200.f) {
-			FVector Forward{ Character->GetActorForwardVector() };
-			const FVector2D NormalVelocity{ UKismetMathLibrary::Normal2D(Velocity) };
-			const FVector2D Forward2D{ Forward.X,Forward.Y };
-			const float dot{ UKismetMathLibrary::DegAcos(
-				UKismetMathLibrary::DotProduct2D(
-					Forward2D,
-					NormalVelocity)) };
-			const float Cross{ UKismetMathLibrary::CrossProduct2D(Forward2D, NormalVelocity) };
-			
-			LastRelativeVelocityAngle = dot;
-			if (Cross < 0.f) {
-				LastRelativeVelocityAngle = -LastRelativeVelocityAngle;
-			}
+			LastRelativeVelocityAngle = Character->GetLastRelativeVelocityAngle();
 		}
 
 		Speed = Velocity.Size();
