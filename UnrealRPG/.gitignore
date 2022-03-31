@@ -89,7 +89,11 @@ Content/AnimationAsset/*
 
 # FX Asset
 Content/FXAsset/*
+Content/InfinityBladeEffects/*
 
 # Others
 Content/Assets/*
 Content/_Game/Map/Level1/*
+Content/InfinityBladeGrassLands/*
+Content/KiteDemo/*
+Content/ParagonProps/*
