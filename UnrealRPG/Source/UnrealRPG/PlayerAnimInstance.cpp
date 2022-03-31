@@ -57,9 +57,11 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		
 		IKLeftFootEffector.X = PlayerCharacter->GetIKLeftFootOffset();
 		IKRightFootEffector.X = -(PlayerCharacter->GetIKRightFootOffset());
-		IKHipOffset = PlayerCharacter->GetIKHipOffset();
+		IKHipOffset.Z = PlayerCharacter->GetIKHipOffset();
 		IKLeftFootRotator = PlayerCharacter->GetIKLeftFootRotator();
 		IKRightFootRotator = PlayerCharacter->GetIKRightFootRotator();
+
+		IKFootAlpha = PlayerCharacter->GetIKFootAlpha();
 	}
 
 	bSelectBrakeForward = (

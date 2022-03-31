@@ -62,13 +62,16 @@ private:
 	FVector IKRightFootEffector;
 
 	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
-	float IKHipOffset;
+	FVector IKHipOffset;
 
 	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
 	FRotator IKLeftFootRotator;
 
 	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
 	FRotator IKRightFootRotator;
+
+	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
+	float IKFootAlpha;
 
 	/* Fast Path 전용 변수 */
 

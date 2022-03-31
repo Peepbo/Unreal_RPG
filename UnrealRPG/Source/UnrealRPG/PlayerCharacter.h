@@ -405,6 +405,7 @@ private:
 	FRotator IKRightFootRotator;
 	FName LeftFootSocketName;
 	FName RightFootSocketName;
+	float IKFootAlpha;
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
@@ -423,4 +424,5 @@ public:
 	FORCEINLINE float GetIKHipOffset() const { return IKHipOffset; }
 	FORCEINLINE FRotator GetIKLeftFootRotator() const { return IKLeftFootRotator; }
 	FORCEINLINE FRotator GetIKRightFootRotator() const { return IKRightFootRotator; }
+	FORCEINLINE float GetIKFootAlpha() const { return IKFootAlpha; }
 };

@@ -59,7 +59,8 @@ APlayerCharacter::APlayerCharacter() :
 	IKLeftFootRotator(0.f, 0.f, 0.f),
 	IKRightFootRotator(0.f, 0.f, 0.f),
 	LeftFootSocketName(FName("Foot_L")),
-	RightFootSocketName(FName("Foot_R"))
+	RightFootSocketName(FName("Foot_R")),
+	IKFootAlpha(0.f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -1075,6 +1076,15 @@ void APlayerCharacter::StopDelayForRoll()
 
 void APlayerCharacter::UpdateIKFootData(float DeltaTime)
 {
+	// IK_Foot을 잠시 끄는 조건
+	if (CombatState == ECombatState::ECS_Attack ||
+		CombatState == ECombatState::ECS_Impact ||
+		CombatState == ECombatState::ECS_Roll) {
+
+		IKFootAlpha = 0.f;
+		return;
+	}
+
 	ContinueUpdateIKData(DeltaTime);
 }
 
@@ -1100,6 +1110,8 @@ void APlayerCharacter::IKFootTrace(const FName& SocketName, FHitResult& HitResul
 
 void APlayerCharacter::ContinueUpdateIKData(float DeltaTime)
 {
+	IKFootAlpha = UKismetMathLibrary::FInterpTo(IKFootAlpha, 1.f, DeltaTime, IKInterpSpeed);
+
 	FVector HitLocation[2]{ FVector::ZeroVector, FVector::ZeroVector };
 
 	// for-loop variable
@@ -1133,7 +1145,7 @@ void APlayerCharacter::ContinueUpdateIKData(float DeltaTime)
 		// 나중에 hipOffset의 위치를 구할 때 사용하므로 따로 저장한다.
 		HitLocation[i] = Location;
 
-		const FVector Temp = HitResult.Location - GetMesh()->GetComponentLocation();
+		const FVector Temp = (HitResult.GetActor() ? HitResult.Location - GetMesh()->GetComponentLocation() : FVector::ZeroVector);
 		Offset = Temp.Z - IKHipOffset;
 		Normal = HitResult.Normal;
 
