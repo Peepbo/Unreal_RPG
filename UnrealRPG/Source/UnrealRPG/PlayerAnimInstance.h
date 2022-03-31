@@ -54,6 +54,22 @@ private:
 	bool bDrinkingPotion;
 
 
+	/* IK_Foot 전용 변수 */
+	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
+	FVector IKLeftFootEffector;
+
+	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
+	FVector IKRightFootEffector;
+
+	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
+	float IKHipOffset;
+
+	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
+	FRotator IKLeftFootRotator;
+
+	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
+	FRotator IKRightFootRotator;
+
 	/* Fast Path 전용 변수 */
 
 	/* Forward ( angle <= abs(90) || LockOn ), Backward ( angle > abs(90)) */

@@ -49,7 +49,17 @@ APlayerCharacter::APlayerCharacter() :
 	LockOnCameraSpeed(0.04f),
 	bDrinkingPotion(false),
 	bCanRoll(true),
-	RollDelay(2.1f)
+	RollDelay(2.1f),
+	//IK_Foot
+	IKLeftFootOffset(0.f),
+	IKRightFootOffset(0.f),
+	IKHipOffset(0.f),
+	IKTraceDistance(0.f),
+	IKInterpSpeed(15.f),
+	IKLeftFootRotator(0.f, 0.f, 0.f),
+	IKRightFootRotator(0.f, 0.f, 0.f),
+	LeftFootSocketName(FName("Foot_L")),
+	RightFootSocketName(FName("Foot_R"))
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -107,9 +117,12 @@ void APlayerCharacter::BeginPlay()
 		}
 	}
 
-	/* 락온에 필요한 트레이스 타입 정보를 미리 만들어둠 */
+	// 락온에 필요한 트레이스 타입 정보를 미리 만들어둠
 	TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
 	TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody));
+
+	// IK Variable 초기화
+	IKTraceDistance = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -609,19 +622,6 @@ void APlayerCharacter::BeginAttackRotate(float DeltaTime)
 	SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), SaveRotator, DeltaTime, BeforeAttackRotateSpeed));
 }
 
-//void APlayerCharacter::PressedBattleModeChange()
-//{
-//	if (CombatState == ECombatState::ECS_Unoccupied) {
-//		//만약 배틀모드가 켜져있는데 락온도 켜져있으면
-//		if (bIsBattleMode && bLockOn) {
-//			// 락온을 리셋한다.
-//			ResetLockOn();
-//		}
-//
-//		bIsBattleMode = !bIsBattleMode;
-//	}
-//}
-
 void APlayerCharacter::PressedChargedAttack()
 {
 	bPressedChargedAttackButton = true;
@@ -908,6 +908,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 	if (bLockOn) {
 		RotateCameraByLockOn();
 	}
+
+	UpdateIKFootData(DeltaTime);
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -1069,4 +1071,105 @@ void APlayerCharacter::Sprint()
 void APlayerCharacter::StopDelayForRoll()
 {
 	bCanRoll = true;
+}
+
+void APlayerCharacter::UpdateIKFootData(float DeltaTime)
+{
+	ContinueUpdateIKData(DeltaTime);
+}
+
+void APlayerCharacter::IKFootTrace(const FName& SocketName, FHitResult& HitResult)
+{
+	const FVector SocketLoc{ GetMesh()->GetBoneLocation(SocketName) };
+	const FVector ActorLoc{ GetActorLocation() };
+
+	const FVector TraceStartPoint{ SocketLoc.X,SocketLoc.Y,ActorLoc.Z };
+	const FVector TraceEndPoint{ SocketLoc.X,SocketLoc.Y,SocketLoc.Z - IKTraceDistance };
+
+	const bool bHit = UKismetSystemLibrary::LineTraceSingle(
+		this,
+		TraceStartPoint,
+		TraceEndPoint,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		{ this },
+		EDrawDebugTrace::None,
+		HitResult,
+		true);
+}
+
+void APlayerCharacter::ContinueUpdateIKData(float DeltaTime)
+{
+	FVector HitLocation[2]{ FVector::ZeroVector, FVector::ZeroVector };
+
+	// for-loop variable
+	FHitResult HitResult;
+	FVector Location;
+	float Offset;
+	FVector Normal;
+
+	// other variable
+	float TargetHipOffset{ 0.f };
+
+
+	// { left, right }
+	// offset과 rotator를 업데이트 시킨다.
+	for (int32 i = 0; i < 2; i++) {
+		const bool bLeft{ i == 0 ? true : false };
+
+		const FName SelectSocketName{ bLeft ? LeftFootSocketName : RightFootSocketName };
+		float& SelectOffset{ bLeft ? IKLeftFootOffset : IKRightFootOffset };
+		FRotator& SelectRotator{ bLeft ? IKLeftFootRotator : IKRightFootRotator };
+
+		// reset last data
+		HitResult.Reset();
+		Location = FVector::ZeroVector;
+		Offset = 0.f;
+		Normal = FVector::ZeroVector;
+
+		IKFootTrace(SelectSocketName, HitResult);
+
+		Location = HitResult.Location;
+		// 나중에 hipOffset의 위치를 구할 때 사용하므로 따로 저장한다.
+		HitLocation[i] = Location;
+
+		const FVector Temp = HitResult.Location - GetMesh()->GetComponentLocation();
+		Offset = Temp.Z - IKHipOffset;
+		Normal = HitResult.Normal;
+
+		// FootOfftset을 interp를 사용해 구한다.
+		SelectOffset = UKismetMathLibrary::FInterpTo(
+			SelectOffset,
+			Offset,
+			DeltaTime,
+			IKInterpSpeed);
+
+		const float Degree1{ UKismetMathLibrary::DegAtan2(Normal.Y,Normal.Z) };
+		const float Degree2{ -(UKismetMathLibrary::DegAtan2(Normal.X,Normal.Z)) };
+		FRotator FootRot;
+		FootRot.Roll = Degree1;
+		FootRot.Pitch = Degree2;
+
+		SelectRotator = UKismetMathLibrary::RInterpTo(
+			SelectRotator,
+			FootRot,
+			DeltaTime,
+			IKInterpSpeed);
+	}
+
+	// 위에서 구한 location(left, right foot)으로 HipOffset을 구한다.
+	FVector Temp1{ HitLocation[0] - HitLocation[1] };
+	// Why use Z? 두 발의 높이차를 구하기위해 Z축을 사용한다.
+	float HightOfTwoFeet{ UKismetMathLibrary::Abs(Temp1.Z) };
+
+	// 높이 차이가 50이하로 차이나는지 검사한다.
+	if (HightOfTwoFeet < 50.f) {
+		TargetHipOffset = HightOfTwoFeet * (-0.5f);
+	}
+
+	IKHipOffset = UKismetMathLibrary::FInterpTo(
+		IKHipOffset,
+		TargetHipOffset,
+		DeltaTime,
+		IKInterpSpeed);
 }

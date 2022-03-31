@@ -54,13 +54,19 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bDrinkingPotion = PlayerCharacter->GetDrinking();
 
-
-		bSelectBrakeForward = (
-			UKismetMathLibrary::Abs(LastRelativeVelocityAngle) <= 90.f ||
-			bLockOn);
-
-		bSelectJogForward = (
-			UKismetMathLibrary::Abs(MoveAngle) <= 90.f ||
-			bLockOn);
+		
+		IKLeftFootEffector.X = PlayerCharacter->GetIKLeftFootOffset();
+		IKRightFootEffector.X = -(PlayerCharacter->GetIKRightFootOffset());
+		IKHipOffset = PlayerCharacter->GetIKHipOffset();
+		IKLeftFootRotator = PlayerCharacter->GetIKLeftFootRotator();
+		IKRightFootRotator = PlayerCharacter->GetIKRightFootRotator();
 	}
+
+	bSelectBrakeForward = (
+		UKismetMathLibrary::Abs(LastRelativeVelocityAngle) <= 90.f ||
+		bLockOn);
+
+	bSelectJogForward = (
+		UKismetMathLibrary::Abs(MoveAngle) <= 90.f ||
+		bLockOn);
 }

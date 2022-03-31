@@ -48,8 +48,6 @@ protected:
 	void PressedRollAndSprint();
 	void ReleasedRollAndSprint();
 
-	//void PressedBattleModeChange();
-
 	void PressedChargedAttack();
 	void ReleasedChargedAttack();
 
@@ -197,6 +195,12 @@ private:
 	void Sprint();
 
 	void StopDelayForRoll();
+
+
+	/* IK_Foot Function */
+	void UpdateIKFootData(float DeltaTime);
+	void IKFootTrace(const FName& SocketName, FHitResult& HitResult);
+	void ContinueUpdateIKData(float DeltaTime);
 
 private:
 	/* Camera Variable */
@@ -390,6 +394,18 @@ private:
 	/* Usable Item Variable */
 	bool bDrinkingPotion;
 
+	
+	/* IK_Foot Variable */
+	float IKLeftFootOffset;
+	float IKRightFootOffset;
+	float IKHipOffset;
+	float IKTraceDistance;
+	float IKInterpSpeed;
+	FRotator IKLeftFootRotator;
+	FRotator IKRightFootRotator;
+	FName LeftFootSocketName;
+	FName RightFootSocketName;
+
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
 	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
@@ -400,4 +416,11 @@ public:
 	FORCEINLINE FVector2D GetLastRollMoveValue() const { return LastRollMoveValue; }
 	FORCEINLINE bool GetBackDodge() const { return bBackDodge; }
 	FORCEINLINE bool GetDrinking() const { return bDrinkingPotion; }
+
+	/* IK_Foot 전용 인라인 함수 */
+	FORCEINLINE float GetIKLeftFootOffset() const { return IKLeftFootOffset; }
+	FORCEINLINE float GetIKRightFootOffset() const { return IKRightFootOffset; }
+	FORCEINLINE float GetIKHipOffset() const { return IKHipOffset; }
+	FORCEINLINE FRotator GetIKLeftFootRotator() const { return IKLeftFootRotator; }
+	FORCEINLINE FRotator GetIKRightFootRotator() const { return IKRightFootRotator; }
 };
