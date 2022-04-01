@@ -1104,7 +1104,7 @@ void APlayerCharacter::IKFootTrace(const FName& SocketName, FHitResult& HitResul
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		{ this },
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForOneFrame,
 		HitResult,
 		true);
 }
