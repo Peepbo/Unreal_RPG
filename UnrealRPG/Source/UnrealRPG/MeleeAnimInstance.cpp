@@ -25,9 +25,14 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		CharVelocity.Z = 0;
 		Velocity = { CharVelocity.X,CharVelocity.Y };
 
-		if (!Character->GetAttacking()) {
+		if (!Character->GetAttacking()) 
+		{
 			AttackExclusionVelocity = Velocity;
 			AttackExclusionSpeed = AttackExclusionVelocity.Size();
+		}
+		else 
+		{
+			AttackExclusionSpeed = 0.f;
 		}
 
 		// 일정 속도 이상이여야 Brake 애니메이션을 호출하기 위해 속도 최소값(200.f)을 지정함

@@ -284,10 +284,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		TArray<UAnimMontage*> ChargedComboMontages;
 
-	/* 피해 몽타주 모음 */
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		TArray<UAnimMontage*> ImpactMontages;
-
 	/* DashAttack의 몽타주 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* DashAttackMontage;
