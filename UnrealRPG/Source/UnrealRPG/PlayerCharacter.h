@@ -152,6 +152,7 @@ protected:
 
 	/* Usable Item Function */
 	void PressedUseItem();
+	void ReleasedUseItem();
 
 	void UseItem();
 
@@ -200,6 +201,11 @@ private:
 
 	void StopDelayForRoll();
 
+	/* True : 몽타주 실행 중, False : 몽타주 실행하지 않음 */
+	bool CheckMontageState();
+	void StopAllMontage();
+	/* Montage가 플레이중일 때 강제로 멈추게함, 아닐경우 아무 효과 없음 */
+	void ForceStopAllMontage();
 
 	/* IK_Foot Function */
 	void UpdateIKFootData(float DeltaTime);
@@ -234,6 +240,7 @@ private:
 	bool bPressedRollAndSprintButton;
 	bool bPressedSubAttackButton;
 	bool bPressedChargedAttackButton;
+	bool bPressedUseItemButton;
 
 
 	/* Timer Variable */
@@ -348,6 +355,9 @@ private:
 	EPlayerAttackType PlayerAttackType;
 
 	EWeaponAttackType WeaponAttackType;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float StopAttackMontageBlendOut;
 
 
 	/* Stamina Variable */

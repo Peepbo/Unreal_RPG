@@ -58,12 +58,13 @@ bool AShield::ShieldTraceSingle(bool bDebugVisible, FHitResult& OutHit)
 {
 	const FVector ShieldSocketLoc{ ItemMesh->GetSocketLocation(ShieldSocketName) };
 
-	const bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+	const bool bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
 		this,
 		ShieldSocketLoc,
 		ShieldSocketLoc,
 		50.f,
-		ETraceTypeQuery::TraceTypeQuery1,
+		// Pawn
+		{ EObjectTypeQuery::ObjectTypeQuery3 },
 		false,
 		{ Character },
 		bDebugVisible ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
@@ -100,7 +101,7 @@ void AShield::PushShield(bool bDebugVisible)
 						Enemy,
 						AttackDamage,
 						CharacterController,
-						this,
+						Character,
 						UDamageType::StaticClass());
 
 					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.

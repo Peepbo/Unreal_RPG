@@ -60,7 +60,8 @@ APlayerCharacter::APlayerCharacter() :
 	IKRightFootRotator(0.f, 0.f, 0.f),
 	LeftFootSocketName(FName("Foot_L")),
 	RightFootSocketName(FName("Foot_R")),
-	IKFootAlpha(0.f)
+	IKFootAlpha(0.f),
+	StopAttackMontageBlendOut(0.2f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -133,7 +134,13 @@ void APlayerCharacter::MoveForward(float Value)
 	if (CombatState == ECombatState::ECS_Impact)return;
 	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
 
+	
 	if (Controller && Value != 0.f) {
+		if (CombatState == ECombatState::ECS_AttackToIdle) {
+			ForceStopAllMontage();
+			CombatState = ECombatState::ECS_Unoccupied;
+		}
+
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
 
@@ -154,6 +161,11 @@ void APlayerCharacter::MoveRight(float Value)
 	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
 
 	if (Controller && Value != 0.f) {
+		if (CombatState == ECombatState::ECS_AttackToIdle) {
+			ForceStopAllMontage();
+			CombatState = ECombatState::ECS_Unoccupied;
+		}
+
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
 
@@ -215,10 +227,14 @@ void APlayerCharacter::SubAttack()
 
 void APlayerCharacter::PressedAttack()
 {
-	//bIsBattleMode = true;
 	bPressedAttackButton = true;
 
+	if (CombatState == ECombatState::ECS_AttackToIdle) {
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
 	if (CombatState == ECombatState::ECS_Unoccupied && EquippedWeapon && AnimInstance) {
+
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
 
@@ -426,11 +442,18 @@ void APlayerCharacter::PressedRollAndSprint()
 {
 	bPressedRollAndSprintButton = true;
 
+	if (CombatState == ECombatState::ECS_AttackToIdle) {
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
 	// 구르기와 뛰기는 둘 다 특정 모션을 취하고 있으면 안되고, 공중에 있으면 안된다. 
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 	if (GetCharacterMovement()->IsFalling())return;
 	if (!bCanRoll)return;
+
 	bCanRoll = false;
+
+	ForceStopAllMontage();
 
 	UE_LOG(LogTemp, Warning, TEXT("롤 앤 스프린트 타이머 시작"));
 
@@ -530,10 +553,16 @@ void APlayerCharacter::ResetDamageState()
 
 void APlayerCharacter::PressedSubAttack()
 {
-	//bIsBattleMode = true;
 	bPressedSubAttackButton = true;
 
-	if (CombatState == ECombatState::ECS_Unoccupied && ST >= 10.f) {
+	if (CombatState == ECombatState::ECS_AttackToIdle) {
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
+	if (CombatState == ECombatState::ECS_Unoccupied) {
+
+		ForceStopAllMontage();
+
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
 
@@ -627,13 +656,14 @@ void APlayerCharacter::PressedChargedAttack()
 {
 	bPressedChargedAttackButton = true;
 
+	if (CombatState == ECombatState::ECS_AttackToIdle) {
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 	if (EquippedWeapon == nullptr)return;
 	//if (ST < EquippedWeapon->GetChargedAttackRequiredStamina())return;
 
-	// 스태미나 검사
-	// Attack 중에 호출할 수 있으며 마무리 공격처럼 사용할 수 있음.
-	//bIsBattleMode = true;
 
 	ResetAttack();
 
@@ -689,7 +719,8 @@ void APlayerCharacter::ResetAttack()
 	ChargedComboAttackMontageIndex = 0;
 	bIsChargedAttack = false;
 
-	CombatState = ECombatState::ECS_Unoccupied;
+	//CombatState = ECombatState::ECS_Unoccupied;
+	CombatState = ECombatState::ECS_AttackToIdle;
 	PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
 }
 
@@ -703,7 +734,7 @@ void APlayerCharacter::StartAttackCheckTime()
 		GetWorldTimerManager().SetTimer(
 			AttackCheckTimer,
 			EquippedWeapon->GetAttackDelegate(),
-			0.005f,
+			0.0025f,
 			true);
 		break;
 	case EPlayerAttackType::EPAT_Shield:
@@ -712,7 +743,7 @@ void APlayerCharacter::StartAttackCheckTime()
 		GetWorldTimerManager().SetTimer(
 			AttackCheckTimer,
 			EquippedShield->GetPushShieldDelegate(),
-			0.005f,
+			0.0025f,
 			true);
 		break;
 	}
@@ -845,16 +876,29 @@ void APlayerCharacter::RotateCameraByLockOn()
 
 void APlayerCharacter::PressedUseItem()
 {
+	bPressedUseItemButton = true;
+
 	//if item valid?
 	if (EquippedPotion) {
+		if (CombatState == ECombatState::ECS_AttackToIdle) {
+			CombatState = ECombatState::ECS_Unoccupied;
+		}
+
 		// 특정 액션을 취하고 있지 않을 때만 가능
 		if (CombatState != ECombatState::ECS_Unoccupied)return;
+
+		ForceStopAllMontage();
 
 		// 풀피가 아닐 때 사용 (포션)
 		if (!UKismetMathLibrary::EqualEqual_FloatFloat(HP, MaximumHP)) {
 			UseItem();
 		}
 	}
+}
+
+void APlayerCharacter::ReleasedUseItem()
+{
+	bPressedUseItemButton = false;
 }
 
 void APlayerCharacter::UseItem()
@@ -941,6 +985,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	// UseItemButton
 	PlayerInputComponent->BindAction("UseItemButton", IE_Pressed, this, &APlayerCharacter::PressedUseItem);
+	PlayerInputComponent->BindAction("UseItemButton", IE_Released, this, &APlayerCharacter::ReleasedUseItem);
 }
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -1072,6 +1117,29 @@ void APlayerCharacter::Sprint()
 void APlayerCharacter::StopDelayForRoll()
 {
 	bCanRoll = true;
+}
+
+bool APlayerCharacter::CheckMontageState()
+{
+	if (AnimInstance) {
+		return AnimInstance->IsAnyMontagePlaying();
+	}
+	return false;
+}
+
+void APlayerCharacter::StopAllMontage()
+{
+	if (AnimInstance) 
+	{
+		AnimInstance->StopAllMontages(0.2f);
+	}
+}
+
+void APlayerCharacter::ForceStopAllMontage()
+{
+	if (AnimInstance && AnimInstance->IsAnyMontagePlaying()) {
+		AnimInstance->StopAllMontages(0.2f);
+	}
 }
 
 void APlayerCharacter::UpdateIKFootData(float DeltaTime)

@@ -324,7 +324,9 @@ void ADarkKnight::EndDamageImpact()
 	Super::EndDamageImpact();
 
 	if (bShouldDrawWeapon) {
+		UE_LOG(LogTemp, Warning, TEXT("Draw해야함"));
 		if (Target && EnemyAIController) {
+			UE_LOG(LogTemp, Warning, TEXT("Target을 지정중"));
 			GetWorldTimerManager().ClearTimer(SearchTimer);
 			ChangeColliderSetting(true);
 		
@@ -332,6 +334,12 @@ void ADarkKnight::EndDamageImpact()
 			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Target);
 		
 			StartDraw();
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("Target을 지정 실패"));
+			if (Target) {
+				UE_LOG(LogTemp, Warning, TEXT("%s"), *Target->GetName());
+			}
 		}
 	}
 }
@@ -382,6 +390,9 @@ float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 		// Non-Battle Impact, DrawAnimation 모두 끝나면 false로 바뀐다.
 		bAvoidImpactState = true;
 	}
+	//else {
+	//	UE_LOG(LogTemp,Warning,TEXT(""))
+	//}
 
 	return DamageAmount;
 }

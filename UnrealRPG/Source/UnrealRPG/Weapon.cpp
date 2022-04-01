@@ -83,12 +83,13 @@ bool AWeapon::WeaponTraceSingle(bool bDebugVisible, FHitResult& OutHit)
 	const FVector TopSocketLoc{ ItemMesh->GetSocketLocation(WeaponTopSocketName) };
 	const FVector BottomSocketLoc{ ItemMesh->GetSocketLocation(WeaponBottomSocketName) };
 
-	const bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+	const bool bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
 		this,
 		BottomSocketLoc,
 		TopSocketLoc,
 		50.f,
-		ETraceTypeQuery::TraceTypeQuery1,
+		// Pawn
+		{ EObjectTypeQuery::ObjectTypeQuery3 },
 		false,
 		{ Character },
 		bDebugVisible? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
