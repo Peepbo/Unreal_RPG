@@ -1077,7 +1077,8 @@ void APlayerCharacter::StopDelayForRoll()
 void APlayerCharacter::UpdateIKFootData(float DeltaTime)
 {
 	// IK_Foot을 잠시 끄는 조건
-	if (CombatState == ECombatState::ECS_Attack ||
+	if (/*bLockOn ||*/
+		CombatState == ECombatState::ECS_Attack ||
 		CombatState == ECombatState::ECS_Impact ||
 		CombatState == ECombatState::ECS_Roll) {
 
@@ -1103,7 +1104,7 @@ void APlayerCharacter::IKFootTrace(const FName& SocketName, FHitResult& HitResul
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		{ this },
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForOneFrame,
 		HitResult,
 		true);
 }

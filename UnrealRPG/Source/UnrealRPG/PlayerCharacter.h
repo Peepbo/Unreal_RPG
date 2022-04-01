@@ -163,6 +163,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndUseItem();
 
+
+	UFUNCTION(BlueprintCallable)
+		void SetHitPoint_Test(FVector HitPoint) { LastHitPoint = HitPoint; }
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

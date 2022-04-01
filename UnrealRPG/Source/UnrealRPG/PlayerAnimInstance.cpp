@@ -66,9 +66,9 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 	bSelectBrakeForward = (
 		UKismetMathLibrary::Abs(LastRelativeVelocityAngle) <= 90.f ||
-		bLockOn);
+		!bLockOn);
 
 	bSelectJogForward = (
 		UKismetMathLibrary::Abs(MoveAngle) <= 90.f ||
-		bLockOn);
+		!bLockOn);
 }
