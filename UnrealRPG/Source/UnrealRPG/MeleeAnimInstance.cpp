@@ -22,6 +22,7 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 	if (Character) {
 		// 캐릭터의 속도를 구함
 		FVector CharVelocity{ Character->GetVelocity() };
+		ZVelocity = CharVelocity.Z;
 		CharVelocity.Z = 0;
 		Velocity = { CharVelocity.X,CharVelocity.Y };
 

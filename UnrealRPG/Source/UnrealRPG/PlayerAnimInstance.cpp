@@ -54,6 +54,9 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bDrinkingPotion = PlayerCharacter->GetDrinking();
 
+
+		MaximumZValue = PlayerCharacter->GetMaximumZValue();
+
 		
 		IKLeftFootEffector.X = PlayerCharacter->GetIKLeftFootOffset();
 		IKRightFootEffector.X = -(PlayerCharacter->GetIKRightFootOffset());

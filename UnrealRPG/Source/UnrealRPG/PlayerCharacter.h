@@ -11,6 +11,7 @@
 /**
  * 
  */
+class UKismetMathLibrary;
 
 UCLASS()
 class UNREALRPG_API APlayerCharacter : public AMeleeCharacter
@@ -164,6 +165,17 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndUseItem();
 
+	UFUNCTION(BlueprintCallable)
+	bool CheckLand();
+
+	UFUNCTION(BlueprintCallable)
+	void JumpLandAttack();
+
+	UFUNCTION(BlueprintCallable)
+		void SaveMaxmimumVelocity();
+
+	UFUNCTION(BlueprintCallable)
+		void ResetZVelocity() { MaximumZVelocity = 0.f; }
 
 	UFUNCTION(BlueprintCallable)
 		void SetHitPoint_Test(FVector HitPoint) { LastHitPoint = HitPoint; }
@@ -207,6 +219,12 @@ private:
 	/* Montage가 플레이중일 때 강제로 멈추게함, 아닐경우 아무 효과 없음 */
 	void ForceStopAllMontage();
 
+	/* Jump */
+	void PressedJump();
+	void ReleasedJump();
+
+	void PrepareJumpAttack();
+
 	/* IK_Foot Function */
 	void UpdateIKFootData(float DeltaTime);
 	void IKFootTrace(const FName& SocketName, FHitResult& HitResult);
@@ -241,6 +259,7 @@ private:
 	bool bPressedSubAttackButton;
 	bool bPressedChargedAttackButton;
 	bool bPressedUseItemButton;
+	bool bPressedJumpButton;
 
 
 	/* Timer Variable */
@@ -291,9 +310,16 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		TArray<UAnimMontage*> ChargedComboMontages;
 
-	/* DashAttack의 몽타주 */
+	/* DashAttack 몽타주 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* DashAttackMontage;
+
+	/* JumpAttack 몽타주 */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* PrepareJumpAttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* JumpAttackMontage;
 
 
 	/* Default Item Variable */
@@ -400,6 +426,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float RollDelay;
 
+	/* 점프 착지 시 필요함 */
+	float MaximumZVelocity;
 
 	/* Usable Item Variable */
 	bool bDrinkingPotion;
@@ -427,6 +455,8 @@ public:
 	FORCEINLINE FVector2D GetLastRollMoveValue() const { return LastRollMoveValue; }
 	FORCEINLINE bool GetBackDodge() const { return bBackDodge; }
 	FORCEINLINE bool GetDrinking() const { return bDrinkingPotion; }
+
+	FORCEINLINE float GetMaximumZValue() const { return MaximumZVelocity; }
 
 	/* IK_Foot 전용 인라인 함수 */
 	FORCEINLINE float GetIKLeftFootOffset() const { return IKLeftFootOffset; }

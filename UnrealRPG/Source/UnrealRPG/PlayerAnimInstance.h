@@ -53,6 +53,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bDrinkingPotion;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	float MaximumZValue;
+
 
 	/* IK_Foot 전용 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))

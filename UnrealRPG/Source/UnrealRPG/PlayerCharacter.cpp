@@ -61,7 +61,9 @@ APlayerCharacter::APlayerCharacter() :
 	LeftFootSocketName(FName("Foot_L")),
 	RightFootSocketName(FName("Foot_R")),
 	IKFootAlpha(0.f),
-	StopAttackMontageBlendOut(0.2f)
+	StopAttackMontageBlendOut(0.2f),
+	bPressedJumpButton(false),
+	MaximumZVelocity(0.f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -233,8 +235,19 @@ void APlayerCharacter::PressedAttack()
 		CombatState = ECombatState::ECS_Unoccupied;
 	}
 
-	if (CombatState == ECombatState::ECS_Unoccupied && EquippedWeapon && AnimInstance) {
+	if (CombatState != ECombatState::ECS_Unoccupied ||
+		EquippedWeapon == nullptr ||
+		AnimInstance == nullptr)
+	{
+		return;
+	}
 
+	if (GetCharacterMovement()->IsFalling()) 
+	{
+		PrepareJumpAttack();
+	}
+	else
+	{
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
 		StopStaminaRecoveryTimer();
 
@@ -919,13 +932,33 @@ void APlayerCharacter::DrinkPotion()
 	const float NextHP{ HP + EquippedPotion->GetRecoveryAmount() };
 
 	// 체력을 최대 체력을 넘어서지 못하게 한다.
-	HP = (NextHP <= MaximumHP) ? NextHP : MaximumHP;
+	HP = (NextHP < MaximumHP) ? NextHP : MaximumHP;
 }
 
 void APlayerCharacter::EndUseItem()
 {
 	bDrinkingPotion = false;
 	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+bool APlayerCharacter::CheckLand()
+{
+	return !GetCharacterMovement()->IsFalling();
+}
+
+void APlayerCharacter::JumpLandAttack()
+{
+	if (JumpAttackMontage) {
+		CombatState = ECombatState::ECS_Attack;
+		AnimInstance->Montage_Play(JumpAttackMontage);
+	}
+}
+
+void APlayerCharacter::SaveMaxmimumVelocity()
+{
+	MaximumZVelocity = UKismetMathLibrary::FMax(
+		MaximumZVelocity,
+		UKismetMathLibrary::Abs(GetVelocity().Z));
 }
 
 void APlayerCharacter::DashAttack()
@@ -986,6 +1019,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// UseItemButton
 	PlayerInputComponent->BindAction("UseItemButton", IE_Pressed, this, &APlayerCharacter::PressedUseItem);
 	PlayerInputComponent->BindAction("UseItemButton", IE_Released, this, &APlayerCharacter::ReleasedUseItem);
+
+	// Jump
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::PressedJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::ReleasedJump);
 }
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -1139,6 +1176,38 @@ void APlayerCharacter::ForceStopAllMontage()
 {
 	if (AnimInstance && AnimInstance->IsAnyMontagePlaying()) {
 		AnimInstance->StopAllMontages(0.2f);
+	}
+}
+
+void APlayerCharacter::PressedJump()
+{
+	bPressedJumpButton = true;
+
+	// 조건 검사
+	if (CombatState == ECombatState::ECS_AttackToIdle) {
+		CombatState = ECombatState::ECS_Unoccupied;
+		StopAllMontage();
+	}
+
+	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (GetCharacterMovement()->IsFalling())return;
+
+	MaximumZVelocity = 0.f;
+	ACharacter::Jump();
+}
+
+void APlayerCharacter::ReleasedJump()
+{
+	bPressedJumpButton = false;
+
+	StopJumping();
+}
+
+void APlayerCharacter::PrepareJumpAttack()
+{
+	if (PrepareJumpAttackMontage) {
+		CombatState = ECombatState::ECS_NonMovingInteraction;
+		AnimInstance->Montage_Play(PrepareJumpAttackMontage);
 	}
 }
 
