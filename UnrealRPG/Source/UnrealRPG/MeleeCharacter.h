@@ -39,6 +39,13 @@ protected:
 
 	void ChangeMaximumSpeedForSmoothSpeed(float DeltaTime);
 
+
+	UFUNCTION(BlueprintCallable)
+		bool CheckFootCollision(bool bLeft, FVector& Out_HitPoint);
+
+	UFUNCTION(BlueprintCallable)
+		void SaveRelativeVelocityAngle();
+
 protected:
 	/* 캐릭터의 상태 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -92,12 +99,12 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	/* 캐릭터 정면 상대 속도의 각도 */
-	float GetLastRelativeVelocityAngle();
-
 private:
 
 	bool ChangeSpeed;
+
+	FName LeftFootSocketName = FName("Foot_LSocket");
+	FName RightFootSocketName = FName("Foot_RSocket");
 
 public:
 	FORCEINLINE bool GetSprinting() const { return bSprinting; }

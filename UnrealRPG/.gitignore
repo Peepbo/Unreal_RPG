@@ -90,6 +90,7 @@ Content/AnimationAsset/*
 # FX Asset
 Content/FXAsset/*
 Content/InfinityBladeEffects/*
+Content/A_Surface_Footstep/*
 
 # Others
 Content/Assets/*

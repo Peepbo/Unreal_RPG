@@ -8,9 +8,9 @@
 
 void UMeleeAnimInstance::InitializeAnimationProperties()
 {
-	Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
-
-	LastRelativeVelocityAngle = 0.f;
+	if (Character == nullptr) {
+		Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
+	}
 }
 
 void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
@@ -34,11 +34,6 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		else 
 		{
 			AttackExclusionSpeed = 0.f;
-		}
-
-		// 일정 속도 이상이여야 Brake 애니메이션을 호출하기 위해 속도 최소값(200.f)을 지정함
-		if (Velocity.Size() > 200.f) {
-			LastRelativeVelocityAngle = Character->GetLastRelativeVelocityAngle();
 		}
 
 		Speed = Velocity.Size();

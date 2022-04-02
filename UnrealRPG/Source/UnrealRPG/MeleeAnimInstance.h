@@ -94,4 +94,5 @@ private:
 public:
 	FORCEINLINE float GetSpeed() const { return Speed; }
 	FORCEINLINE bool GetAccelerating() const { return bIsAccelerating; }
+	FORCEINLINE void SetLastRelativeVelocityAngle(float Angle) { LastRelativeVelocityAngle = Angle; }
 };
