@@ -675,6 +675,7 @@ void APlayerCharacter::PressedChargedAttack()
 
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
 	if (EquippedWeapon == nullptr)return;
+	if (GetMovementComponent()->IsFalling())return;
 	//if (ST < EquippedWeapon->GetChargedAttackRequiredStamina())return;
 
 
