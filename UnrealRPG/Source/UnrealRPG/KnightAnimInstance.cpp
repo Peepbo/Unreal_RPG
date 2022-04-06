@@ -9,38 +9,30 @@ void UKnightAnimInstance::InitializeAnimationProperties()
 {
 	Super::InitializeAnimationProperties();
 
-	DarkKnight = Cast<ADarkKnight>(TryGetPawnOwner());
+	if (DarkKnight == nullptr) 
+	{
+		DarkKnight = Cast<ADarkKnight>(TryGetPawnOwner());
+	}
 }
 
 void UKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 {
 	Super::UpdateAnimationProperties(DeltaTime);
 
-	if (DarkKnight == nullptr) {
-		DarkKnight = Cast<ADarkKnight>(TryGetPawnOwner());
-	}
-
-	if (DarkKnight) {
-		bIsBattleMode = DarkKnight->GetBattleMode();
-		bIsSprint = DarkKnight->GetSprinting();
-
-		WalkDirection = DarkKnight->GetWalkDirection();
-
-		bWalkDirectionZero = UKismetMathLibrary::NearlyEqual_FloatFloat(WalkDirection, 0.f);
-
-		bTurnInPlace = DarkKnight->GetTurnInPlace();
-
-		bTurnLeft = DarkKnight->GetTurnLeft();
-
+	if (DarkKnight)
+	{
 		bShouldDrawWeapon = DarkKnight->ShouldDrawWeapon();
 
-		if (DarkKnight->GetMove()) {
+		if (DarkKnight->GetMove())
+		{
 			MoveValue = 0.5f;
-			if (DarkKnight->GetSprinting()) {
+			if (DarkKnight->GetSprinting()) 
+			{
 				MoveValue = 1.f;
 			}
 		}
-		else {
+		else 
+		{
 			MoveValue = 0.f;
 		}
 	}

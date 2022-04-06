@@ -7,21 +7,12 @@
 #include "PlayerCharacter.h"
 #include "EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/GameplayStatics.h"
+
 
 ADarkKnight::ADarkKnight() :
 	bShouldDrawWeapon(true),
-	AttackIndex(0),
-	LastAttackIndex(0),
-	bTurnInPlace(false),
-	InterpSpeed(5.f),
-	bAttackable(true),
-	WalkDirection(0.f),
 	DirectionLerpSpeed(1.f),
-	TurnTime(1.2f),
-	bMove(false)
+	TurnTime(1.2f)
 {
 
 }
@@ -32,12 +23,11 @@ void ADarkKnight::BeginPlay()
 
 	AD = 20.f;
 
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst) {
-		UKnightAnimInstance* KnightAnimInst = Cast<UKnightAnimInstance>(AnimInst);
+	if (AnimInstance) {
+		UKnightAnimInstance* KnightAnimInst = Cast<UKnightAnimInstance>(AnimInstance);
 
 		if (KnightAnimInst) {
-			AnimInstance = KnightAnimInst;
+			KnightAnimInstance = KnightAnimInst;
 		}
 	}
 
@@ -94,199 +84,6 @@ void ADarkKnight::EndDraw()
 	bAvoidImpactState = false;
 }
 
-void ADarkKnight::SaveTargetRotator()
-{
-	FVector TargetLoc{ Target->GetActorLocation() };
-	FVector ActorLoc{ GetActorLocation() };
-	TargetLoc.Z = ActorLoc.Z = 0.f;
-
-	const FVector DirectionToTarget{ TargetLoc - ActorLoc };
-	const FVector DirectionToTargetNormal{ UKismetMathLibrary::Normal(DirectionToTarget) };
-	const float RotateDegree = UKismetMathLibrary::DegAtan2(DirectionToTargetNormal.Y, DirectionToTargetNormal.X);
-
-	const FRotator RotationToTarget{ 0,RotateDegree,0 };
-	LastSaveRotate = RotationToTarget;
-}
-
-void ADarkKnight::StartRotate()
-{
-	bTurnInPlace = true;
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
-}
-
-void ADarkKnight::StopRotate()
-{
-	bTurnInPlace = false;
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
-}
-
-void ADarkKnight::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)
-{
-	if (ItemMesh) {
-		WeaponMesh = ItemMesh;
-	}
-}
-
-void ADarkKnight::TracingAttackSphere()
-{
-	if (!bAttackable)return;
-
-	/* 아이템의 TopSocket과 BottomSocket의 위치를 받아온다. */
-	const FVector TopSocketLoc{ WeaponMesh->GetSocketLocation("TopSocket") };
-	const FVector BottomSocketLoc{ WeaponMesh->GetSocketLocation("BottomSocket") };
-
-	FHitResult HitResult;
-	// SphereTraceSingle로 원을 그리고 원에 겹치는 오브젝트를 HitResult에 담는다.
-	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
-		this,
-		BottomSocketLoc,
-		TopSocketLoc,
-		50.f,
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		{ this },
-		bVisibleTraceSphere? EDrawDebugTrace::ForDuration: EDrawDebugTrace::None,
-		HitResult,
-		true
-	);
-
-	if (bHit) {
-		if (HitResult.Actor != nullptr) {
-			auto Player = Cast<APlayerCharacter>(HitResult.Actor);
-	
-			if (Player) {
-				// attack point를 플레이어한테 전달
-				Player->SetHitPoint(HitResult.Location);
-
-				UGameplayStatics::ApplyDamage(
-					Player,
-					AD,
-					GetController(),
-					this,
-					UDamageType::StaticClass());
-
-				bAttackable = false;
-			}
-		}
-	}
-}
-
-void ADarkKnight::StartAttackCheckTime()
-{
-	GetWorldTimerManager().SetTimer(
-		AttackCheckTimer,
-		this,
-		&ADarkKnight::TracingAttackSphere,
-		0.005f,
-		true);
-}
-
-void ADarkKnight::EndAttackCheckTime()
-{
-	GetWorldTimerManager().ClearTimer(AttackCheckTimer);
-
-	bAttackable = true;
-}
-
-void ADarkKnight::FaceOff(float NextWalkDirection)
-{
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-
-	WalkDirection = NextWalkDirection;
-}
-
-void ADarkKnight::EndFaceOff()
-{
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-
-	WalkDirection = 0.f;
-}
-
-void ADarkKnight::StartRestTimer()
-{
-	bRestTime = true;
-
-	GetWorldTimerManager().SetTimer(
-		RestTimer,
-		this,
-		&ADarkKnight::EndRestTimer,
-		1.5f,
-		false);
-}
-
-void ADarkKnight::EndRestTimer()
-{
-	bRestTime = false;
-
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
-	ChangeCombatState(ECombatState::ECS_Unoccupied);
-
-	//GetCharacterMovement()->bUseControllerDesiredRotation = true;
-}
-
-void ADarkKnight::ChangeSprinting(bool IsSprinting)
-{
-	SetSprinting(IsSprinting);
-	if (IsSprinting) {
-		GetCharacterMovement()->MaxWalkSpeed = BattleRunSpeed;
-	}
-	else {
-		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
-	}
-}
-
-void ADarkKnight::FindCharacter()
-{
-	// 캐릭터가 전방 160도 안에 있는지 확인한다. (dot product)
-	FVector ActorForward{ GetActorForwardVector() };
-	ActorForward.Z = 0.f;
-
-	FVector ActorToCharacter{ OverlapCharacter->GetActorLocation() - GetActorLocation() };
-	ActorToCharacter.Z = 0.f;
-	ActorToCharacter = UKismetMathLibrary::Normal(ActorToCharacter);
-
-	float DotRadian{ UKismetMathLibrary::Dot_VectorVector(ActorForward, ActorToCharacter) };
-	float DotDegree{ UKismetMathLibrary::DegAcos(DotRadian) };
-	// 전방 160도면 -80~+80 사이 (dot product는 어차피 -가 나오질 않으므로 80이하인지 검사)
-	const bool bFind{ DotDegree <= 80.f };
-
-	if (bFind) {
-		if (EnemyAIController) {
-			GetWorldTimerManager().ClearTimer(SearchTimer);
-			ChangeColliderSetting(true);
-			
-			StopRotate();
-
-			bShouldDrawWeapon = false;
-
-			Target = OverlapCharacter;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), OverlapCharacter);
-
-			StartDraw();
-		}
-	}
-}
-
-float ADarkKnight::GetDegreeForwardToTarget()
-{
-	if (Target == nullptr)return 0.f;
-
-	const FVector ActorForward{ GetActorForwardVector() };
-	const FVector ActorToTarget{ UKismetMathLibrary::Normal(Target->GetActorLocation() - GetActorLocation()) };
-	const FVector2D ActorForward2D{ ActorForward };
-	const FVector2D ActorToTarget2D{ ActorToTarget };
-
-	const float DotProductRadian{ UKismetMathLibrary::DotProduct2D(ActorForward2D,ActorToTarget2D) };
-	float ResultDegree{ UKismetMathLibrary::DegAcos(DotProductRadian) };
-
-	const float CrossProduct{ UKismetMathLibrary::CrossProduct2D(ActorForward2D,ActorToTarget2D) };
-	if (CrossProduct < 0.f) {
-		ResultDegree = -(ResultDegree);
-	}
-
-	return ResultDegree;
-}
-
 void ADarkKnight::EndDamageImpact()
 {
 	Super::EndDamageImpact();
@@ -310,21 +107,6 @@ void ADarkKnight::EndDamageImpact()
 			}
 		}
 	}
-}
-
-void ADarkKnight::StartAttack()
-{
-	ChangeCombatState(ECombatState::ECS_Attack);
-
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-}
-
-void ADarkKnight::EndAttack()
-{
-	EnemyAIController->ClearFocus(EAIFocusPriority::Gameplay);
-
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	StartRestTimer();
 }
 
 void ADarkKnight::PlayAttackMontage()
@@ -357,20 +139,27 @@ void ADarkKnight::PlayAttackMontage()
 	}
 }
 
+void ADarkKnight::FindCharacter()
+{
+	Super::FindCharacter();
+
+	if (Target && bShouldDrawWeapon)
+	{
+		bShouldDrawWeapon = false;
+
+		StartDraw();
+	}
+}
+
+void ADarkKnight::DropWeapon()
+{
+	GetWeapon()->SetSimulatePhysics(true);
+	GetWeapon()->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+}
+
 void ADarkKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (GetAttacking() && bTurnInPlace) {
-		const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
-
-		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) {
-			bTurnInPlace = false;
-		}
-		else {
-			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
-		}
-	}
 }
 
 float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -388,9 +177,13 @@ float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 		// Non-Battle Impact, DrawAnimation 모두 끝나면 false로 바뀐다.
 		bAvoidImpactState = true;
 	}
-	//else {
-	//	UE_LOG(LogTemp,Warning,TEXT(""))
-	//}
+
+	if (bDying) 
+	{
+		FDetachmentTransformRules DetachmentTransfromRules(EDetachmentRule::KeepWorld, true);
+		GetWeapon()->DetachFromComponent(DetachmentTransfromRules);
+		GetWorldTimerManager().SetTimer(DropWeaponTimer, this, &ADarkKnight::DropWeapon, 0.1f, false);
+	}
 
 	return DamageAmount;
 }

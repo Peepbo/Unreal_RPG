@@ -32,6 +32,7 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 		case EWeaponType::EWT_TwoHandWeapon:
 			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("TwoHandSword"), TEXT(""));
 			break;
+			//case EWeaponType::EWT
 		}
 
 		if (WeaponDataRow) {

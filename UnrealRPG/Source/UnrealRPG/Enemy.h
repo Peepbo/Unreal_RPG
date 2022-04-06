@@ -78,6 +78,53 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void Die();
 
+
+	/* 이동된 함수 */
+	UFUNCTION(BlueprintCallable)
+		void SaveTargetRotator();
+
+	UFUNCTION(BlueprintCallable)
+		void StartRotate();
+
+	UFUNCTION(BlueprintCallable)
+		void StopRotate();
+
+	void TracingAttackSphere();
+
+	UFUNCTION(BlueprintCallable)
+		void StartAttackCheckTime();
+
+	UFUNCTION(BlueprintCallable)
+		void EndAttackCheckTime();
+
+	UFUNCTION(BlueprintCallable)
+		void FaceOff(float NextWalkDirection);
+
+	UFUNCTION(BlueprintCallable)
+		void EndFaceOff();
+
+	void StartRestTimer();
+
+	void EndRestTimer();
+
+	UFUNCTION(BlueprintCallable)
+		void ChangeSprinting(bool IsSprinting);
+
+	virtual void FindCharacter();
+
+	UFUNCTION(BlueprintCallable)
+		float GetDegreeForwardToTarget();
+
+
+	UFUNCTION(BlueprintCallable)
+		void StartAttack();
+
+	UFUNCTION(BlueprintCallable)
+		void EndAttack();
+
+	UFUNCTION(BlueprintCallable)
+		void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
+
 protected:
 	class UAnimInstance* AnimInstance;
 
@@ -99,6 +146,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		TArray<UAnimMontage*> AttackMontage;
+
+	APlayerCharacter* OverlapCharacter;
+
+	FTimerHandle SearchTimer;
+
+	int32 AttackIndex;
+	int32 LastAttackIndex;
 
 private:
 
@@ -149,6 +203,31 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bPatrolEnemy;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+		FRotator LastSaveRotate;
+
+	bool bTurnInPlace;
+
+	bool bAttackable;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USkeletalMeshComponent* WeaponMesh;
+
+	FTimerHandle AttackCheckTimer;
+
+	/* -1 : left, 0 : forward, 1 : right */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float WalkDirection;
+
+	/* true: 왼쪽, false: 오른쪽 */
+	bool bTurnLeft;
+
+	bool bMove;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float InterpSpeed;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -170,4 +249,16 @@ public:
 	FORCEINLINE bool DamageableState() const { return DamageState == EDamageState::EDS_Unoccupied; }
 	FORCEINLINE bool GetLockOn() const { return bLockOnEnemy; }
 	FORCEINLINE void SetLockOn(bool NextBool) { bLockOnEnemy = NextBool; }
+
+	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
+	FORCEINLINE bool GetTurnInPlace() const { return bTurnInPlace; }
+
+	UFUNCTION(BlueprintCallable)
+		void SetMove(bool bNextBool) { bMove = bNextBool; }
+	FORCEINLINE bool GetMove() const { return bMove; }
+
+	FORCEINLINE void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
+	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
+
+	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }
 };

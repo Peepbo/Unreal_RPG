@@ -51,55 +51,17 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndDraw();
 
-	UFUNCTION(BlueprintCallable)
-	void SaveTargetRotator();
-
-	UFUNCTION(BlueprintCallable)
-	void StartRotate();
-
-	UFUNCTION(BlueprintCallable)
-	void StopRotate();
-
-	UFUNCTION(BlueprintCallable)
-	void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
-
-	void TracingAttackSphere();
-
-	UFUNCTION(BlueprintCallable)
-	void StartAttackCheckTime();
-
-	UFUNCTION(BlueprintCallable)
-	void EndAttackCheckTime();
-
-	UFUNCTION(BlueprintCallable)
-	void FaceOff(float NextWalkDirection);
-
-	UFUNCTION(BlueprintCallable)
-	void EndFaceOff();
-
-	void StartRestTimer();
-
-	void EndRestTimer();
-
-	UFUNCTION(BlueprintCallable)
-	void ChangeSprinting(bool IsSprinting);
-
-	void FindCharacter();
-
-	UFUNCTION(BlueprintCallable)
-	float GetDegreeForwardToTarget();
-
 	virtual void EndDamageImpact() override;
-
-	UFUNCTION(BlueprintCallable)
-		void StartAttack();
-
-	UFUNCTION(BlueprintCallable)
-		void EndAttack();
 
 	virtual	void PlayAttackMontage() override;
 
+	virtual void FindCharacter() override;
+
 private:
+	void DropWeapon();
+
+private:
+	class UKnightAnimInstance* KnightAnimInstance;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DrawMontage;
@@ -110,28 +72,6 @@ private:
 		FVector EnemyDir;
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
 		FVector EnemyToTargetDir;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FRotator LastSaveRotate;
-
-	int32 AttackIndex;
-	int32 LastAttackIndex;
-
-	bool bTurnInPlace;
-
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float InterpSpeed;
-
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* WeaponMesh;
-
-	FTimerHandle AttackCheckTimer;
-
-	bool bAttackable;
-
-	/* -1 : left, 0 : forward, 1 : right */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float WalkDirection;
 
 	FTimerHandle WalkDirectionLerpTimer;
 
@@ -144,14 +84,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* SprintAttackMontage;
 
-	FTimerHandle SearchTimer;
-
-	APlayerCharacter* OverlapCharacter;
-
-	/* true: 왼쪽, false: 오른쪽 */
-	bool bTurnLeft;
-
-	bool bMove;
+	FTimerHandle DropWeaponTimer;
 
 public:
 	// Called every frame
@@ -160,13 +93,5 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 public:
-	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
-	FORCEINLINE bool GetTurnInPlace() const { return bTurnInPlace; }
-	FORCEINLINE void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
-	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
-	UFUNCTION(BlueprintCallable)
-	void SetMove(bool bNextBool) { bMove = bNextBool; }
-	FORCEINLINE bool GetMove() const { return bMove; }
-
 	FORCEINLINE bool ShouldDrawWeapon() const { return bShouldDrawWeapon; }
 };

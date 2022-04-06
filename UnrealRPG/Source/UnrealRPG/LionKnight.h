@@ -17,9 +17,10 @@ class UNREALRPG_API ALionKnight : public AEnemy
 public:
 	ALionKnight();
 
+private:
+	virtual	void PlayAttackMontage() override;
+
 protected:
-	//UFUNCTION(BlueprintCallable)
-	//void FaceOff(int32 NextWalkDirection);
-	//UFUNCTION(BlueprintCallable)
-	//void EndFaceOff(int32 NextWalkDirection);
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 };

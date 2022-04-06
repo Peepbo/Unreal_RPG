@@ -28,6 +28,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 				BlackboardComponent->InitializeBlackboard(*(Enemy->GetBehaviorTree()->BlackboardAsset));
 
 				BlackboardComponent->SetValueAsObject(TEXT("SelfActor"), Enemy);
+				BlackboardComponent->SetValueAsBool(TEXT("bStopPatrol"), Enemy);
 			}
 		}
 	}

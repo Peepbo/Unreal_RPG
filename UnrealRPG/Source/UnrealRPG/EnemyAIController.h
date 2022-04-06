@@ -26,5 +26,4 @@ private:
 
 public:
 	FORCEINLINE UBlackboardComponent* GetBlackboardComponent() const { return BlackboardComponent; }
-	//FORCEINLINE UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return BehaviorTreeComponent; }
 };

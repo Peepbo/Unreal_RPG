@@ -3,42 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MeleeAnimInstance.h"
+#include "EnemyAnimInstance.h"
 #include "KnightAnimInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UNREALRPG_API UKnightAnimInstance : public UMeleeAnimInstance
+class UNREALRPG_API UKnightAnimInstance : public UEnemyAnimInstance
 {
 	GENERATED_BODY()
-
-public:
-
 public:
 	virtual void InitializeAnimationProperties() override;
 
 	virtual void UpdateAnimationProperties(float DeltaTime) override;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Class", meta = (AllowPrivateAccess = "true"))
 	class ADarkKnight* DarkKnight;
-	//class AEnemy* Enemy;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Movement, meta = (AllowPrivateAccess = "true"))
-	float WalkDirection;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Movement, meta = (AllowPrivateAccess = "true"))
-	bool bTurnInPlace;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= Movement, meta = (AllowPrivateAccess = "true"))
-	bool bTurnLeft;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	bool bWalkDirectionZero;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	float MoveValue;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bShouldDrawWeapon;
