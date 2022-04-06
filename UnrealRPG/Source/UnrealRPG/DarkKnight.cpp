@@ -94,33 +94,6 @@ void ADarkKnight::EndDraw()
 	bAvoidImpactState = false;
 }
 
-void ADarkKnight::PlayAttackMontage()
-{
-	if (AnimInstance) {
-		//GetCharacterMovement()->bUseControllerDesiredRotation = false;
-
-		if (GetSprinting() && SprintAttackMontage) {
-			AnimInstance->Montage_Play(SprintAttackMontage);
-			SetSprinting(false);
-
-			UE_LOG(LogTemp, Warning, TEXT("Play Sprint Attack Montage"));
-		}
-		else {
-			if (AttackMontage.IsValidIndex(AttackIndex) && AttackMontage[AttackIndex]) {
-				AnimInstance->Montage_Play(AttackMontage[AttackIndex]);
-				LastAttackIndex = AttackIndex;
-
-				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
-			}
-
-			AttackIndex++;
-			if (AttackMontage.Num() == AttackIndex) {
-				AttackIndex = 0;
-			}
-		}
-	}
-}
-
 void ADarkKnight::SaveTargetRotator()
 {
 	FVector TargetLoc{ Target->GetActorLocation() };
@@ -213,11 +186,6 @@ void ADarkKnight::EndAttackCheckTime()
 	GetWorldTimerManager().ClearTimer(AttackCheckTimer);
 
 	bAttackable = true;
-}
-
-void ADarkKnight::ChangeCombatState(ECombatState NextCombatState)
-{
-	CombatState = NextCombatState;
 }
 
 void ADarkKnight::FaceOff(float NextWalkDirection)
@@ -357,6 +325,36 @@ void ADarkKnight::EndAttack()
 
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	StartRestTimer();
+}
+
+void ADarkKnight::PlayAttackMontage()
+{
+	if (AnimInstance)
+	{
+		if (GetSprinting() && SprintAttackMontage)
+		{
+			AnimInstance->Montage_Play(SprintAttackMontage);
+			SetSprinting(false);
+
+			UE_LOG(LogTemp, Warning, TEXT("Play Sprint Attack Montage"));
+		}
+		else
+		{
+			if (AttackMontage.IsValidIndex(AttackIndex) && AttackMontage[AttackIndex])
+			{
+				AnimInstance->Montage_Play(AttackMontage[AttackIndex]);
+				LastAttackIndex = AttackIndex;
+
+				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
+			}
+
+			AttackIndex++;
+			if (AttackMontage.Num() == AttackIndex)
+			{
+				AttackIndex = 0;
+			}
+		}
+	}
 }
 
 void ADarkKnight::Tick(float DeltaTime)

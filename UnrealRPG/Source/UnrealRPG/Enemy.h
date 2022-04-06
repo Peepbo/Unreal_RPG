@@ -63,6 +63,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void ChangeBattleMode();
 
+	UFUNCTION(BlueprintCallable)
+		void ChangeCombatState(ECombatState NextCombatState);
+
+	UFUNCTION(BlueprintCallable)
+		virtual	void PlayAttackMontage();
+
 	/* 캐릭터의 크기를 변경하는 함수 (LockOn에 필요) */
 	void ChangeEnemySize(EEnemySize Size);
 
@@ -73,6 +79,8 @@ protected:
 		void Die();
 
 protected:
+	class UAnimInstance* AnimInstance;
+
 	class AEnemyAIController* EnemyAIController;
 
 	/* 전투 이동속도 관련 변수 (RootMotion을 사용하지 않는 Enemy가 사용) */
@@ -89,7 +97,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
 	class APlayerCharacter* Target;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		TArray<UAnimMontage*> AttackMontage;
+
 private:
+
 	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EDamageState DamageState;
@@ -133,6 +145,9 @@ private:
 	UAnimMontage* DeathMontage;
 
 	bool bLockOnEnemy;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bPatrolEnemy;
 
 public:
 	// Called every frame

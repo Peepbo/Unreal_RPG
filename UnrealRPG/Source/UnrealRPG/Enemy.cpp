@@ -22,7 +22,8 @@ AEnemy::AEnemy() :
 	EnemySize(EEnemySize::EES_MAX),
 	bLockOnEnemy(false),
 	bRestTime(false),
-	bAvoidImpactState(false)
+	bAvoidImpactState(false),
+	bPatrolEnemy(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -42,6 +43,7 @@ AEnemy::AEnemy() :
 	LockOnWidget->SetupAttachment(GetMesh(), TEXT("Hips"));
 	LockOnWidget->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidget->SetDrawSize({ 18.f,18.f });
+	LockOnWidget->SetVisibility(false);
 }
 
 // Called when the game starts or when spawned
@@ -57,34 +59,37 @@ void AEnemy::BeginPlay()
 	// 플레이어를 찾게 되면 activate 해준다.
 	CombatRangeSphere->Deactivate();
 
-	const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
-	const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
+	if (bPatrolEnemy) 
+	{
+		const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
+		const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
 
-	DrawDebugSphere(
-		GetWorld(),
-		WorldPatrolPoint,
-		25.f,
-		12,
-		FColor::Red,
-		true
-	);
+		DrawDebugSphere(
+			GetWorld(),
+			WorldPatrolPoint,
+			25.f,
+			12,
+			FColor::Red,
+			true
+		);
 
-	DrawDebugSphere(
-		GetWorld(),
-		WorldPatrolPoint2,
-		25.f,
-		12,
-		FColor::Red,
-		true
-	);
+		DrawDebugSphere(
+			GetWorld(),
+			WorldPatrolPoint2,
+			25.f,
+			12,
+			FColor::Red,
+			true
+		);
 
-	EnemyAIController = Cast<AEnemyAIController>(GetController());
-	if (EnemyAIController) {
-		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
-		EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint2"), WorldPatrolPoint2);
-		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), false);
+		EnemyAIController = Cast<AEnemyAIController>(GetController());
+		if (EnemyAIController) {
+			EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
+			EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint2"), WorldPatrolPoint2);
+			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), false);
 
-		EnemyAIController->RunBehaviorTree(BehaviorTree);
+			EnemyAIController->RunBehaviorTree(BehaviorTree);
+		}
 	}
 }
 
@@ -145,6 +150,16 @@ void AEnemy::ChangeBattleMode()
 	if (EnemyAIController) {
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsBattleMode"), bIsBattleMode);
 	}
+}
+
+void AEnemy::ChangeCombatState(ECombatState NextCombatState)
+{
+	CombatState = NextCombatState;
+}
+
+void AEnemy::PlayAttackMontage()
+{
+	AnimInstance->Montage_Play(AttackMontage[0]);
 }
 
 void AEnemy::ChangeEnemySize(EEnemySize Size)
@@ -211,7 +226,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 		HideHealthBar();
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), true);
 
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		//UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && DeathMontage) {
 			AnimInstance->Montage_Play(DeathMontage);
 		}

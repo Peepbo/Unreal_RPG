@@ -231,13 +231,12 @@ void APlayerCharacter::PressedAttack()
 {
 	bPressedAttackButton = true;
 
-	if (CombatState == ECombatState::ECS_AttackToIdle) {
+	if (CombatState == ECombatState::ECS_AttackToIdle) 
+	{
 		CombatState = ECombatState::ECS_Unoccupied;
 	}
 
-	if (CombatState != ECombatState::ECS_Unoccupied ||
-		EquippedWeapon == nullptr ||
-		AnimInstance == nullptr)
+	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr || AnimInstance == nullptr)
 	{
 		return;
 	}
@@ -253,32 +252,28 @@ void APlayerCharacter::PressedAttack()
 
 		const FVector2D ThumbAxis{ GetThumbStickLocalAxis() };
 
-		// 1. lock-on  
-		if (bLockOn) {
-			if (ThumbAxis.Size() < 0.8f) {
-				MainAttack();
-				ComboAttackMontageIndex++;
-			}
-			else {
-				// Axis Size가 0.8f보다 크면서 전방 50도(-25,+25)를 가르킬 때 대쉬 공격
-				const float ThumbAbsDegree{ UKismetMathLibrary::Abs(GetThumbStickDegree()) };
-				if (ThumbAbsDegree <= 25.f) {
-					DashAttack();
-				}
+		// 질주 상태가 아니거나, 질주 상태여도 전방 30도를 가리키지 않을 경우 일반 공격 실행
+		bool bPlayMainAttack{ true };
+
+		if (GetSprinting()) 
+		{
+			const float ThumbAbsDegree{ UKismetMathLibrary::Abs(GetThumbStickDegree()) };
+
+			if (!bLockOn || ThumbAbsDegree <= 15.f) 
+			{
+				bPlayMainAttack = false;
 			}
 		}
 
-		// 2. normal
-		else {
-			// 질주 상태(0.8f~1.f)가 아니라면 기본 공격
-			if (ThumbAxis.Size() < 0.8f) {
-				MainAttack();
-				ComboAttackMontageIndex++;
-			}
-			// 질주 상태면 대쉬 공격
-			else {
-				DashAttack();
-			}
+
+		if (bPlayMainAttack)
+		{
+			MainAttack();
+			ComboAttackMontageIndex++;
+		}
+		else
+		{
+			DashAttack();
 		}
 	}
 }
@@ -818,6 +813,11 @@ AEnemy* APlayerCharacter::GetNearestEnemyWithLockOn(const TArray<AActor*> Actors
 	float LastDistance{ 0.f };
 
 	for (AActor* Actor : Actors) {
+		AEnemy* NowEnemy{ Cast<AEnemy>(Actor) };
+		if (NowEnemy->GetDying())
+		{
+			continue;
+		}
 
 		// 카메라 정면과 50도 이상 떨어져있는지 검사한다.
 		const FVector PlayerToEnemyDirection{
@@ -836,8 +836,6 @@ AEnemy* APlayerCharacter::GetNearestEnemyWithLockOn(const TArray<AActor*> Actors
 
 		// 카메라 정면으로 부터 좌, 우 50도내에 있는 경우
 		if (ValueToDegree <= 50.f) {
-			AEnemy* NowEnemy{ Cast<AEnemy>(Actor) };
-
 			const float NowDistance{
 				UKismetMathLibrary::Vector_Distance(
 					Actor->GetActorLocation(),
@@ -845,7 +843,6 @@ AEnemy* APlayerCharacter::GetNearestEnemyWithLockOn(const TArray<AActor*> Actors
 
 			// 이미 선택된 적이 있으면
 			if (OutputEnemy) {
-
 				// 이전 정보, 현재 정보 중 더 가까운 적을 타겟팅한다.
 				if (NowDistance < LastDistance) {
 					OutputEnemy = NowEnemy;

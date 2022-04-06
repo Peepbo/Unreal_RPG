@@ -52,9 +52,6 @@ protected:
 	void EndDraw();
 
 	UFUNCTION(BlueprintCallable)
-	void PlayAttackMontage();
-
-	UFUNCTION(BlueprintCallable)
 	void SaveTargetRotator();
 
 	UFUNCTION(BlueprintCallable)
@@ -73,9 +70,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void EndAttackCheckTime();
-
-	UFUNCTION(BlueprintCallable)
-	void ChangeCombatState(ECombatState NextCombatState);
 
 	UFUNCTION(BlueprintCallable)
 	void FaceOff(float NextWalkDirection);
@@ -103,12 +97,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void EndAttack();
 
+	virtual	void PlayAttackMontage() override;
+
 private:
-
-	class UKnightAnimInstance* AnimInstance;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	TArray<UAnimMontage*> AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DrawMontage;
