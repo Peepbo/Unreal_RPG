@@ -28,11 +28,12 @@ AEnemy::AEnemy() :
 	bRestTime(false),
 	bAvoidImpactState(false),
 	bPatrolEnemy(false),
-	bTurnInPlace(false),
+	bTurn(false),
 	bAttackable(true),
 	WalkDirection(0.f),
 	bMove(false),
-	InterpSpeed(5.f),
+	InplaceRotateSpeed(5.f),
+	AttackRotateSpeed(5.f),
 	AttackIndex(0),
 	LastAttackIndex(0)
 {
@@ -168,11 +169,6 @@ void AEnemy::ChangeBattleMode()
 	}
 }
 
-void AEnemy::ChangeCombatState(ECombatState NextCombatState)
-{
-	CombatState = NextCombatState;
-}
-
 void AEnemy::PlayAttackMontage()
 {
 	AnimInstance->Montage_Play(AttackMontage[0]);
@@ -232,14 +228,14 @@ void AEnemy::SaveTargetRotator()
 
 void AEnemy::StartRotate()
 {
-	bTurnInPlace = true;
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
+	bTurn = true;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurn);
 }
 
 void AEnemy::StopRotate()
 {
-	bTurnInPlace = false;
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurnInPlace);
+	bTurn = false;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurn);
 }
 
 void AEnemy::TracingAttackSphere()
@@ -420,19 +416,42 @@ void AEnemy::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)
 	}
 }
 
+void AEnemy::PlayMontage(UAnimMontage* Montage)
+{
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(Montage);
+	}
+}
+
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetAttacking() && bTurnInPlace) {
-		const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
+	if (Target)
+	{
+		if (bTurn)
+		{
+			const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
 
-		if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) {
-			bTurnInPlace = false;
-		}
-		else {
-			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, InterpSpeed));
+			if (!GetAttacking())
+			{
+				// 왼쪽으로 회전하는지 오른쪽으로 회전하는지 알아야 함 (TurnInPlace 애니메이션에 사용)
+				const float Degree{ GetDegreeForwardToTarget() };
+				bTurnLeft = (Degree < 0.f);
+			}
+			// 공격 회전 속도와 제자리 회전 속도를 다르게한다.
+			const float SelectInterpSpeed{ GetAttacking() ? AttackRotateSpeed : InplaceRotateSpeed };
+
+			if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) 
+			{
+				bTurn = false;
+			}
+			else 
+			{
+				SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, SelectInterpSpeed));
+			}
 		}
 	}
 }

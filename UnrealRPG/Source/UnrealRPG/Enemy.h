@@ -64,9 +64,6 @@ protected:
 		void ChangeBattleMode();
 
 	UFUNCTION(BlueprintCallable)
-		void ChangeCombatState(ECombatState NextCombatState);
-
-	UFUNCTION(BlueprintCallable)
 		virtual	void PlayAttackMontage();
 
 	/* 캐릭터의 크기를 변경하는 함수 (LockOn에 필요) */
@@ -124,6 +121,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
+
+	UFUNCTION(BlueprintCallable)
+			void PlayMontage(class UAnimMontage* Montage);
 
 protected:
 	class UAnimInstance* AnimInstance;
@@ -207,7 +207,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 		FRotator LastSaveRotate;
 
-	bool bTurnInPlace;
+	bool bTurn;
 
 	bool bAttackable;
 
@@ -226,7 +226,10 @@ private:
 	bool bMove;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float InterpSpeed;
+		float InplaceRotateSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float AttackRotateSpeed;
 
 public:
 	// Called every frame
@@ -251,13 +254,15 @@ public:
 	FORCEINLINE void SetLockOn(bool NextBool) { bLockOnEnemy = NextBool; }
 
 	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
-	FORCEINLINE bool GetTurnInPlace() const { return bTurnInPlace; }
+	FORCEINLINE bool GetTurn() const { return bTurn; }
 
 	UFUNCTION(BlueprintCallable)
 		void SetMove(bool bNextBool) { bMove = bNextBool; }
 	FORCEINLINE bool GetMove() const { return bMove; }
 
-	FORCEINLINE void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
+	UFUNCTION(BlueprintCallable)
+	void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
+
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
 
 	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }

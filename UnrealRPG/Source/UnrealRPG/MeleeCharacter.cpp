@@ -40,6 +40,11 @@ void AMeleeCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
+void AMeleeCharacter::ChangeCombatState(ECombatState NextCombatState)
+{
+	CombatState = NextCombatState;
+}
+
 // Called every frame
 void AMeleeCharacter::Tick(float DeltaTime)
 {

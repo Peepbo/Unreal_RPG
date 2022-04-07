@@ -26,14 +26,22 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		CharVelocity.Z = 0;
 		Velocity = { CharVelocity.X,CharVelocity.Y };
 
-		if (!Character->GetAttacking()) 
+		if (!Character->GetAttacking())
 		{
 			AttackExclusionVelocity = Velocity;
 			AttackExclusionSpeed = AttackExclusionVelocity.Size();
 		}
-		else 
+		else
 		{
 			AttackExclusionSpeed = 0.f;
+		}
+		if (Character->GetCombatState() == ECombatState::ECS_Unoccupied)
+		{
+			UnoccupiedSpeed = Velocity.Size();
+		}
+		else
+		{
+			UnoccupiedSpeed = 0.f;
 		}
 
 		Speed = Velocity.Size();

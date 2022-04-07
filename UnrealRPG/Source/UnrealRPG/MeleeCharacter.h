@@ -21,6 +21,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable)
+		void ChangeCombatState(ECombatState NextCombatState);
 
 	/* Shield Function */
 	/* bIsShieldImpact을 false로 바꾸는 함수 */
@@ -108,6 +110,7 @@ private:
 
 public:
 	FORCEINLINE bool GetSprinting() const { return bSprinting; }
+	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }
 	FORCEINLINE bool GetGuarding() const { return CombatState == ECombatState::ECS_Guard; }
 	FORCEINLINE bool GetImpacting() const { return CombatState == ECombatState::ECS_Impact; }

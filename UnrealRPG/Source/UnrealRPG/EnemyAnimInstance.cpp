@@ -28,7 +28,7 @@ void UEnemyAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		
 		bWalkDirectionZero = UKismetMathLibrary::NearlyEqual_FloatFloat(WalkDirection, 0.f);
 		
-		bTurnInPlace = Enemy->GetTurnInPlace();
+		bTurn = Enemy->GetTurn();
 		
 		bTurnLeft = Enemy->GetTurnLeft();
 	}
