@@ -22,9 +22,14 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void StartDodge();
-	UFUNCTION(BlueprintCallable)
-	void EndDodge();
+	void UseMagic();
+
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Magic", meta = (AllowPrivateAccess = "true"))
+		TSubclassOf<class AProjectileMagic> ProjectileMagic;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Magic", meta = (AllowPrivateAccess = "true"))
+		float ProjectileDamage;
 
 private:
 	virtual	void PlayAttackMontage() override;

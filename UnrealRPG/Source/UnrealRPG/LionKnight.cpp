@@ -2,8 +2,11 @@
 
 
 #include "LionKnight.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "ProjectileMagic.h"
 
-ALionKnight::ALionKnight()
+ALionKnight::ALionKnight():
+	ProjectileDamage(50.f)
 {
 
 }
@@ -33,14 +36,27 @@ void ALionKnight::BeginPlay()
 	Super::BeginPlay();
 
 	ChangeEnemySize(EEnemySize::EES_Large);
+
+	GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
+
+	//if (ProjectileMagic)
+	//{
+	//	AProjectileMagic* ProjectMagic = Cast<AProjectileMagic>(ProjectileMagic);
+	//	if (ProjectMagic)
+	//	{
+	//		ProjectMagic->InitMagic(this, ProjectileDamage);
+	//		UE_LOG(LogTemp, Warning, TEXT("Projectile Init"));
+	//	}
+	//}
 }
 
-void ALionKnight::StartDodge()
+void ALionKnight::UseMagic()
 {
-	ChangeCombatState(ECombatState::ECS_Roll);
-}
+	if (ProjectileMagic)
+	{
+		FVector MagicStartLoc{ GetActorLocation() + (GetActorForwardVector() * 150.f) };
 
-void ALionKnight::EndDodge()
-{
-	ChangeCombatState(ECombatState::ECS_Unoccupied);
+		AProjectileMagic* SpawnMagic = GetWorld()->SpawnActor<AProjectileMagic>(ProjectileMagic, MagicStartLoc, GetActorRotation());
+		SpawnMagic->InitMagic(this, ProjectileDamage);
+	}
 }

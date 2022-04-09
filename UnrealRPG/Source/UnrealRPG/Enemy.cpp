@@ -339,7 +339,8 @@ void AEnemy::ChangeSprinting(bool IsSprinting)
 {
 	SetSprinting(IsSprinting);
 	if (IsSprinting) {
-		GetCharacterMovement()->MaxWalkSpeed = BattleRunSpeed;
+		//GetCharacterMovement()->MaxWalkSpeed = BattleRunSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
 	}
 	else {
 		GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
