@@ -21,15 +21,11 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void ShowBackWeapon();
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void HideBackWeapon();
+	UFUNCTION(BlueprintCallable)
+	void SetBackWeaponVisibility(const bool bNextVisibility);
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void ShowWeapon();
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void HideWeapon();
+	UFUNCTION(BlueprintCallable)
+	void SetEquipWeaponVisibility(const bool bNextVisibility);
 
 	virtual void AgroSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
@@ -62,6 +58,9 @@ private:
 
 private:
 	class UKnightAnimInstance* KnightAnimInstance;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class USkeletalMeshComponent* WeaponCaseMesh;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DrawMontage;

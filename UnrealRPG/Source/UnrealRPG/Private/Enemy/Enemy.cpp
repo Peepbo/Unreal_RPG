@@ -27,7 +27,6 @@ AEnemy::AEnemy() :
 	bLockOnEnemy(false),
 	bRestTime(false),
 	bAvoidImpactState(false),
-	bPatrolEnemy(false),
 	bTurn(false),
 	bAttackable(true),
 	WalkDirection(0.f),
@@ -52,11 +51,22 @@ AEnemy::AEnemy() :
 	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
 	GetCharacterMovement()->bAllowPhysicsRotationDuringAnimRootMotion = true;
 
+	// Widget
 	LockOnWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidget"));
 	LockOnWidget->SetupAttachment(GetMesh(), TEXT("Hips"));
 	LockOnWidget->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidget->SetDrawSize({ 18.f,18.f });
 	LockOnWidget->SetVisibility(false);
+
+	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidget"));
+	HealthBar->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthBar->SetDrawSize({ 150.f,10.f });
+	HealthBar->SetRelativeLocation({ 0.f,0.f,120.f });
+
+	// Weapon
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
+	WeaponMesh->SetupAttachment(GetMesh(), TEXT("RightHandSocket"));
+
 }
 
 // Called when the game starts or when spawned
@@ -75,33 +85,6 @@ void AEnemy::BeginPlay()
 	EnemyAIController = Cast<AEnemyAIController>(GetController());
 	if (EnemyAIController && BehaviorTree)
 	{
-		if (bPatrolEnemy)
-		{
-			const FVector WorldPatrolPoint = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint);
-			const FVector WorldPatrolPoint2 = UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoint2);
-
-			DrawDebugSphere(
-				GetWorld(),
-				WorldPatrolPoint,
-				25.f,
-				12,
-				FColor::Red,
-				true
-			);
-
-			DrawDebugSphere(
-				GetWorld(),
-				WorldPatrolPoint2,
-				25.f,
-				12,
-				FColor::Red,
-				true
-			);
-
-			EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
-			EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint2"), WorldPatrolPoint2);
-		}
-
 		EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), false);
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);

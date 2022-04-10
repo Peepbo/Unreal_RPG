@@ -179,14 +179,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
 	class UBehaviorTree* BehaviorTree;
 
-	/* 정찰 지점1 */
-	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
-	FVector PatrolPoint;
-
-	/* 정찰 지점2 */
-	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
-	FVector PatrolPoint2;
-
 	/* 적(플레이어) 인식 콜라이더 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Combat, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* AgroSphere;
@@ -215,9 +207,6 @@ private:
 
 	bool bLockOnEnemy;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool bPatrolEnemy;
-
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 		FRotator LastSaveRotate;
@@ -226,7 +215,7 @@ private:
 
 	bool bAttackable;
 
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		USkeletalMeshComponent* WeaponMesh;
 
 	FTimerHandle AttackCheckTimer;
@@ -245,6 +234,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float AttackRotateSpeed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		class UWidgetComponent* HealthBar;
 
 public:
 	// Called every frame

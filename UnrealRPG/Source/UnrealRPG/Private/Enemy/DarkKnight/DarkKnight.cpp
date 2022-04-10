@@ -7,6 +7,7 @@
 #include "Player/PlayerCharacter.h"
 #include "Enemy/EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/WidgetComponent.h"
 
 
 ADarkKnight::ADarkKnight() :
@@ -14,7 +15,11 @@ ADarkKnight::ADarkKnight() :
 	DirectionLerpSpeed(1.f),
 	TurnTime(1.2f)
 {
+	GetWeapon()->SetVisibility(false);
+	GetLockOnWidget()->SetRelativeLocation({ 0.f,0.f,100.f });
 
+	WeaponCaseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponCase"));
+	WeaponCaseMesh->SetupAttachment(GetMesh(), TEXT("SwordSocket"));
 }
 
 void ADarkKnight::BeginPlay()
@@ -38,6 +43,16 @@ void ADarkKnight::BeginPlay()
 	EnemyAIController->GetBlackboardComponent()->SetValueAsFloat(TEXT("TurnTime"), TurnTime);
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bFirstPatrol"), true);
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bShouldFaceOff"), true);
+}
+
+void ADarkKnight::SetBackWeaponVisibility(const bool bNextVisibility)
+{
+	WeaponCaseMesh->SetVisibility(bNextVisibility);
+}
+
+void ADarkKnight::SetEquipWeaponVisibility(const bool bNextVisibility)
+{
+	GetWeapon()->SetVisibility(bNextVisibility);
 }
 
 void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
