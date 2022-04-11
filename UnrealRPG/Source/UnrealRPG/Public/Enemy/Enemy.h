@@ -169,6 +169,11 @@ protected:
 	int32 AttackIndex;
 	int32 LastAttackIndex;
 
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float InplaceRotateSpeed;
+
+	bool bTurn;
+
 private:
 
 	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
@@ -211,8 +216,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 		FRotator LastSaveRotate;
 
-	bool bTurn;
-
 	bool bAttackable;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -229,8 +232,7 @@ private:
 
 	bool bMove;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float InplaceRotateSpeed;
+
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float AttackRotateSpeed;

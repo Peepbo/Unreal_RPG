@@ -24,6 +24,9 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	virtual void Tick(float DeltaTime) override;
+
+private:
 	UFUNCTION(CallInEditor, Category = "Patrol", meta = (AllowPrivateAccess = "true"))
 	void CallRetargetPathAndDraw();
 
@@ -40,7 +43,15 @@ private:
 	*/
 	TArray<TArray<FVector>> PatrolPath;
 
+	int32 PatrolIndex;
+
+	bool bPatrol;
+
 public:
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	virtual int32 GetPatrolIndex() override;
+
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
 	virtual TArray<FVector> GetPatrolPath() override;
 
@@ -52,4 +63,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
 	virtual void RetargetPatrolPath() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	virtual	void NextPath() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	virtual FVector GetActorToPatrolFirstPointDirection() override;
 };

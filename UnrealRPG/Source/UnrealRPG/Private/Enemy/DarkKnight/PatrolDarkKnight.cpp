@@ -8,7 +8,9 @@
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
 
-APatrolDarkKnight::APatrolDarkKnight()
+APatrolDarkKnight::APatrolDarkKnight() :
+	PatrolIndex(0),
+	bPatrol(true)
 {
 
 }
@@ -17,22 +19,41 @@ void APatrolDarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//FVector FirstPoint{};
-	//FVector LastPoint{};
-	//for (int32 Index = 0; Index < PatrolPoints.Num(); Index++)
-	//{
-	//	const FVector WorldPatrolPoint{ UKismetMathLibrary::TransformLocation(GetActorTransform(), PatrolPoints[Index]) };
-	//
-	//	if (Index == 0)
-	//	{
-	//		FirstPoint = WorldPatrolPoint;
-	//	}
-	//
-	//	LastPoint = WorldPatrolPoint;
-	//}
+	RetargetPatrolPath();
+}
 
-	// 아마 배열 자체를 전달해야 편할듯, 물론 WorldPosition으로 변경 후 전달해야 함
-	//EnemyAIController->GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolPoint"), WorldPatrolPoint);
+void APatrolDarkKnight::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	const bool PatrolAble{ !Target && PatrolPoints.Num() > 0 };
+	const bool PatrolTurn{ bPatrol && GetTurn() };
+	if (PatrolAble && PatrolTurn)
+	{
+		const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), GetPatrolPath()[1]) };
+
+		// 공격 회전 속도와 제자리 회전 속도를 다르게한다.
+		const float SelectInterpSpeed{ InplaceRotateSpeed };
+
+		// 회전 방향이 왼쪽인지 오른쪽인지 구한다.
+		
+		const FVector2D Forward2D{ GetActorForwardVector() };
+		const FVector2D ActorToPatrol2D{ UKismetMathLibrary::Normal(GetPatrolPath()[1] - GetActorLocation()) };
+
+		const float Cross{ UKismetMathLibrary::CrossProduct2D(Forward2D, ActorToPatrol2D) };
+		const bool bLeft{ Cross < 0.f };
+		SetTurnLeft(bLeft);
+
+		FRotator Temp;
+		Temp.Yaw = (bLeft ? -SelectInterpSpeed : SelectInterpSpeed) * DeltaTime;
+
+		SetActorRotation(UKismetMathLibrary::ComposeRotators(GetActorRotation(), Temp));
+
+		if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetActorRotation().Yaw, LookRot.Yaw))
+		{
+			SetActorRotation(LookRot);
+		}
+	}
 }
 
 void APatrolDarkKnight::CallRetargetPathAndDraw()
@@ -41,9 +62,14 @@ void APatrolDarkKnight::CallRetargetPathAndDraw()
 	DrawPatrolPath(10.f);
 }
 
+int32 APatrolDarkKnight::GetPatrolIndex()
+{
+	return PatrolIndex;
+}
+
 TArray<FVector> APatrolDarkKnight::GetPatrolPath()
 {
-	return PatrolPath[0];
+	return PatrolPath[PatrolIndex];
 }
 
 void APatrolDarkKnight::InitPatrolPath(int32 Size)
@@ -151,4 +177,19 @@ void APatrolDarkKnight::RetargetPatrolPath()
 	Path = NavigationPath->PathPoints;
 
 	PatrolPath[SavePathIndex] = Path;
+}
+
+void APatrolDarkKnight::NextPath()
+{
+	PatrolIndex++;
+
+	if (PatrolIndex == PatrolPoints.Num())
+	{
+		PatrolIndex = 0;
+	}
+}
+
+FVector APatrolDarkKnight::GetActorToPatrolFirstPointDirection()
+{
+	return UKismetMathLibrary::Normal((GetPatrolPath()[0] - GetActorLocation()));
 }

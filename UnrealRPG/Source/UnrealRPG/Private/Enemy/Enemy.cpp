@@ -62,6 +62,7 @@ AEnemy::AEnemy() :
 	HealthBar->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthBar->SetDrawSize({ 150.f,10.f });
 	HealthBar->SetRelativeLocation({ 0.f,0.f,120.f });
+	HealthBar->SetVisibility(false);
 
 	// Weapon
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
@@ -481,8 +482,14 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	UE_LOG(LogTemp, Warning, TEXT("Enemy TakeDamage call"));
 	if (bDying)return DamageAmount;
 
+	if (!HealthBar->IsWidgetVisible())
+	{
+		HealthBar->SetVisibility(true);
+	}
+
 	// Attack이 아니거나 Attack Rest Time일 경우 Impact로 바뀐다.
-	if (!bAvoidImpactState && (CombatState != ECombatState::ECS_Attack || bRestTime)) {
+	if (!bAvoidImpactState && (CombatState != ECombatState::ECS_Attack || bRestTime)) 
+	{
 		CombatState = ECombatState::ECS_Impact;
 	}
 
@@ -491,12 +498,14 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 
 	UE_LOG(LogTemp, Warning, TEXT("Enemy Change DamageState"));
 	DamageState = EDamageState::EDS_invincibility;
-	if (bDying) {
+	if (bDying) 
+	{
 		HideHealthBar();
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), true);
 
 		//UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && DeathMontage) {
+		if (AnimInstance && DeathMontage)
+		{
 			AnimInstance->Montage_Play(DeathMontage);
 		}
 	}

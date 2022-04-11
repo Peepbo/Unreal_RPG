@@ -7,7 +7,7 @@
 #include "Patrolable.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI, meta = (CannotImplementInterfaceInBlueprint))
+UINTERFACE(BlueprintType, MinimalAPI, meta = (CannotImplementInterfaceInBlueprint))
 class UPatrolable : public UInterface
 {
 	GENERATED_BODY()
@@ -23,6 +23,9 @@ class UNREALRPG_API IPatrolable
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	virtual int32 GetPatrolIndex() = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
 	virtual TArray<FVector> GetPatrolPath() = 0;
 
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
@@ -34,4 +37,10 @@ public:
 	/* 에디터에서 부를 수 있게 구현하여 Path를 Update한다. */
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
 	virtual void RetargetPatrolPath() = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	virtual	void NextPath() = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	virtual FVector GetActorToPatrolFirstPointDirection() = 0;
 };
