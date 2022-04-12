@@ -462,8 +462,11 @@ void AEnemy::Tick(float DeltaTime)
 				const float Degree{ GetDegreeForwardToTarget() };
 				bTurnLeft = (Degree < 0.f);
 			}
+
 			// 공격 회전 속도와 제자리 회전 속도를 다르게한다.
 			const float SelectInterpSpeed{ GetAttacking() ? AttackRotateSpeed : InplaceRotateSpeed };
+			FRotator Temp;
+			Temp.Yaw = (bTurnLeft ? -SelectInterpSpeed : SelectInterpSpeed) * DeltaTime;
 
 			if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, 0.5f)) 
 			{
@@ -471,8 +474,33 @@ void AEnemy::Tick(float DeltaTime)
 			}
 			else 
 			{
-				SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, SelectInterpSpeed));
+				SetActorRotation(UKismetMathLibrary::ComposeRotators(GetActorRotation(), Temp));
+				//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), { 0.f,LookRot.Yaw,0.f }, DeltaTime, SelectInterpSpeed));
 			}
+
+			//const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), GetPatrolPath()[1]) };
+			//
+			//// 공격 회전 속도와 제자리 회전 속도를 다르게한다.
+			//const float SelectInterpSpeed{ InplaceRotateSpeed };
+			//
+			//// 회전 방향이 왼쪽인지 오른쪽인지 구한다.
+			//
+			//const FVector2D Forward2D{ GetActorForwardVector() };
+			//const FVector2D ActorToPatrol2D{ UKismetMathLibrary::Normal(GetPatrolPath()[1] - GetActorLocation()) };
+			//
+			//const float Cross{ UKismetMathLibrary::CrossProduct2D(Forward2D, ActorToPatrol2D) };
+			//const bool bLeft{ Cross < 0.f };
+			//SetTurnLeft(bLeft);
+			//
+			//FRotator Temp;
+			//Temp.Yaw = (bLeft ? -SelectInterpSpeed : SelectInterpSpeed) * DeltaTime;
+			//
+			//SetActorRotation(UKismetMathLibrary::ComposeRotators(GetActorRotation(), Temp));
+			//
+			//if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetActorRotation().Yaw, LookRot.Yaw))
+			//{
+			//	SetActorRotation(LookRot);
+			//}
 		}
 	}
 }
