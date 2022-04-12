@@ -139,8 +139,7 @@ void APlayerCharacter::MoveForward(float Value)
 	
 	if (Controller && Value != 0.f) {
 		if (CombatState == ECombatState::ECS_AttackToIdle) {
-			ForceStopAllMontage();
-			CombatState = ECombatState::ECS_Unoccupied;
+			StopAttackToIdle();
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -164,8 +163,7 @@ void APlayerCharacter::MoveRight(float Value)
 
 	if (Controller && Value != 0.f) {
 		if (CombatState == ECombatState::ECS_AttackToIdle) {
-			ForceStopAllMontage();
-			CombatState = ECombatState::ECS_Unoccupied;
+			StopAttackToIdle();
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -231,7 +229,7 @@ void APlayerCharacter::PressedAttack()
 {
 	bPressedAttackButton = true;
 
-	if (CombatState == ECombatState::ECS_AttackToIdle) 
+	if (CombatState == ECombatState::ECS_AttackToIdle)
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
 	}
@@ -239,6 +237,12 @@ void APlayerCharacter::PressedAttack()
 	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr || AnimInstance == nullptr)
 	{
 		return;
+	}
+
+	// 모든 공격 조건이 성립하면
+	if (bLockOn)
+	{
+		ApplyLockOnAttackSetting(true);
 	}
 
 	if (GetCharacterMovement()->IsFalling()) 
@@ -451,7 +455,7 @@ void APlayerCharacter::PressedRollAndSprint()
 	bPressedRollAndSprintButton = true;
 
 	if (CombatState == ECombatState::ECS_AttackToIdle) {
-		CombatState = ECombatState::ECS_Unoccupied;
+		StopAttackToIdle();
 	}
 
 	// 구르기와 뛰기는 둘 다 특정 모션을 취하고 있으면 안되고, 공중에 있으면 안된다. 
@@ -649,12 +653,12 @@ void APlayerCharacter::SaveDegree()
 
 void APlayerCharacter::BeginAttackRotate(float DeltaTime)
 {
-	// 각도가 거의 비슷해졌다면 회전을 종료한다.
-	if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), SaveRotator, 0.01f)) {
-		bIsBeforeAttackRotate = false;
-		UE_LOG(LogTemp, Warning, TEXT("End Rot"));
-		return;
-	}
+	//// 각도가 거의 비슷해졌다면 회전을 종료한다.
+	//if (UKismetMathLibrary::EqualEqual_RotatorRotator(GetActorRotation(), SaveRotator, 0.01f)) {
+	//	bIsBeforeAttackRotate = false;
+	//	UE_LOG(LogTemp, Warning, TEXT("End Rot"));
+	//	return;
+	//}
 
 	// InterpTo를 사용하여 일정한 속도로 회전을 진행한다.
 	SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), SaveRotator, DeltaTime, BeforeAttackRotateSpeed));
@@ -728,7 +732,6 @@ void APlayerCharacter::ResetAttack()
 	ChargedComboAttackMontageIndex = 0;
 	bIsChargedAttack = false;
 
-	//CombatState = ECombatState::ECS_Unoccupied;
 	CombatState = ECombatState::ECS_AttackToIdle;
 	PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
 }
@@ -892,7 +895,7 @@ void APlayerCharacter::PressedUseItem()
 	//if item valid?
 	if (EquippedPotion) {
 		if (CombatState == ECombatState::ECS_AttackToIdle) {
-			CombatState = ECombatState::ECS_Unoccupied;
+			StopAttackToIdle();
 		}
 
 		// 특정 액션을 취하고 있지 않을 때만 가능
@@ -966,6 +969,48 @@ void APlayerCharacter::DashAttack()
 		AnimInstance->Montage_Play(DashAttackMontage);
 		CombatState = ECombatState::ECS_Attack;
 		WeaponAttackType = EWeaponAttackType::EWAT_Dash;
+	}
+}
+
+void APlayerCharacter::ApplyLockOnMovementSetting()
+{
+	if (bLockOn)
+	{
+		// Other -> Sprint animation
+		if (GetSprinting())
+		{
+			// 잠시 lockOn Movement에 필요한 세팅을 끈다.
+			GetCharacterMovement()->bUseControllerDesiredRotation = false;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+		// Sprint -> Other animation
+		else
+		{
+			// 다시 lockOn Movement에 필요한 세팅을 킨다.
+			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+			GetCharacterMovement()->bOrientRotationToMovement = false;
+		}
+	}
+}
+
+void APlayerCharacter::ApplyLockOnAttackSetting(bool bStartAttack)
+{
+	if (!bLockOn)
+	{
+		return;
+	}
+
+	if (bStartAttack)
+	{
+		// 잠시 lockOn Movement에 필요한 세팅을 끈다.
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+	}
+	else
+	{
+		// 다시 lockOn Movement에 필요한 세팅을 킨다.
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
 }
 
@@ -1183,8 +1228,7 @@ void APlayerCharacter::PressedJump()
 
 	// 조건 검사
 	if (CombatState == ECombatState::ECS_AttackToIdle) {
-		CombatState = ECombatState::ECS_Unoccupied;
-		StopAllMontage();
+		StopAttackToIdle();
 	}
 
 	if (CombatState != ECombatState::ECS_Unoccupied)return;
@@ -1320,4 +1364,14 @@ void APlayerCharacter::ContinueUpdateIKData(float DeltaTime)
 		TargetHipOffset,
 		DeltaTime,
 		IKInterpSpeed);
+}
+
+void APlayerCharacter::StopAttackToIdle()
+{
+	if (bLockOn)
+	{
+		ApplyLockOnAttackSetting(false);
+	}
+	ForceStopAllMontage();
+	CombatState = ECombatState::ECS_Unoccupied;
 }

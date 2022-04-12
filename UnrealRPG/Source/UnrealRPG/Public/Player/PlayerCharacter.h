@@ -180,6 +180,13 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void SetHitPoint_Test(FVector HitPoint) { LastHitPoint = HitPoint; }
 
+	/* 락온 상태에서 달리기(sprint)로 전환할 때 호출하는 함수, 캐릭터가 바라보는 방향을 수정함 */
+	UFUNCTION(BlueprintCallable)
+		void ApplyLockOnMovementSetting();
+
+	UFUNCTION(BlueprintCallable)
+		void ApplyLockOnAttackSetting(bool bStartAttack);
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -229,6 +236,8 @@ private:
 	void UpdateIKFootData(float DeltaTime);
 	void IKFootTrace(const FName& SocketName, FHitResult& HitResult);
 	void ContinueUpdateIKData(float DeltaTime);
+
+	void StopAttackToIdle();
 
 private:
 	/* Camera Variable */
@@ -396,7 +405,7 @@ private:
 
 	/* Lock-On Variable */
 	/* 락온 상태인지 아닌지 */
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool bLockOn;
 
 	/* 락온 시 visible이 켜져야되는 위젯, 해당 위젯의 월드 위치를 카메라(컨트롤러)가 lookAt함 */
