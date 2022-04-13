@@ -43,6 +43,11 @@ void ALionKnight::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
 }
 
+void ALionKnight::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
 void ALionKnight::UseMagic()
 {
 	if (ProjectileMagic)
