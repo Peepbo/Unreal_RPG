@@ -27,6 +27,8 @@ protected:
 
 	bool CastAble() const { return (FX && Mesh); }
 
+	void PlayCollisionSound();
+
 public:	
 	// Called every frame1
 	virtual void Tick(float DeltaTime) override;
@@ -53,6 +55,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
 		class UNiagaraSystem* EndFX_niagara;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
+		class USoundCue* FXSound;
+		
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
+		USoundCue* CollisionSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
+		class USoundAttenuation* SoundAttenuation;
+
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
+	//class USoundClass* SoundClass;
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "FX Param")

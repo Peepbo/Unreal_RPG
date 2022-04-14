@@ -106,6 +106,7 @@ void AProjectileMagic::ActiveMagic(float DeltaTime)
 						GetActorRotation());
 				}
 
+				PlayCollisionSound();
 				Mesh->SetVisibility(false);
 				FXSpawnRate = 0.5f;
 
@@ -117,6 +118,7 @@ void AProjectileMagic::ActiveMagic(float DeltaTime)
 
 void AProjectileMagic::DeactiveMagic(float DeltaTime)
 {
+	Super::DeactiveMagic(DeltaTime);
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), FXSpawnRate);
 	const bool bDestroy{ !bAutoFadeOut || UKismetMathLibrary::NearlyEqual_FloatFloat(FXSpawnRate, 0.f) };
 	if (bDestroy)

@@ -3,6 +3,10 @@
 
 #include "Magic/Magic.h"
 #include <../Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h>
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AMagic::AMagic():
@@ -25,6 +29,20 @@ void AMagic::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (FXSound)
+	{
+		FXSound->VolumeMultiplier = 1.75f;
+		UGameplayStatics::SpawnSoundAttached(
+			FXSound,
+			FX,
+			"None",
+			{ 0.f,0.f,0.f }, EAttachLocation::KeepRelativeOffset,
+			true,
+			0.5f,
+			1.5f,
+			0.f,
+			(SoundAttenuation != nullptr) ? SoundAttenuation : nullptr);
+	}
 }
 
 void AMagic::OnConstruction(const FTransform& Transform)
@@ -37,6 +55,23 @@ void AMagic::OnConstruction(const FTransform& Transform)
 
 		FX->SetFloatParameter(FireParam, FXSpawnRate);
 		FX->SetFloatParameter(SizeParam, FXSize);
+	}
+}
+
+void AMagic::PlayCollisionSound()
+{
+	if (CollisionSound)
+	{
+		UGameplayStatics::SpawnSoundAttached(
+			CollisionSound,
+			FX,
+			"None",
+			{ 0.f,0.f,0.f }, EAttachLocation::KeepRelativeOffset,
+			true,
+			0.5f,
+			1.5f,
+			0.f,
+			(SoundAttenuation != nullptr) ? SoundAttenuation : nullptr);
 	}
 }
 
@@ -64,4 +99,9 @@ void AMagic::ActiveMagic(float DeltaTime)
 void AMagic::DeactiveMagic(float DeltaTime)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Magic:DeactiveMagic"));
+
+	if (FXSound)
+	{
+		FXSound->VolumeMultiplier = UKismetMathLibrary::Lerp(FXSound->VolumeMultiplier, 0.f, DeltaTime);
+	}
 }
