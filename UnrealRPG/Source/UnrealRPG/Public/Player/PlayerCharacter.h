@@ -197,7 +197,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
+	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
 	/* 델리게이트에 Enemy의 데미지 타입 초기화 함수를 넣는다 */
 	void AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName);

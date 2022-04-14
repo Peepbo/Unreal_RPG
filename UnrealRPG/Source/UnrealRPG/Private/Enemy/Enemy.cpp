@@ -16,6 +16,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -252,20 +253,45 @@ void AEnemy::TracingAttackSphere(float Damage)
 
 	if (bHit) {
 		if (HitResult.Actor != nullptr) {
-			auto Player = Cast<APlayerCharacter>(HitResult.Actor);
+			APlayerCharacter* Player = Cast<APlayerCharacter>(HitResult.Actor);
 
 			if (Player) {
-				// attack point를 플레이어한테 전달
-				Player->SetHitPoint(HitResult.Location);
+				ECombatState PlayerCombatState{ Player->GetCombatState() };
 
-				Player->CustomApplyDamage(
+				// 공격을 상대가 맞았거나, 막았을 때 bAttack이 true가 됨
+				bool bAttack = Player->CustomApplyDamage(
 					Player,
 					Damage,
 					this,
-					EAttackType::EAT_Light
-				);
+					AdvancedAttackMontage[AttackIndex].AttackType);
 
-				bAttackable = false;
+				if (bAttack)
+				{
+					// 피해를 입었거나 가드가 부셔졌을 때 파티클, 사운드를 생성한다.
+					if (Player->GetImpacting() || Player->GuardBreaking())
+					{
+						// attack point를 플레이어한테 전달
+						Player->SetHitPoint(HitResult.Location);
+
+						// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
+						if (Player->GetBloodParticle()) {
+							UGameplayStatics::SpawnEmitterAtLocation(
+								GetWorld(),
+								Player->GetBloodParticle(),
+								HitResult.Location);
+						}
+						// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
+						if (Player->GetBloodSound())
+						{
+							UGameplayStatics::PlaySoundAtLocation(
+								this,
+								Player->GetBloodSound(),
+								HitResult.Location);
+						}
+					}
+
+					bAttackable = false;
+				}
 			}
 		}
 	}
@@ -459,12 +485,12 @@ void AEnemy::Tick(float DeltaTime)
 	}
 }
 
-void AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Enemy TakeDamage call"));
 	if (bDying)
 	{
-		return;
+		return false;
 	}
 
 	if (!HealthBar->IsWidgetVisible())
@@ -494,4 +520,6 @@ void AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 			AnimInstance->Montage_Play(DeathMontage);
 		}
 	}
+
+	return true;
 }

@@ -176,7 +176,7 @@ void ADarkKnight::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+bool ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
@@ -198,4 +198,6 @@ void ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 		GetWeapon()->DetachFromComponent(DetachmentTransfromRules);
 		GetWorldTimerManager().SetTimer(DropWeaponTimer, this, &ADarkKnight::DropWeapon, 0.1f, false);
 	}
+
+	return true;
 }

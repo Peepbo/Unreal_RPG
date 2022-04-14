@@ -7,6 +7,7 @@
 #include "Enemy/Enemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/PlayerCharacter.h"
+#include "Sound/SoundCue.h"
 //
 
 AWeapon::AWeapon() :
@@ -136,6 +137,14 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 						UGameplayStatics::SpawnEmitterAtLocation(
 							GetWorld(),
 							Enemy->GetBloodParticle(),
+							HitResult.Location);
+					}
+					// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
+					if (Enemy->GetBloodSound())
+					{
+						UGameplayStatics::PlaySoundAtLocation(
+							this,
+							Enemy->GetBloodSound(),
 							HitResult.Location);
 					}
 

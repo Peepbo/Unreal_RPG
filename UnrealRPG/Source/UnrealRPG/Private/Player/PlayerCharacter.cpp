@@ -1069,15 +1069,15 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::ReleasedJump);
 }
 
-void APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	if (bDying)
 	{
-		return;
+		return false;
 	}
 	if (CombatState == ECombatState::ECS_Roll)
 	{
-		return;
+		return false;
 	}
 
 
@@ -1100,7 +1100,7 @@ void APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 				SetShiledImpact(true);
 
 				// 데미지를 가드가 모두 받아냈으니 함수를 종료한다.
-				return;
+				return true;
 			}
 			else {
 				ST = 0.f;
@@ -1123,6 +1123,8 @@ void APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 
 	// 데미지 적용
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
+
+	return true;
 }
 
 void APlayerCharacter::AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName)

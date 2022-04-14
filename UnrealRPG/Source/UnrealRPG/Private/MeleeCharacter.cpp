@@ -57,11 +57,11 @@ void AMeleeCharacter::Tick(float DeltaTime)
 	ChangeMaximumSpeedForSmoothSpeed(DeltaTime);
 }
 
-void AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+bool AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	if (DamagedActor == nullptr || DamageCauser == nullptr)
 	{
-		return;
+		return false;
 	}
 
 	// TakeDamage를 호출할 수 있는 대상일 경우 함수를 계속 진행한다.
@@ -69,15 +69,17 @@ void AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount
 
 	if (Character)
 	{
-		Character->CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
+		return Character->CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 	}
+	
+	return false;
 }
 
-void AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	if (bDying)
 	{
-		return;
+		return false;
 	}
 
 	const FVector HitDir{ DamageCauser->GetActorLocation() - GetActorLocation() };
@@ -92,6 +94,8 @@ void AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 		HP = 0.f;
 		bDying = true;
 	}
+
+	return true;
 }
 
 void AMeleeCharacter::EndShieldImpact()

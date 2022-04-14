@@ -47,7 +47,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void SaveRelativeVelocityAngle();
 
-	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
 
 protected:
 	/* 캐릭터의 상태 */
@@ -85,6 +85,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* BloodParticle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class USoundCue* BloodSound;
+
 	/* 공격 시 TraceSphere를 시각화할지 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bVisibleTraceSphere;
@@ -106,7 +109,7 @@ public:
 
 	// Custom Damage function
 	UFUNCTION(BlueprintCallable)
-	void CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+	bool CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
 
 private:
 
@@ -128,6 +131,7 @@ public:
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
 	FORCEINLINE bool GetDying() const { return bDying; }
 	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }
+	FORCEINLINE USoundCue* GetBloodSound() const { return BloodSound; }
 	FORCEINLINE FVector GetLastHitDirection() const { return LastHitDirection; }
 	FORCEINLINE EAttackType GetLastDamagedAttackType() const { return LastDamagedAttackType; }
 };

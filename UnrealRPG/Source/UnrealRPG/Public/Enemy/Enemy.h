@@ -104,6 +104,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void StopRotate();
 
+	UFUNCTION()
 	void TracingAttackSphere(float Damage);
 
 	UFUNCTION(BlueprintCallable)
@@ -249,7 +250,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
+	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
 	UFUNCTION()
 	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
