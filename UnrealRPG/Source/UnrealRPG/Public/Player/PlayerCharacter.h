@@ -187,6 +187,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void ApplyLockOnAttackSetting(bool bStartAttack);
 
+	UFUNCTION(BlueprintCallable)
+	void EndGuardBreak() { bGuardBreak = false; }
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -194,7 +197,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
 	/* 델리게이트에 Enemy의 데미지 타입 초기화 함수를 넣는다 */
 	void AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName);
@@ -438,6 +441,9 @@ private:
 	/* 점프 착지 시 필요함 */
 	float MaximumZVelocity;
 
+	bool bGuardBreak;
+
+
 	/* Usable Item Variable */
 	bool bDrinkingPotion;
 
@@ -458,6 +464,7 @@ public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
 	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
 	/* 방어 시 필요한 정보를 Enemy한테 전달받는다 */
+	FORCEINLINE bool GuardBreaking() { return bGuardBreak; }
 	FORCEINLINE void SetHitPoint(const FVector HitPoint) { LastHitPoint = HitPoint; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 

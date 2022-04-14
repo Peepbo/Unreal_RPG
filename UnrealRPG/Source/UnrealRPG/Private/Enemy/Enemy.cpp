@@ -33,8 +33,7 @@ AEnemy::AEnemy() :
 	bMove(false),
 	InplaceRotateSpeed(5.f),
 	AttackRotateSpeed(5.f),
-	AttackIndex(0),
-	LastAttackIndex(0)
+	AttackIndex(0)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -227,32 +226,13 @@ void AEnemy::StopRotate()
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRotate"), bTurn);
 }
 
-void AEnemy::TracingAttackSphere()
+void AEnemy::TracingAttackSphere(float Damage)
 {
 	if (!bAttackable)return;
 
 	/* 아이템의 TopSocket과 BottomSocket의 위치를 받아온다. */
 	const FVector TopSocketLoc{ WeaponMesh->GetSocketLocation("TopSocket") };
 	const FVector BottomSocketLoc{ WeaponMesh->GetSocketLocation("BottomSocket") };
-
-	/*
-		const FVector TopSocketLoc{ ItemMesh->GetSocketLocation(WeaponTopSocketName) };
-	const FVector BottomSocketLoc{ ItemMesh->GetSocketLocation(WeaponBottomSocketName) };
-
-	const bool bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
-		this,
-		BottomSocketLoc,
-		TopSocketLoc,
-		50.f,
-		// Pawn
-		{ EObjectTypeQuery::ObjectTypeQuery3 },
-		false,
-		{ Character },
-		bDebugVisible? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
-		OutHit,
-		true
-	);
-	*/
 
 	FHitResult HitResult;
 	// SphereTraceSingle로 원을 그리고 원에 겹치는 오브젝트를 HitResult에 담는다.
@@ -278,12 +258,12 @@ void AEnemy::TracingAttackSphere()
 				// attack point를 플레이어한테 전달
 				Player->SetHitPoint(HitResult.Location);
 
-				UGameplayStatics::ApplyDamage(
+				Player->CustomApplyDamage(
 					Player,
-					AD,
-					GetController(),
+					Damage,
 					this,
-					UDamageType::StaticClass());
+					EAttackType::EAT_Light
+				);
 
 				bAttackable = false;
 			}
@@ -291,14 +271,22 @@ void AEnemy::TracingAttackSphere()
 	}
 }
 
-void AEnemy::StartAttackCheckTime()
+void AEnemy::StartAttackCheckTime(float DamagePersantage)
 {
-	GetWorldTimerManager().SetTimer(
-		AttackCheckTimer,
-		this,
-		&AEnemy::TracingAttackSphere,
-		0.005f,
-		true);
+	if (AdvancedAttackMontage.IsValidIndex(AttackIndex) && AdvancedAttackMontage[AttackIndex].AttackMontage)
+	{
+		FTimerDelegate AttackDelegate;
+		AttackDelegate.BindUFunction(
+			this,
+			FName("TracingAttackSphere"),
+			AdvancedAttackMontage[AttackIndex].AttackDamage * DamagePersantage);
+
+		GetWorldTimerManager().SetTimer(
+			AttackCheckTimer,
+			AttackDelegate,
+			0.005f,
+			true);
+	}
 }
 
 void AEnemy::EndAttackCheckTime()
@@ -471,10 +459,13 @@ void AEnemy::Tick(float DeltaTime)
 	}
 }
 
-float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Enemy TakeDamage call"));
-	if (bDying)return DamageAmount;
+	if (bDying)
+	{
+		return;
+	}
 
 	if (!HealthBar->IsWidgetVisible())
 	{
@@ -488,7 +479,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Enemy Super(MeleeCharacter) TakeDamage call"));
-	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
 	UE_LOG(LogTemp, Warning, TEXT("Enemy Change DamageState"));
 	DamageState = EDamageState::EDS_invincibility;
@@ -503,6 +494,4 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 			AnimInstance->Montage_Play(DeathMontage);
 		}
 	}
-
-	return DamageAmount;
 }

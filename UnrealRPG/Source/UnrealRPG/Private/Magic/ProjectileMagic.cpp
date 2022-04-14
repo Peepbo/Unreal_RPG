@@ -72,12 +72,12 @@ void AProjectileMagic::ActiveMagic(float DeltaTime)
 			{
 				if (MeleeCharacter->GetCombatState() != ECombatState::ECS_Roll)
 				{
-					UGameplayStatics::ApplyDamage(
+					MeleeCharacter->CustomApplyDamage(
 						MeleeCharacter,
 						MagicDamage,
-						MagicOwner->GetController(),
 						MagicOwner,
-						UDamageType::StaticClass());
+						EAttackType::EAT_Strong
+					);
 				}
 				else
 				{

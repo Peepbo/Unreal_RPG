@@ -63,7 +63,8 @@ APlayerCharacter::APlayerCharacter() :
 	IKFootAlpha(0.f),
 	StopAttackMontageBlendOut(0.2f),
 	bPressedJumpButton(false),
-	MaximumZVelocity(0.f)
+	MaximumZVelocity(0.f),
+	bGuardBreak(false)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -1068,10 +1069,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::ReleasedJump);
 }
 
-float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
-	if (bDying)return DamageAmount;
-	if (CombatState == ECombatState::ECS_Roll)return DamageAmount;
+	if (bDying)
+	{
+		return;
+	}
+	if (CombatState == ECombatState::ECS_Roll)
+	{
+		return;
+	}
 
 
 	const FVector PlayerForward{ GetActorForwardVector() };
@@ -1093,11 +1100,14 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 				SetShiledImpact(true);
 
 				// 데미지를 가드가 모두 받아냈으니 함수를 종료한다.
-				return DamageAmount;
+				return;
 			}
 			else {
+				ST = 0.f;
 				// 가드로 막을 수 없는 공격이면 가드를 취소한다.
 				EndSubAttack();
+
+				bGuardBreak = true;
 			}
 		}
 		break;
@@ -1112,9 +1122,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	CombatState = ECombatState::ECS_Impact;
 
 	// 데미지 적용
-	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	return DamageAmount;
+	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 }
 
 void APlayerCharacter::AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName)

@@ -12,11 +12,17 @@ struct FEnemyAdvancedAttack
 {
 	GENERATED_BODY()
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-		class UAnimMontage* AttackMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-		float AttackAbleRange;
+	float AttackAbleRange;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	EAttackType AttackType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float AttackDamage;
 };
 
 UCLASS()
@@ -98,10 +104,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void StopRotate();
 
-	void TracingAttackSphere();
+	void TracingAttackSphere(float Damage);
 
 	UFUNCTION(BlueprintCallable)
-		void StartAttackCheckTime();
+		void StartAttackCheckTime(float DamagePersantage = 1.f);
 
 	UFUNCTION(BlueprintCallable)
 		void EndAttackCheckTime();
@@ -167,7 +173,6 @@ protected:
 	FTimerHandle SearchTimer;
 
 	int32 AttackIndex;
-	int32 LastAttackIndex;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float InplaceRotateSpeed;
@@ -244,7 +249,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
 	UFUNCTION()
 	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }

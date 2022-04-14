@@ -90,7 +90,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
 public:
 	FORCEINLINE bool ShouldDrawWeapon() const { return bShouldDrawWeapon; }

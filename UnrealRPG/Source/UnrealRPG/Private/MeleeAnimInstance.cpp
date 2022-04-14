@@ -68,5 +68,7 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsDamageImpact = Character->GetImpacting();
 
 		LastHitDirection = Character->GetLastHitDirection();
+
+		LastDamagedAttackType = Character->GetLastDamagedAttackType();
 	}
 }

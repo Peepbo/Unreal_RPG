@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "RPGTypes.h"
 #include "MeleeAnimInstance.generated.h"
 
 /** 클래스 기능
@@ -83,13 +84,16 @@ protected:
 	bool bDying;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
-		bool bIsShieldImpact;
+	bool bIsShieldImpact;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
-		bool bIsDamageImpact;
+	bool bIsDamageImpact;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
-		FVector LastHitDirection;
+	FVector LastHitDirection;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	EAttackType LastDamagedAttackType;
 
 private:
 	class AMeleeCharacter* Character;

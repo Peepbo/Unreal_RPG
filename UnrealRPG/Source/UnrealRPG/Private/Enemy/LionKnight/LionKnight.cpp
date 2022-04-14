@@ -15,18 +15,16 @@ void ALionKnight::PlayAttackMontage()
 {
 	if (AnimInstance)
 	{
-		if (AdvancedAttackMontage.IsValidIndex(AttackIndex) && AdvancedAttackMontage[AttackIndex].AttackMontage)
-		{
-			AnimInstance->Montage_Play(AdvancedAttackMontage[AttackIndex].AttackMontage);
-			LastAttackIndex = AttackIndex;
-
-			UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
-		}
-
 		AttackIndex++;
 		if (AdvancedAttackMontage.Num() == AttackIndex)
 		{
 			AttackIndex = 0;
+		}
+
+		if (AdvancedAttackMontage.IsValidIndex(AttackIndex) && AdvancedAttackMontage[AttackIndex].AttackMontage)
+		{
+			AnimInstance->Montage_Play(AdvancedAttackMontage[AttackIndex].AttackMontage);
+			UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
 		}
 	}
 }

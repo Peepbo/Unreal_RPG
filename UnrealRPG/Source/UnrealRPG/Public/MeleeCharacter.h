@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "RPGTypes.h"
-
 #include "MeleeCharacter.generated.h"
 
 UCLASS()
@@ -47,6 +46,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		void SaveRelativeVelocityAngle();
+
+	virtual void CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
 
 protected:
 	/* 캐릭터의 상태 */
@@ -95,11 +96,19 @@ protected:
 	
 	FVector LastHitDirection;
 
+	EAttackType LastDamagedAttackType;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	//virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	// Custom Damage function
+	UFUNCTION(BlueprintCallable)
+	void CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+
+private:
 
 private:
 
@@ -120,4 +129,5 @@ public:
 	FORCEINLINE bool GetDying() const { return bDying; }
 	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }
 	FORCEINLINE FVector GetLastHitDirection() const { return LastHitDirection; }
+	FORCEINLINE EAttackType GetLastDamagedAttackType() const { return LastDamagedAttackType; }
 };

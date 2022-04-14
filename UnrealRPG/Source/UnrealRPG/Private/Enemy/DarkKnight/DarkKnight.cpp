@@ -137,18 +137,17 @@ void ADarkKnight::PlayAttackMontage()
 		}
 		else
 		{
-			if (AdvancedAttackMontage.IsValidIndex(AttackIndex) && AdvancedAttackMontage[AttackIndex].AttackMontage)
-			{
-				AnimInstance->Montage_Play(AdvancedAttackMontage[AttackIndex].AttackMontage);
-				LastAttackIndex = AttackIndex;
-
-				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
-			}
-
 			AttackIndex++;
 			if (AdvancedAttackMontage.Num() == AttackIndex)
 			{
 				AttackIndex = 0;
+			}
+
+			if (AdvancedAttackMontage.IsValidIndex(AttackIndex) && AdvancedAttackMontage[AttackIndex].AttackMontage)
+			{
+				AnimInstance->Montage_Play(AdvancedAttackMontage[AttackIndex].AttackMontage);
+
+				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
 			}
 		}
 	}
@@ -177,9 +176,9 @@ void ADarkKnight::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
-	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
 	UE_LOG(LogTemp, Warning, TEXT("DarkKnight Damaged!"));
 
@@ -199,6 +198,4 @@ float ADarkKnight::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 		GetWeapon()->DetachFromComponent(DetachmentTransfromRules);
 		GetWorldTimerManager().SetTimer(DropWeaponTimer, this, &ADarkKnight::DropWeapon, 0.1f, false);
 	}
-
-	return DamageAmount;
 }

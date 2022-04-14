@@ -26,7 +26,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	bVisibleTraceSphere(false),
 	bIsShieldImpact(false),
 	LastHitDirection(0.f,0.f,0.f),
-	ChangeSpeed(false)
+	ChangeSpeed(false),
+	LastDamagedAttackType(EAttackType::EAT_Light)
 {
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
@@ -56,12 +57,33 @@ void AMeleeCharacter::Tick(float DeltaTime)
 	ChangeMaximumSpeedForSmoothSpeed(DeltaTime);
 }
 
-float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
-	if (bDying)return DamageAmount;
+	if (DamagedActor == nullptr || DamageCauser == nullptr)
+	{
+		return;
+	}
+
+	// TakeDamage를 호출할 수 있는 대상일 경우 함수를 계속 진행한다.
+	AMeleeCharacter* Character{ Cast<AMeleeCharacter>(DamagedActor) };
+
+	if (Character)
+	{
+		Character->CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
+	}
+}
+
+void AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+{
+	if (bDying)
+	{
+		return;
+	}
 
 	const FVector HitDir{ DamageCauser->GetActorLocation() - GetActorLocation() };
 	LastHitDirection = UKismetMathLibrary::Normal(HitDir);
+
+	LastDamagedAttackType = AttackType;
 
 	if (HP - DamageAmount > 0.f) {
 		HP -= DamageAmount;
@@ -70,8 +92,6 @@ float AMeleeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		HP = 0.f;
 		bDying = true;
 	}
-
-	return DamageAmount;
 }
 
 void AMeleeCharacter::EndShieldImpact()

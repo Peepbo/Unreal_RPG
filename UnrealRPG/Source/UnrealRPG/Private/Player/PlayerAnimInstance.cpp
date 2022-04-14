@@ -57,6 +57,8 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		MaximumZValue = PlayerCharacter->GetMaximumZValue();
 
+		bGuardBreak = PlayerCharacter->GuardBreaking();
+
 		
 		IKLeftFootEffector.X = PlayerCharacter->GetIKLeftFootOffset();
 		IKRightFootEffector.X = -(PlayerCharacter->GetIKRightFootOffset());

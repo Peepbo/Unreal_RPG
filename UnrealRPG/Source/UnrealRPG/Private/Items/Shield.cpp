@@ -97,12 +97,12 @@ void AShield::PushShield(bool bDebugVisible)
 						Character->AddFunctionToDamageTypeResetDelegate(Enemy, FName("ResetDamageState"));
 					}
 
-					UGameplayStatics::ApplyDamage(
+					Enemy->CustomApplyDamage(
 						Enemy,
 						AttackDamage,
-						CharacterController,
 						Character,
-						UDamageType::StaticClass());
+						EAttackType::EAT_Light
+					);
 
 					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
 					if (Enemy->GetBloodParticle()) {

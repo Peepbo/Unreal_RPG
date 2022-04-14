@@ -56,6 +56,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	float MaximumZValue;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bGuardBreak;
+
 
 	/* IK_Foot 전용 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))
