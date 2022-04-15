@@ -64,15 +64,7 @@ bool AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount
 		return false;
 	}
 
-	// TakeDamage를 호출할 수 있는 대상일 경우 함수를 계속 진행한다.
-	AMeleeCharacter* Character{ Cast<AMeleeCharacter>(DamagedActor) };
-
-	if (Character)
-	{
-		return Character->CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
-	}
-	
-	return false;
+	return CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 }
 
 bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
@@ -82,8 +74,20 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 		return false;
 	}
 
-	const FVector HitDir{ DamageCauser->GetActorLocation() - GetActorLocation() };
-	LastHitDirection = UKismetMathLibrary::Normal(HitDir);
+
+	const FVector HitDir{ UKismetMathLibrary::Normal(DamageCauser->GetActorLocation() - GetActorLocation()) };
+	const FVector ForwardVector{ GetActorForwardVector() };
+
+	const float DotResult{ UKismetMathLibrary::DotProduct2D(FVector2D(ForwardVector), FVector2D(HitDir)) };
+	float RelativeDegree{ UKismetMathLibrary::DegAcos(DotResult) };
+
+	const float CrossResult{UKismetMathLibrary::CrossProduct2D(FVector2D(ForwardVector), FVector2D(HitDir)) };
+	if (CrossResult < 0.f) 
+	{
+		RelativeDegree = -RelativeDegree;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Hit Degree : %f"), RelativeDegree);
+	LastHitDirection = { UKismetMathLibrary::DegCos(RelativeDegree),UKismetMathLibrary::DegSin(RelativeDegree), 0.f };
 
 	LastDamagedAttackType = AttackType;
 

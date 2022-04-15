@@ -1082,10 +1082,10 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 
 
 	const FVector PlayerForward{ GetActorForwardVector() };
-	const FVector PlayerToHitPoint{ UKismetMathLibrary::Normal(LastHitPoint - GetActorLocation()) };
-	const float DotProductResult{ UKismetMathLibrary::Dot_VectorVector(PlayerForward,PlayerToHitPoint) };
+	const FVector PlayerToHitPoint{ UKismetMathLibrary::Normal(DamageCauser->GetActorLocation() - GetActorLocation()) };
+	const float DotProductResult{ UKismetMathLibrary::DotProduct2D(FVector2D(PlayerForward),FVector2D(PlayerToHitPoint)) };
 	const float DegreeDifference{ UKismetMathLibrary::DegAcos(DotProductResult) };
-	UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
+	//UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
 
 	switch (CombatState)
 	{
@@ -1098,6 +1098,7 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 				ST -= HalfDamage;
 
 				SetShiledImpact(true);
+				AnimInstance->SetShouldPlayShieldImpact(true);
 
 				// 데미지를 가드가 모두 받아냈으니 함수를 종료한다.
 				return true;

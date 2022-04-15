@@ -137,7 +137,7 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 						UGameplayStatics::SpawnEmitterAtLocation(
 							GetWorld(),
 							Enemy->GetBloodParticle(),
-							HitResult.Location);
+							HitResult.ImpactPoint);
 					}
 					// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
 					if (Enemy->GetBloodSound())
@@ -145,7 +145,7 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 						UGameplayStatics::PlaySoundAtLocation(
 							this,
 							Enemy->GetBloodSound(),
-							HitResult.Location);
+							HitResult.ImpactPoint);
 					}
 
 					// 방금 일격으로 락온된 몬스터가 사망했다면

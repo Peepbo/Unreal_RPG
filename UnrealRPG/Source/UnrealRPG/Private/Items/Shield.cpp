@@ -109,7 +109,7 @@ void AShield::PushShield(bool bDebugVisible)
 						UGameplayStatics::SpawnEmitterAtLocation(
 							GetWorld(),
 							Enemy->GetBloodParticle(),
-							HitResult.Location);
+							HitResult.ImpactPoint);
 					}
 
 					// 방금 일격으로 락온된 몬스터가 사망했다면

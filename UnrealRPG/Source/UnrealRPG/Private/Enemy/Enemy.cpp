@@ -258,6 +258,9 @@ void AEnemy::TracingAttackSphere(float Damage)
 			if (Player) {
 				ECombatState PlayerCombatState{ Player->GetCombatState() };
 
+				// attack point를 플레이어한테 전달
+				Player->SetHitPoint(HitResult.ImpactPoint);
+
 				// 공격을 상대가 맞았거나, 막았을 때 bAttack이 true가 됨
 				bool bAttack = Player->CustomApplyDamage(
 					Player,
@@ -270,15 +273,12 @@ void AEnemy::TracingAttackSphere(float Damage)
 					// 피해를 입었거나 가드가 부셔졌을 때 파티클, 사운드를 생성한다.
 					if (Player->GetImpacting() || Player->GuardBreaking())
 					{
-						// attack point를 플레이어한테 전달
-						Player->SetHitPoint(HitResult.Location);
-
 						// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
 						if (Player->GetBloodParticle()) {
 							UGameplayStatics::SpawnEmitterAtLocation(
 								GetWorld(),
 								Player->GetBloodParticle(),
-								HitResult.Location);
+								HitResult.ImpactPoint);
 						}
 						// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
 						if (Player->GetBloodSound())
@@ -286,7 +286,7 @@ void AEnemy::TracingAttackSphere(float Damage)
 							UGameplayStatics::PlaySoundAtLocation(
 								this,
 								Player->GetBloodSound(),
-								HitResult.Location);
+								HitResult.ImpactPoint);
 						}
 					}
 

@@ -86,6 +86,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bIsShieldImpact;
 
+	/* impact중 한번 더 impact 됬을 때 사용하는 변수 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bShouldPlayShieldImpact;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bIsDamageImpact;
 
@@ -102,4 +106,5 @@ public:
 	FORCEINLINE float GetSpeed() const { return Speed; }
 	FORCEINLINE bool GetAccelerating() const { return bIsAccelerating; }
 	FORCEINLINE void SetLastRelativeVelocityAngle(float Angle) { LastRelativeVelocityAngle = Angle; }
+	FORCEINLINE void SetShouldPlayShieldImpact(bool bCondition) { bShouldPlayShieldImpact = bCondition; }
 };
