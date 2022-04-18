@@ -282,7 +282,7 @@ void APlayerCharacter::PressedAttack()
 		ApplyLockOnAttackSetting(true);
 	}
 
-	if (GetCharacterMovement()->IsFalling()) 
+	if (!CheckLand()) 
 	{
 		PrepareJumpAttack();
 	}
@@ -316,7 +316,6 @@ void APlayerCharacter::ReleasedAttack()
 bool APlayerCharacter::CheckComboAttack()
 {
 	bool MontageValid;
-	bool bContinueCombo{ false };
 
 	// 일반 공격
 	if (bShouldContinueAttack)
@@ -329,7 +328,7 @@ bool APlayerCharacter::CheckComboAttack()
 			MainAttack();
 			ComboAttackMontageIndex++;
 
-			bContinueCombo = true;
+			return true;
 		}
 	}
 	// 강 공격
@@ -342,16 +341,18 @@ bool APlayerCharacter::CheckComboAttack()
 		{
 			ChargedAttack();
 
-			bContinueCombo = true;
+			return true;
 		}
 	}
 
+	// 아직 return이 되지 않았다면 EndAttack을 호출한다.
 	EndAttack();
-	return bContinueCombo;
+	return false;
 }
 
 void APlayerCharacter::EndAttack()
 {
+	UE_LOG(LogTemp, Warning, TEXT("End Attack Call"));
 	ResetAttack();
 
 	//StartStaminaRecoveryDelayTimer();
@@ -473,10 +474,14 @@ void APlayerCharacter::Roll()
 			bBackDodge = true;
 		}
 
-		const FRotator ThumbStickRot{ 0,GetMovementDegree(),0 };
-		const FRotator ControllRot{ 0,GetControlRotation().Yaw,0 };
-		const FRotator ComposeRot{ UKismetMathLibrary::ComposeRotators(ControllRot,ThumbStickRot) };
-		SetActorRotation(ComposeRot);
+		if (!bLockOn)
+		{
+			const FRotator ThumbStickRot{ 0,GetMovementDegree(),0 };
+			const FRotator ControllRot{ 0,GetControlRotation().Yaw,0 };
+			const FRotator ComposeRot{ UKismetMathLibrary::ComposeRotators(ControllRot,ThumbStickRot) };
+			SetActorRotation(ComposeRot);
+		}
+
 		LastRollMoveValue = GetMovementLocalAxis();
 
 		// 상태를 바꾼다.
@@ -653,17 +658,18 @@ void APlayerCharacter::EndSubAttack()
 
 void APlayerCharacter::SaveDegree()
 {
-	// 게임 패드 스틱의 방향
-	const FVector2D ThumbstickAxis{ GetMovementLocalAxis() };
-	const float ThumbstickDegree{ GetMovementDegree() };
-	const FRotator ThumbstickRot{ 0,ThumbstickDegree,0 };
+	// 방향키의 방향
+	const FVector2D MovementAxis{ GetMovementLocalAxis() };
+	const float MovementDegree{ GetMovementDegree() };
+	const FRotator MovementRotation{ 0,MovementDegree,0 };
 
 	// 정면 방향
-	const FRotator ControllerRot{ 0,GetControlRotation().Yaw,0 };
+	const FRotator ControllerRotation{ 0,GetControlRotation().Yaw,0 };
 
-	// 만약 패드 스틱을 조작하지 않았을 땐 Rotation을 저장할 필요가 없다. 어차피 각도가 같아 회전할 필요가 없기 때문
-	if (ThumbstickAxis.IsNearlyZero()) 
+	// 만약 방향키를 이동하지 않았을 땐 Rotation을 저장할 필요가 없다. 어차피 각도가 같아 회전할 필요가 없기 때문
+	if (MovementAxis.IsNearlyZero()) 
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Player:SaveDegree]Axis is nearly zero : {%f,%f}"), MovementAxis.X, MovementAxis.Y);
 		return;
 	}
 
@@ -694,7 +700,7 @@ void APlayerCharacter::SaveDegree()
 	// 0보다 클 때? 각도가 0~90 내로 차이가 날 때
 	if (DotProductValue >= 0.f) {
 		// 정면 회전과 스틱 회전을 결합하여 최종 회전을 구한다.
-		SaveRotator = UKismetMathLibrary::ComposeRotators(ControllerRot, ThumbstickRot);
+		SaveRotator = UKismetMathLibrary::ComposeRotators(ControllerRotation, MovementRotation);
 	}
 
 	// 0보다 작을 때, 각도가 90~180 내로 차이가 날 때 (최대 허용 각도를 90도로 제한함)
@@ -1080,7 +1086,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		RotateCameraByLockOn();
 	}
 
-	//UpdateIKFootData(DeltaTime);
+	UpdateIKFootData(DeltaTime);
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -63,7 +63,6 @@ AEnemy::AEnemy() :
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidget"));
 	HealthBar->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthBar->SetDrawSize({ 150.f,10.f });
-	HealthBar->SetRelativeLocation({ 0.f,0.f,120.f });
 	HealthBar->SetVisibility(false);
 
 	// Weapon
