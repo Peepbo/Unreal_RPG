@@ -29,6 +29,7 @@ enum class ECombatState : uint8
 	// Common State
 	ECS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	ECS_Attack UMETA(DisplayName = "Attack"),
+	ECS_ToIdle UMETA(DisplayName = "ToIdle"),
 	ECS_AttackToIdle UMETA(DisplayName = "AttackToIdle"),
 	ECS_Guard UMETA(DisplayName = "Guard"),
 

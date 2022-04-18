@@ -34,6 +34,13 @@ public:
 	// Sets default values for this character's properties
 	AEnemy();
 
+	void InitLastHitBoneData(FName BoneName)
+	{
+		bActiveBoneOffset = true;
+		LastHitBoneName = BoneName;
+		LastHitBoneOffset = 1.f;
+	}
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -180,6 +187,9 @@ protected:
 
 	bool bTurn;
 
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float OverrideHP;
+
 private:
 
 	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
@@ -246,6 +256,16 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		class UWidgetComponent* HealthBar;
 
+	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bActiveBoneOffset;
+	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FName LastHitBoneName;
+	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float LastHitBoneOffset;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class USoundCue* LastBloodSound;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -281,4 +301,6 @@ public:
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
 
 	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }
+
+	FORCEINLINE USoundCue* GetLastBloodSound() const { return LastBloodSound; }
 };

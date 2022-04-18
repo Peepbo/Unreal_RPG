@@ -212,12 +212,14 @@ private:
 
 	virtual void EndShieldImpact() override;
 
+	virtual void EndDamageImpact() override;
+
 	/* ThumbStick의 Axis를 가져온다. (local direction) */
-	const FVector2D GetThumbStickLocalAxis();
+	const FVector2D GetMovementLocalAxis();
 	/* ThumbStick의 Degree를 가져온다. */
-	const float GetThumbStickDegree();
+	const float GetMovementDegree();
 	/* ThumbStick방향과 Controller방향을 혼합한 Axis를 가져온다. (world direction) */
-	const FVector2D GetThumbStickWorldAxis();
+	const FVector2D GetAxisOfMovementRelativeController();
 
 	void Sprint();
 
@@ -241,6 +243,10 @@ private:
 	void ContinueUpdateIKData(float DeltaTime);
 
 	void StopAttackToIdle();
+
+
+	bool CheckActionableState();
+	void EndToIdleState(bool bForceStopMontage = false);
 
 private:
 	/* Camera Variable */
@@ -298,9 +304,9 @@ private:
 	/* Stat Variable */
 	/* Steminar */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
-		float ST;
+		float Stamina;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
-		float MaximumST;
+		float MaximumStamina;
 
 	/* 플레이어가 착용하고있는 무기 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
@@ -397,6 +403,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float StopAttackMontageBlendOut;
 
+	/* Trace검사를 다시 시도할 때 까지의 딜레이 */
+	float AttackCheckTimeDelay;
+
 
 	/* Stamina Variable */
 	/* 스태미나 회복 지연 시간, 일반 상태에서 회복 상태로 바뀌는 시간 */
@@ -404,6 +413,16 @@ private:
 
 	/* 구르기에 필요한 스태미나 */
 	float RollRequiredStamina;
+
+	float StaminaRecoveryAmount;
+	/* 일반 상태 스태미나 회복량 */
+	float DefaultStaminaRecoveryAmount;
+	/* 질주 상태 스태미나 회복량 */
+	float SprintStaminaRecoveryAmount;
+	/* 쉴드 상태 스태미나 회복량 */
+	float GuardStaminaRecoveryAmount;
+	/* 스태미나 회복 속도 */
+	float StaminaRecoverySpeed;
 
 
 	/* Lock-On Variable */
@@ -456,9 +475,22 @@ private:
 	float IKInterpSpeed;
 	FRotator IKLeftFootRotator;
 	FRotator IKRightFootRotator;
-	FName LeftFootSocketName;
-	FName RightFootSocketName;
+
 	float IKFootAlpha;
+
+
+	/* Socket Name Variable */
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		FName LeftHandSocketName;
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		FName RightHandSocketName;
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		FName PotionSocketName;
+	UPROPERTY(EditDefaultsOnly, Category = IK, meta = (AllowPrivateAccess = "true"))
+		FName LeftFootSocketName;
+	UPROPERTY(EditDefaultsOnly, Category = IK, meta = (AllowPrivateAccess = "true"))
+		FName RightFootSocketName;
+
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }

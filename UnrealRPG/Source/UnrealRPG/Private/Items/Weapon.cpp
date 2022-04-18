@@ -132,6 +132,9 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 						EAttackType::EAT_Light
 					);
 
+					UE_LOG(LogTemp, Warning, TEXT("Hit Comp : %s"), *HitResult.BoneName.ToString());
+					Enemy->InitLastHitBoneData(HitResult.BoneName);
+
 					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
 					if (Enemy->GetBloodParticle()) {
 						UGameplayStatics::SpawnEmitterAtLocation(
@@ -149,9 +152,21 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 					}
 
 					// 방금 일격으로 락온된 몬스터가 사망했다면
-					if (Enemy->GetDying() && Enemy->GetLockOn()) {
-						// KillEnemy를 호출하여 Lock-On과 같은 특수 상호작용을 리셋한다.
-						Character->ResetLockOn();
+					if (Enemy->GetDying())
+					{
+						if (Enemy->GetLastBloodSound())
+						{
+							UGameplayStatics::PlaySoundAtLocation(
+								this,
+								Enemy->GetLastBloodSound(),
+								HitResult.ImpactPoint);
+						}
+
+						if (Enemy->GetLockOn())
+						{
+							// KillEnemy를 호출하여 Lock-On과 같은 특수 상호작용을 리셋한다.
+							Character->ResetLockOn();
+						}
 					}
 				}
 			}

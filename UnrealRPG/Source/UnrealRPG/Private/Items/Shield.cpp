@@ -6,6 +6,7 @@
 #include "Enemy/Enemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/PlayerCharacter.h"
+#include "Sound/SoundCue.h"
 
 AShield::AShield() 
 {
@@ -111,11 +112,31 @@ void AShield::PushShield(bool bDebugVisible)
 							Enemy->GetBloodParticle(),
 							HitResult.ImpactPoint);
 					}
+					// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
+					if (Enemy->GetBloodSound())
+					{
+						UGameplayStatics::PlaySoundAtLocation(
+							this,
+							Enemy->GetBloodSound(),
+							HitResult.ImpactPoint);
+					}
 
 					// 방금 일격으로 락온된 몬스터가 사망했다면
-					if (Enemy->GetDying() && Enemy->GetLockOn()) {
-						// KillEnemy를 호출하여 Lock-On과 같은 특수 상호작용을 리셋한다.
-						Character->ResetLockOn();
+					if (Enemy->GetDying())
+					{
+						if (Enemy->GetLastBloodSound())
+						{
+							UGameplayStatics::PlaySoundAtLocation(
+								this,
+								Enemy->GetLastBloodSound(),
+								HitResult.ImpactPoint);
+						}
+
+						if (Enemy->GetLockOn())
+						{
+							// KillEnemy를 호출하여 Lock-On과 같은 특수 상호작용을 리셋한다.
+							Character->ResetLockOn();
+						}
 					}
 				}
 			}

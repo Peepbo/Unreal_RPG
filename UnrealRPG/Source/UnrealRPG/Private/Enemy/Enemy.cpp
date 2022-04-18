@@ -34,7 +34,9 @@ AEnemy::AEnemy() :
 	bMove(false),
 	InplaceRotateSpeed(5.f),
 	AttackRotateSpeed(5.f),
-	AttackIndex(0)
+	AttackIndex(0),
+	OverrideHP(0.f),
+	bActiveBoneOffset(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -493,7 +495,7 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 		return false;
 	}
 
-	if (!HealthBar->IsWidgetVisible())
+	if (HealthBar && !HealthBar->IsWidgetVisible())
 	{
 		HealthBar->SetVisibility(true);
 	}
