@@ -13,6 +13,7 @@
 #include "Enemy/Enemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "..\Public\MeleeCharacter.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -141,37 +142,42 @@ void AMeleeCharacter::ChangeMaximumSpeedForSmoothSpeed(float DeltaTime)
 	}
 }
 
-bool AMeleeCharacter::CheckFootCollision(bool bLeft, FVector& Out_HitPoint)
+FVector AMeleeCharacter::GetFootLocation(bool bLeft)
 {
-	const FName SelectSocketName{ bLeft ? LeftFootSocketName : RightFootSocketName };
-	
-	if (GetMesh()->DoesSocketExist(SelectSocketName)) 
-	{
-		const FVector StartLocation{ GetMesh()->GetSocketLocation(SelectSocketName) };
-		const FVector EndLocation{ StartLocation + FVector{0.f,0.f,-25.f} };
-
-		FHitResult HitResult;
-
-		bool bHit = UKismetSystemLibrary::LineTraceSingle(
-			this,
-			StartLocation,
-			EndLocation,
-			ETraceTypeQuery::TraceTypeQuery1,
-			false,
-			{ this },
-			EDrawDebugTrace::None,
-			HitResult,
-			true);
-
-		if (bHit) 
-		{
-			Out_HitPoint = HitResult.Location;
-		}
-
-		return bHit;
-	}
-	return false;
+	return FVector();
 }
+
+//bool AMeleeCharacter::CheckFootCollision(bool bLeft, FVector& Out_HitPoint)
+//{
+//	const FName SelectSocketName{ bLeft ? LeftFootSocketName : RightFootSocketName };
+//	
+//	if (GetMesh()->DoesSocketExist(SelectSocketName)) 
+//	{
+//		const FVector StartLocation{ GetMesh()->GetSocketLocation(SelectSocketName) };
+//		const FVector EndLocation{ StartLocation + FVector{0.f,0.f,-25.f} };
+//
+//		FHitResult HitResult;
+//
+//		bool bHit = UKismetSystemLibrary::LineTraceSingle(
+//			this,
+//			StartLocation,
+//			EndLocation,
+//			ETraceTypeQuery::TraceTypeQuery1,
+//			false,
+//			{ this },
+//			EDrawDebugTrace::None,
+//			HitResult,
+//			true);
+//
+//		if (bHit) 
+//		{
+//			Out_HitPoint = HitResult.Location;
+//		}
+//
+//		return bHit;
+//	}
+//	return false;
+//}
 
 void AMeleeCharacter::SaveRelativeVelocityAngle()
 {

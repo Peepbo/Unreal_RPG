@@ -55,7 +55,7 @@ protected:
 	void EndSprint();
 
 	/* Attack Function */
-	void MainAttack();
+	bool MainAttack();
 	void SubAttack();
 	
 	/* 콤보를 이어나갈지 멈출지 확인하는 함수 */
@@ -87,7 +87,7 @@ protected:
 	void PrepareChargedAttack();
 
 	UFUNCTION(BlueprintCallable)
-		void ChargedAttack();
+		bool ChargedAttack();
 
 	void ResetAttack();
 
@@ -127,11 +127,10 @@ protected:
 	void RecoverStamina();
 
 	/* 스태미나 회복 타이머 */
-	void StartStaminaRecoveryTimer();
-	void StopStaminaRecoveryTimer();
+	void StartStaminaRecovery();
+	void StopStaminaRecovery();
 
-	/* 스태미나 회복 지연 타이머 */
-	void StartStaminaRecoveryDelayTimer();
+	void UseStaminaAndStopRecovery(float UseStamina);
 
 	/* Roll Function */
 	/* 일단 캐릭터가 보는 방향으로 구르기 */
@@ -241,6 +240,8 @@ private:
 	void UpdateIKFootData(float DeltaTime);
 	void IKFootTrace(const FName& SocketName, FHitResult& HitResult);
 	void ContinueUpdateIKData(float DeltaTime);
+	virtual	FVector GetFootLocation(bool bLeft) override;
+
 
 	void StopAttackToIdle();
 
@@ -284,14 +285,8 @@ private:
 	/* 콤보 타이머 (loop) */
 	FTimerHandle ComboTimer;
 
-	/* 스태미나 회복 타이머, 스태미나를 채울 수 있을 때 작동하는 타이머 (loop) */
-	FTimerHandle StaminaRecoveryTimer;
-
 	/* 스태미나 회복 지연 타이머, 지연 시간 이후 스태미나 타이머를 작동시키는 딜레이 타이머 */
 	FTimerHandle StaminaRecoveryDelayTimer;
-
-	/* 스태미나를 감소시키는 타이머 (loop) */
-	FTimerHandle StaminaReductionTimer;
 
 	/* 공격 충돌 확인 타이머, 타이머가 작동되면 특정 딜레이(=0.005f) 마다 저장된 함수를 호출함 */
 	FTimerHandle AttackCheckTimer;
@@ -413,6 +408,7 @@ private:
 
 	/* 구르기에 필요한 스태미나 */
 	float RollRequiredStamina;
+	float JumpRequiredStamina;
 
 	float StaminaRecoveryAmount;
 	/* 일반 상태 스태미나 회복량 */
@@ -423,6 +419,9 @@ private:
 	float GuardStaminaRecoveryAmount;
 	/* 스태미나 회복 속도 */
 	float StaminaRecoverySpeed;
+
+	bool bRecoverStamina;
+
 
 
 	/* Lock-On Variable */

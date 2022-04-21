@@ -45,10 +45,9 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			ChargedDamage = WeaponDataRow->ChargedDamage;
 			DashDamage = WeaponDataRow->DashDamage;
 
-			const float WeaponScalar{ WeaponDataRow->WeaponScale };
-			const FVector WeaponSize{ WeaponScalar ,WeaponScalar ,WeaponScalar };
-			ItemMesh->SetWorldScale3D(WeaponSize);
-			ItemMesh->SetRelativeLocation(FVector(0, 0, WeaponDataRow->WeaponLocationZ));
+			NormalAttackStamina = WeaponDataRow->NormalAttackStamina;
+			DashAttackStamina = WeaponDataRow->DashAttackStamina;
+			ChargedAttackStamina = WeaponDataRow->ChargedAttackStamina;
 		}
 	}
 }
@@ -78,6 +77,21 @@ void AWeapon::InitAttackData(EWeaponAttackType Type, bool bDebugVisible)
 		this,
 		FName("SwingWeapon"),
 		bDebugVisible);
+}
+
+float AWeapon::GetRequiredStamina(EWeaponAttackType Type)
+{
+	switch (Type)
+	{
+	case EWeaponAttackType::EWAT_Normal:
+		return NormalAttackStamina;
+	case EWeaponAttackType::EWAT_Charged:
+		return ChargedAttackStamina;
+	case EWeaponAttackType::EWAT_Dash:
+		return DashAttackStamina;
+	}
+
+	return 0.0f;
 }
 
 bool AWeapon::WeaponTraceSingle(bool bDebugVisible, FHitResult& OutHit)

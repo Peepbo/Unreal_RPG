@@ -38,11 +38,14 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMesh* WeaponMesh;
 
-	UPROPERTY(EditDefaultsOnly)
-	float WeaponScale;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float NormalAttackStamina;
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DashAttackStamina;
 
-	UPROPERTY(EditDefaultsOnly)
-	float WeaponLocationZ;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ChargedAttackStamina;
 };
 
 UCLASS()
@@ -57,6 +60,9 @@ protected:
 
 public:
 	void InitAttackData(EWeaponAttackType Type, bool bDebugVisible);
+
+	/* 입력한 Type정보를 바탕으로 공격에 필요한 스태미나를 확인한다. */
+	float GetRequiredStamina(EWeaponAttackType Type);
 
 private:
 	float GetDamage(EWeaponAttackType AttackType);
@@ -89,6 +95,15 @@ private:
 	FTimerDelegate AttackDelegate;
 
 	EWeaponAttackType AttackType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float NormalAttackStamina;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float DashAttackStamina;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float ChargedAttackStamina;
 
 public:
 	FORCEINLINE FTimerDelegate GetAttackDelegate() { return AttackDelegate; }

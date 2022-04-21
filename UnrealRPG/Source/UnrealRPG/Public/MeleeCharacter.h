@@ -40,9 +40,10 @@ protected:
 
 	void ChangeMaximumSpeedForSmoothSpeed(float DeltaTime);
 
-
 	UFUNCTION(BlueprintCallable)
-		bool CheckFootCollision(bool bLeft, FVector& Out_HitPoint);
+	virtual	FVector GetFootLocation(bool bLeft);
+	//UFUNCTION(BlueprintCallable)
+	//	bool CheckFootCollision(bool bLeft, FVector& Out_HitPoint);
 
 	UFUNCTION(BlueprintCallable)
 		void SaveRelativeVelocityAngle();
@@ -117,8 +118,8 @@ private:
 
 	bool ChangeSpeed;
 
-	FName LeftFootSocketName = FName("Foot_LSocket");
-	FName RightFootSocketName = FName("Foot_RSocket");
+	//FName LeftFootSocketName = FName("Foot_LSocket");
+	//FName RightFootSocketName = FName("Foot_RSocket");
 
 public:
 	FORCEINLINE bool GetSprinting() const { return bSprinting; }

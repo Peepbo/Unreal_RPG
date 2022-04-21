@@ -29,13 +29,13 @@ APlayerCharacter::APlayerCharacter() :
 	// Stamina
 	Stamina(50.f),
 	MaximumStamina(50.f),
-	RollRequiredStamina(10.f),
 	StaminaRecoveryAmount(0.2f),
 	DefaultStaminaRecoveryAmount(0.2f),
 	SprintStaminaRecoveryAmount(0.1f),
-	StaminaRecoveryDelayTime(0.3f),
+	StaminaRecoveryDelayTime(1.f),
 	StaminaRecoverySpeed(0.01f),
 	GuardStaminaRecoveryAmount(0.1f),
+	bRecoverStamina(false),
 
 	// Attack
 	bShouldContinueAttack(false),
@@ -58,12 +58,14 @@ APlayerCharacter::APlayerCharacter() :
 	// Jump
 	bPressedJumpButton(false),
 	MaximumZVelocity(0.f),
+	JumpRequiredStamina(10.f),
 
 	// Roll
 	LastRollMoveValue(0.f, 0.f),
 	bBackDodge(false),
 	bCanRoll(true),
 	RollDelay(2.1f),
+	RollRequiredStamina(10.f),
 
 	// Potion
 	bDrinkingPotion(false),
@@ -163,10 +165,15 @@ void APlayerCharacter::MoveForward(float Value)
 	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
 	
 	if (Controller && Value != 0.f) {
-		EndToIdleState(true);
-		if (CombatState == ECombatState::ECS_Unoccupied && !GetSprinting() && bLockOn) 
+		if (CheckActionableState() && !GetSprinting() && bLockOn) 
 		{
 			ApplyLockOnAttackSetting(false);
+		}
+
+		//EndToIdleState(true);
+		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
+		{
+			AnimInstance->StopAllMontages(0.45f);
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -189,10 +196,15 @@ void APlayerCharacter::MoveRight(float Value)
 	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
 
 	if (Controller && Value != 0.f) {
-		EndToIdleState(true);
 		if (CombatState == ECombatState::ECS_Unoccupied && !GetSprinting() && bLockOn)
 		{
 			ApplyLockOnAttackSetting(false);
+		}
+
+		//EndToIdleState(true);
+		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
+		{
+			AnimInstance->StopAllMontages(0.45f);
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -209,7 +221,7 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::TurnAtRate(float Rate)
 {
-	if (bLockOn)
+	if (bLockOn || GetAttacking())
 	{
 		return;
 	}
@@ -221,7 +233,7 @@ void APlayerCharacter::TurnAtRate(float Rate)
 
 void APlayerCharacter::LookUpAtRate(float Rate)
 {
-	if (bLockOn)
+	if (bLockOn || GetAttacking())
 	{
 		return;
 	}
@@ -251,12 +263,22 @@ void APlayerCharacter::LookUpAtRateInMouse(float Rate)
 	AddControllerPitchInput(Rate);
 }
 
-void APlayerCharacter::MainAttack()
+bool APlayerCharacter::MainAttack()
 {
-	AnimInstance->Montage_Play(MainComboMontages[ComboAttackMontageIndex]);
-	CombatState = ECombatState::ECS_Attack;
+	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Normal))
+	{
+		UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Normal));
 
-	PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
+		AnimInstance->Montage_Play(MainComboMontages[ComboAttackMontageIndex]);
+		CombatState = ECombatState::ECS_Attack;
+
+		PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
+
+		ComboAttackMontageIndex++;
+		return true;
+	}
+
+	return false;
 }
 
 void APlayerCharacter::SubAttack()
@@ -288,9 +310,6 @@ void APlayerCharacter::PressedAttack()
 	}
 	else
 	{
-		GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
-		StopStaminaRecoveryTimer();
-
 		const FVector2D ThumbAxis{ GetMovementLocalAxis() };
 
 		// 질주 상태가 아닐경우 일반 공격 실행
@@ -299,7 +318,6 @@ void APlayerCharacter::PressedAttack()
 		if (bPlayMainAttack)
 		{
 			MainAttack();
-			ComboAttackMontageIndex++;
 		}
 		else
 		{
@@ -316,6 +334,7 @@ void APlayerCharacter::ReleasedAttack()
 bool APlayerCharacter::CheckComboAttack()
 {
 	bool MontageValid;
+	bool bPlayAttack;
 
 	// 일반 공격
 	if (bShouldContinueAttack)
@@ -325,10 +344,9 @@ bool APlayerCharacter::CheckComboAttack()
 		MontageValid = MainComboMontages.IsValidIndex(ComboAttackMontageIndex) && MainComboMontages[ComboAttackMontageIndex];
 		if (MontageValid)
 		{
-			MainAttack();
-			ComboAttackMontageIndex++;
+			bPlayAttack = MainAttack();
 
-			return true;
+			if (bPlayAttack) return true;
 		}
 	}
 	// 강 공격
@@ -339,9 +357,9 @@ bool APlayerCharacter::CheckComboAttack()
 		MontageValid = ChargedComboMontages.IsValidIndex(ChargedComboAttackMontageIndex) && ChargedComboMontages[ChargedComboAttackMontageIndex];
 		if (MontageValid)
 		{
-			ChargedAttack();
+			bPlayAttack = ChargedAttack();
 
-			return true;
+			if (bPlayAttack) return true;
 		}
 	}
 
@@ -354,8 +372,6 @@ void APlayerCharacter::EndAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("End Attack Call"));
 	ResetAttack();
-
-	//StartStaminaRecoveryDelayTimer();
 }
 
 void APlayerCharacter::CheckComboTimer()
@@ -466,7 +482,7 @@ void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
 void APlayerCharacter::Roll()
 {
 	if (AnimInstance) {
-		Stamina -= RollRequiredStamina;
+		UseStaminaAndStopRecovery(RollRequiredStamina);
 
 		const FVector2D ThumbAxis{ GetMovementLocalAxis() };
 		if (ThumbAxis.IsNearlyZero()) 
@@ -494,7 +510,6 @@ void APlayerCharacter::EndRoll()
 	CombatState = ECombatState::ECS_Unoccupied;
 
 	bBackDodge = false;
-	StartStaminaRecoveryDelayTimer();
 
 	GetWorldTimerManager().SetTimer(
 		RollDelayTimer,
@@ -559,12 +574,9 @@ void APlayerCharacter::ReleasedRollAndSprint()
 			*	Released 호출시에 공중에 있거나 특정 모션을 취하면 구르기를 하면 안되기 때문
 			*/
 			if (!GetCharacterMovement()->IsFalling() &&
-				CombatState == ECombatState::ECS_Unoccupied &&
+				CheckActionableState() &&
 				Stamina >= RollRequiredStamina)
 			{
-				GetWorldTimerManager().ClearTimer(StaminaRecoveryDelayTimer);
-				StopStaminaRecoveryTimer();
-
 				Roll();
 			}
 			else 
@@ -589,32 +601,29 @@ void APlayerCharacter::RecoverStamina()
 	else 
 	{
 		Stamina = MaximumStamina;
-		StopStaminaRecoveryTimer();
 	}
 }
 
-void APlayerCharacter::StartStaminaRecoveryTimer()
+void APlayerCharacter::StartStaminaRecovery()
 {
-	GetWorldTimerManager().SetTimer(
-		StaminaRecoveryTimer,
-		this,
-		&APlayerCharacter::RecoverStamina,
-		StaminaRecoverySpeed,
-		true);
+	bRecoverStamina = true;
 }
 
-void APlayerCharacter::StopStaminaRecoveryTimer()
+void APlayerCharacter::StopStaminaRecovery()
 {
-	GetWorldTimerManager().ClearTimer(StaminaRecoveryTimer);
-}
+	bRecoverStamina = false;
 
-void APlayerCharacter::StartStaminaRecoveryDelayTimer()
-{
 	GetWorldTimerManager().SetTimer(
 		StaminaRecoveryDelayTimer,
 		this,
-		&APlayerCharacter::StartStaminaRecoveryTimer,
+		&APlayerCharacter::StartStaminaRecovery,
 		StaminaRecoveryDelayTime);
+}
+
+void APlayerCharacter::UseStaminaAndStopRecovery(float UseStamina)
+{
+	Stamina -= UseStamina;
+	StopStaminaRecovery();
 }
 
 void APlayerCharacter::ResetDamageState()
@@ -729,15 +738,9 @@ void APlayerCharacter::PressedChargedAttack()
 {
 	bPressedChargedAttackButton = true;
 
-	EndToIdleState(false);
-
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (!CheckActionableState())return;
 	if (EquippedWeapon == nullptr)return;
-	if (GetMovementComponent()->IsFalling())return;
-	//if (ST < EquippedWeapon->GetChargedAttackRequiredStamina())return;
-
-
-	ResetAttack();
+	if (!CheckLand())return;
 
 	PrepareChargedAttack();
 }
@@ -755,35 +758,47 @@ void APlayerCharacter::EndSprint()
 
 void APlayerCharacter::PrepareChargedAttack()
 {
-	// 0번은 차지 공격 준비 자세
-	if (ChargedComboMontages[0]) 
+	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Charged))
 	{
-		CombatState = ECombatState::ECS_NonMovingInteraction;
-		bShouldChargedAttack = false;
+		// 0번은 차지 공격 준비 자세
+		if (ChargedComboMontages[0])
+		{
+			EndToIdleState(false);
+			ResetAttack();
 
-		StopStaminaRecoveryTimer();
+			CombatState = ECombatState::ECS_NonMovingInteraction;
+			bShouldChargedAttack = false;
 
-		// 준비 몽타주(0번 애니메이션) 플레이
-		ChargedAttack();
+
+			// 준비 몽타주(0번 애니메이션) 플레이
+			ChargedAttack();
+		}
 	}
 }
 
-void APlayerCharacter::ChargedAttack()
+bool APlayerCharacter::ChargedAttack()
 {
-	const bool bPrepare{ ChargedComboAttackMontageIndex == 0 };
-
-	// 준비 몽타주 차례가 아닐 때
-	if (!bPrepare)
+	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Charged))
 	{
-		bIsChargedAttack = true;
+		const bool bPrepare{ ChargedComboAttackMontageIndex == 0 };
 
-		CombatState = ECombatState::ECS_Attack;
+		// 준비 몽타주 차례가 아닐 때
+		if (!bPrepare)
+		{
+			bIsChargedAttack = true;
+
+			CombatState = ECombatState::ECS_Attack;
+			UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Charged));
+		}
+
+		AnimInstance->Montage_Play(ChargedComboMontages[ChargedComboAttackMontageIndex], 1.f);
+
+		WeaponAttackType = EWeaponAttackType::EWAT_Charged;
+		ChargedComboAttackMontageIndex++;
+
+		return true;
 	}
-
-	AnimInstance->Montage_Play(ChargedComboMontages[ChargedComboAttackMontageIndex], 1.f);
-
-	WeaponAttackType = EWeaponAttackType::EWAT_Charged;
-	ChargedComboAttackMontageIndex++;
+	return false;
 }
 
 void APlayerCharacter::ResetAttack()
@@ -1002,6 +1017,8 @@ void APlayerCharacter::JumpLandAttack()
 
 	if (JumpAttackMontage)
 	{
+		UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash));
+
 		CombatState = ECombatState::ECS_Attack;
 		AnimInstance->Montage_Play(JumpAttackMontage);
 	}
@@ -1016,12 +1033,17 @@ void APlayerCharacter::SaveMaxmimumVelocity()
 
 void APlayerCharacter::DashAttack()
 {
-	if (DashAttackMontage) 
+	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash))
 	{
-		bShouldContinueAttack = false;
-		AnimInstance->Montage_Play(DashAttackMontage);
-		CombatState = ECombatState::ECS_Attack;
-		WeaponAttackType = EWeaponAttackType::EWAT_Dash;
+		if (DashAttackMontage)
+		{
+			UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash));
+
+			bShouldContinueAttack = false;
+			AnimInstance->Montage_Play(DashAttackMontage);
+			CombatState = ECombatState::ECS_Attack;
+			WeaponAttackType = EWeaponAttackType::EWAT_Dash;
+		}
 	}
 }
 
@@ -1084,6 +1106,11 @@ void APlayerCharacter::Tick(float DeltaTime)
 	if (bLockOn)
 	{
 		RotateCameraByLockOn();
+	}
+
+	if (bRecoverStamina)
+	{
+		RecoverStamina();
 	}
 
 	UpdateIKFootData(DeltaTime);
@@ -1312,12 +1339,14 @@ void APlayerCharacter::PressedJump()
 	bPressedJumpButton = true;
 
 	// 조건 검사
+	if (Stamina < JumpRequiredStamina)return;
+	if (!CheckActionableState())return;
+	if (!CheckLand())return;
 	EndToIdleState(true);
-
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
-	if (GetCharacterMovement()->IsFalling())return;
-
 	MaximumZVelocity = 0.f;
+
+	UseStaminaAndStopRecovery(JumpRequiredStamina);
+
 	ACharacter::Jump();
 }
 
@@ -1330,9 +1359,13 @@ void APlayerCharacter::ReleasedJump()
 
 void APlayerCharacter::PrepareJumpAttack()
 {
-	if (PrepareJumpAttackMontage) {
-		CombatState = ECombatState::ECS_NonMovingInteraction;
-		AnimInstance->Montage_Play(PrepareJumpAttackMontage);
+	// 점프 하강 공격은 대쉬 공격과 같은 스태미나를 사용한다.
+	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash))
+	{
+		if (PrepareJumpAttackMontage) {
+			CombatState = ECombatState::ECS_NonMovingInteraction;
+			AnimInstance->Montage_Play(PrepareJumpAttackMontage);
+		}
 	}
 }
 
@@ -1448,6 +1481,23 @@ void APlayerCharacter::ContinueUpdateIKData(float DeltaTime)
 		TargetHipOffset,
 		DeltaTime,
 		IKInterpSpeed);
+}
+
+FVector APlayerCharacter::GetFootLocation(bool bLeft)
+{
+	const FName SelectSocketName{ bLeft ? LeftFootSocketName : RightFootSocketName };
+	FHitResult HitResult;
+	IKFootTrace(SelectSocketName, HitResult);
+
+	if (HitResult.bBlockingHit)
+	{
+		return HitResult.ImpactPoint;
+	}
+	else
+	{
+		FVector BoneLoc{ GetMesh()->GetBoneLocation(SelectSocketName) };
+		return BoneLoc + FVector(0.f, 0.f, -13.5f);
+	}
 }
 
 void APlayerCharacter::StopAttackToIdle()
