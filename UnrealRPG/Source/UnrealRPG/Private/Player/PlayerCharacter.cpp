@@ -475,7 +475,8 @@ void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
 		}
 		EquippedPotion = Potion;
 
-		//UpdateIcon
+		// HUD에 연결된 아이템 아이콘을 변경한다. (포션은 아래)
+		UpdateBottomItemIcon();
 	}
 }
 

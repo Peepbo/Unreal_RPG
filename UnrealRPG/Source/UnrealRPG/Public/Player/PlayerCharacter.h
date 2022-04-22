@@ -117,6 +117,8 @@ protected:
 		void UpdateLeftItemIcon();
 	UFUNCTION(BlueprintImplementableEvent)
 		void UpdateRightItemIcon();
+	UFUNCTION(BlueprintImplementableEvent)
+		void UpdateBottomItemIcon();
 
 	UFUNCTION(BlueprintCallable)
 		void PrepareShieldAttack();
