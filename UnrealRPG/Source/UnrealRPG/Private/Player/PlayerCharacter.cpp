@@ -173,7 +173,7 @@ void APlayerCharacter::MoveForward(float Value)
 		//EndToIdleState(true);
 		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 		{
-			AnimInstance->StopAllMontages(0.45f);
+			AnimInstance->StopAllMontages(0.6f);
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -204,7 +204,7 @@ void APlayerCharacter::MoveRight(float Value)
 		//EndToIdleState(true);
 		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 		{
-			AnimInstance->StopAllMontages(0.45f);
+			AnimInstance->StopAllMontages(0.6f);
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };

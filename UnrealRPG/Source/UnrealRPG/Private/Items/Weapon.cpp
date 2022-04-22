@@ -146,9 +146,6 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 						EAttackType::EAT_Light
 					);
 
-					UE_LOG(LogTemp, Warning, TEXT("Hit Comp : %s"), *HitResult.BoneName.ToString());
-					Enemy->InitLastHitBoneData(HitResult.BoneName);
-
 					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
 					if (Enemy->GetBloodParticle()) {
 						UGameplayStatics::SpawnEmitterAtLocation(

@@ -34,20 +34,9 @@ public:
 	// Sets default values for this character's properties
 	AEnemy();
 
-	void InitLastHitBoneData(FName BoneName)
-	{
-		bActiveBoneOffset = true;
-		LastHitBoneName = BoneName;
-		LastHitBoneOffset = 1.f;
-	}
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	/* HealthBar 위젯을 숨긴다. */
-	UFUNCTION(BlueprintImplementableEvent)
-	void HideHealthBar();
 
 	/* 탐색 시아 (범위 안에 들어오면 전투가 활성화된다.) */
 	UFUNCTION()
@@ -86,7 +75,7 @@ protected:
 
 	/* non-battle에서 battle로, 혹은 battle에서 non-battle로 */
 	UFUNCTION(BlueprintCallable)
-		void ChangeBattleMode();
+		virtual void ChangeBattleMode();
 
 	UFUNCTION(BlueprintCallable)
 		virtual	void PlayAttackMontage();
@@ -126,6 +115,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void EndFaceOff();
 
+	UFUNCTION(BlueprintCallable)
+	void Chase();
+
 	void StartRestTimer();
 
 	void EndRestTimer();
@@ -137,6 +129,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		float GetDegreeForwardToTarget();
+
+	float GetDistanceToTarget();
 
 
 	UFUNCTION(BlueprintCallable)
@@ -154,6 +148,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	const float GetAttackableDistance() const;
 
+	void SetVisibleHealthBar(bool bVisible);
+
+private:
+	void CombatTurn(float DeltaTime);
+	virtual void CheckCombatReset(float DeltaTime);
+
 protected:
 	class UAnimInstance* AnimInstance;
 
@@ -170,10 +170,10 @@ protected:
 	bool bAvoidImpactState;
 
 	/* 플레이어를 저장하는 변수 */
-	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree")
 	class APlayerCharacter* Target;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
 		TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
 
 	APlayerCharacter* OverlapCharacter;
@@ -182,13 +182,18 @@ protected:
 
 	int32 AttackIndex;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		float InplaceRotateSpeed;
 
 	bool bTurn;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	float OverrideHP;
+
+	/* 전투 지속 시간 (데미지를 입지 않거나, 데미지를 입히지 않으면 계속 올라감)*/
+	float CombatResetTime;
+	float MaximumCombatResetTime;
+	float MaximumCombatDistance;
 
 private:
 

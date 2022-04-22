@@ -47,13 +47,23 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndDraw();
 
+	UFUNCTION(BlueprintCallable)
+	void StartSheath();
+
+	UFUNCTION(BlueprintCallable)
+	void EndSheath();
+
 	virtual void EndDamageImpact() override;
 
 	virtual	void PlayAttackMontage() override;
 
 	virtual void FindCharacter() override;
 
+	//virtual void ChangeBattleMode() override;
+
 private:
+	virtual void CheckCombatReset(float DeltaTime) override;
+
 	void DropWeapon();
 
 private:
@@ -64,6 +74,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DrawMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* SheathMontage;
 	
 	bool bShouldDrawWeapon;
 
@@ -82,7 +95,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	FEnemyAdvancedAttack SprintAttack;
-	//	UAnimMontage* SprintAttackMontage;
 
 	FTimerHandle DropWeaponTimer;
 

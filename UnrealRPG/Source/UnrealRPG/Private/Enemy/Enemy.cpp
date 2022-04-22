@@ -36,7 +36,10 @@ AEnemy::AEnemy() :
 	AttackRotateSpeed(5.f),
 	AttackIndex(0),
 	OverrideHP(0.f),
-	bActiveBoneOffset(false)
+	bActiveBoneOffset(false),
+	MaximumCombatResetTime(20.f),
+	MaximumCombatDistance(2500.f),
+	CombatResetTime(0.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -136,10 +139,12 @@ void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 
 	auto Character = Cast<APlayerCharacter>(OtherActor);
 
-	if (Character) {
+	if (Character) 
+	{
 		bInAttackRange = false;
 
-		if (EnemyAIController) {
+		if (EnemyAIController)
+		{
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), false);
 		}
 	}
@@ -151,7 +156,8 @@ void AEnemy::ChangeBattleMode()
 
 	GetCharacterMovement()->MaxWalkSpeed = (bIsBattleMode ? BattleWalkSpeed : MaximumWalkSpeed);
 
-	if (EnemyAIController) {
+	if (EnemyAIController)
+	{
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsBattleMode"), bIsBattleMode);
 	}
 }
@@ -325,6 +331,8 @@ void AEnemy::EndAttackCheckTime()
 
 void AEnemy::FaceOff(float NextWalkDirection)
 {
+	CombatState = ECombatState::ECS_FaceOff;
+
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
 	WalkDirection = NextWalkDirection;
@@ -332,13 +340,22 @@ void AEnemy::FaceOff(float NextWalkDirection)
 
 void AEnemy::EndFaceOff()
 {
+	CombatState = ECombatState::ECS_Unoccupied;
+
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	WalkDirection = 0.f;
 }
 
+void AEnemy::Chase()
+{
+	CombatState = ECombatState::ECS_Chase;
+}
+
 void AEnemy::StartRestTimer()
 {
+	CombatState = ECombatState::ECS_Unoccupied;
+
 	bRestTime = true;
 
 	GetWorldTimerManager().SetTimer(
@@ -419,6 +436,18 @@ float AEnemy::GetDegreeForwardToTarget()
 	return ResultDegree;
 }
 
+float AEnemy::GetDistanceToTarget()
+{
+	if (Target == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AEnemy::GetDistanceToTarget()] Target is Nullptr"));
+		return 0.f;
+	}
+
+	const FVector ToVector{ Target->GetActorLocation() - GetActorLocation() };
+	return ToVector.Size();
+}
+
 void AEnemy::StartAttack()
 {
 	ChangeCombatState(ECombatState::ECS_Attack);
@@ -460,6 +489,51 @@ const float AEnemy::GetAttackableDistance() const
 	return 0.f;
 }
 
+void AEnemy::SetVisibleHealthBar(bool bVisible)
+{
+	HealthBar->SetVisibility(bVisible);
+}
+
+void AEnemy::CombatTurn(float DeltaTime)
+{
+	// 이 함수는 Target이 존재할 때만 호출하는 함수입니다.
+	if (bTurn)
+	{
+		const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
+
+		const float Degree{ GetDegreeForwardToTarget() };
+		bTurnLeft = (Degree < 0.f);
+
+		// 공격 회전 속도와 제자리 회전 속도를 다르게한다.
+		const float SelectInterpSpeed{ GetAttacking() ? AttackRotateSpeed : InplaceRotateSpeed };
+		const float PlusYaw{ (bTurnLeft ? -SelectInterpSpeed : SelectInterpSpeed) * DeltaTime };
+
+		if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetActorRotation().Yaw + PlusYaw, LookRot.Yaw) == false)
+		{
+			SetActorRotation(UKismetMathLibrary::ComposeRotators(GetActorRotation(), FRotator(0.f, PlusYaw, 0.f)));
+		}
+	}
+}
+
+void AEnemy::CheckCombatReset(float DeltaTime)
+{
+	// 이 함수는 Target이 존재할 때만 호출하는 함수입니다.
+	if (CombatState == ECombatState::ECS_Chase)
+	{
+		CombatResetTime += DeltaTime;
+
+		if (CombatResetTime > MaximumCombatResetTime || GetDistanceToTarget() > MaximumCombatDistance)
+		{
+			CombatResetTime = 0.f;
+			Target = nullptr;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
+
+			SetVisibleHealthBar(false);
+			ChangeBattleMode();
+		}
+	}
+}
+
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
@@ -467,22 +541,8 @@ void AEnemy::Tick(float DeltaTime)
 
 	if (Target)
 	{
-		if (bTurn)
-		{
-			const FRotator LookRot{ UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation()) };
-
-			const float Degree{ GetDegreeForwardToTarget() };
-			bTurnLeft = (Degree < 0.f);
-
-			// 공격 회전 속도와 제자리 회전 속도를 다르게한다.
-			const float SelectInterpSpeed{ GetAttacking() ? AttackRotateSpeed : InplaceRotateSpeed };
-			const float PlusYaw{ (bTurnLeft ? -SelectInterpSpeed : SelectInterpSpeed) * DeltaTime };
-
-			if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetActorRotation().Yaw + PlusYaw, LookRot.Yaw) == false)
-			{
-				SetActorRotation(UKismetMathLibrary::ComposeRotators(GetActorRotation(), FRotator(0.f, PlusYaw, 0.f)));
-			}
-		}
+		CombatTurn(DeltaTime);
+		CheckCombatReset(DeltaTime);
 	}
 }
 
@@ -496,7 +556,7 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 
 	if (HealthBar && !HealthBar->IsWidgetVisible())
 	{
-		HealthBar->SetVisibility(true);
+		SetVisibleHealthBar(true);
 	}
 
 	// Attack이 아니거나 Attack Rest Time일 경우 Impact로 바뀐다.
@@ -512,10 +572,10 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 	DamageState = EDamageState::EDS_invincibility;
 	if (bDying) 
 	{
-		HideHealthBar();
+		HealthBar->SetVisibility(false);
+
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), true);
 
-		//UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && DeathMontage)
 		{
 			AnimInstance->Montage_Play(DeathMontage);

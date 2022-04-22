@@ -99,6 +99,24 @@ void ADarkKnight::EndDraw()
 	bAvoidImpactState = false;
 }
 
+void ADarkKnight::StartSheath()
+{
+	GetCharacterMovement()->StopActiveMovement();
+	SetMove(false);
+	if (DrawMontage) {
+		if (AnimInstance) {
+			AnimInstance->Montage_Play(SheathMontage);
+			UE_LOG(LogTemp, Warning, TEXT("Montage Play"));
+		}
+	}
+}
+
+void ADarkKnight::EndSheath()
+{
+	bShouldDrawWeapon = true;
+	OverlapCharacter = nullptr;
+}
+
 void ADarkKnight::EndDamageImpact()
 {
 	Super::EndDamageImpact();
@@ -132,7 +150,6 @@ void ADarkKnight::PlayAttackMontage()
 		{
 			AnimInstance->Montage_Play(SprintAttack.AttackMontage);
 			SetSprinting(false);
-
 			UE_LOG(LogTemp, Warning, TEXT("Play Sprint Attack Montage"));
 		}
 		else
@@ -150,6 +167,8 @@ void ADarkKnight::PlayAttackMontage()
 				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
 			}
 		}
+
+		CombatResetTime = 0.f;
 	}
 }
 
@@ -162,6 +181,26 @@ void ADarkKnight::FindCharacter()
 		bShouldDrawWeapon = false;
 
 		StartDraw();
+	}
+}
+
+void ADarkKnight::CheckCombatReset(float DeltaTime)
+{
+	// 이 함수는 Target이 존재할 때만 호출하는 함수입니다.
+	if (CombatState == ECombatState::ECS_Chase)
+	{
+		CombatResetTime += DeltaTime;
+
+		if (CombatResetTime > MaximumCombatResetTime || GetDistanceToTarget() > MaximumCombatDistance)
+		{
+			CombatResetTime = 0.f;
+			Target = nullptr;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
+
+			SetVisibleHealthBar(false);
+			StartSheath();
+			ChangeBattleMode();
+		}
 	}
 }
 
@@ -192,11 +231,16 @@ bool ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 		bAvoidImpactState = true;
 	}
 
+
 	if (bDying) 
 	{
 		FDetachmentTransformRules DetachmentTransfromRules(EDetachmentRule::KeepWorld, true);
 		GetWeapon()->DetachFromComponent(DetachmentTransfromRules);
 		GetWorldTimerManager().SetTimer(DropWeaponTimer, this, &ADarkKnight::DropWeapon, 0.1f, false);
+	}
+	else
+	{
+		CombatResetTime = 0.f;
 	}
 
 	return true;
