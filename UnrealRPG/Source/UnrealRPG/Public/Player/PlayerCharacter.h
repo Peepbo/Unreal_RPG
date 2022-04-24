@@ -8,6 +8,7 @@
 
 #include "PlayerCharacter.generated.h"
 
+class ASavePoint;
 /**
  * 
  */
@@ -214,14 +215,11 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndRestMode();
 
-	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
 	UFUNCTION(BlueprintCallable)
-	void SetEventAble(bool bNext) { bEventAble = bNext; }
+		void SetCheckPoint(ASavePoint* Point) { CheckPoint = Point; }
 
 	UFUNCTION(BlueprintCallable)
-	void SetCloseSavePoint(FVector Point) { LastCloseCheckPoint = Point; }
-	UFUNCTION(BlueprintCallable)
-	FVector GetCloseSavePoint() const { return LastCloseCheckPoint; }
+		ASavePoint* GetLastCloseCheckPoint() const { return LastCloseCheckPoint; }
 
 public:
 	// Called every frame
@@ -535,7 +533,8 @@ private:
 	/* Event Motion */
 	bool bEventAble;
 	bool bRest;
-	FVector LastCloseCheckPoint;
+	ASavePoint* LastCloseCheckPoint;
+	ASavePoint* CheckPoint;
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
@@ -552,6 +551,11 @@ public:
 	FORCEINLINE float GetMaximumZValue() const { return MaximumZVelocity; }
 
 	FORCEINLINE bool GetResting() const { return bRest; }
+
+	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
+	FORCEINLINE void SetEventAble(bool bNext) { bEventAble = bNext; }
+	FORCEINLINE void SetCloseSavePoint(ASavePoint* SavePoint) { LastCloseCheckPoint = SavePoint; }
+
 
 	/* IK_Foot 전용 인라인 함수 */
 	FORCEINLINE float GetIKLeftFootOffset() const { return IKLeftFootOffset; }

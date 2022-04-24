@@ -19,6 +19,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Actor.h"
 #include "Components/WidgetComponent.h"
+#include "Player/SavePoint.h"
 
 
 APlayerCharacter::APlayerCharacter() :
@@ -167,6 +168,7 @@ void APlayerCharacter::MoveForward(float Value)
 	if (CombatState == ECombatState::ECS_Roll)return;
 	if (CombatState == ECombatState::ECS_Impact)return;
 	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
+	if (CombatState == ECombatState::ECS_RestInteraction)return;
 	
 	if (Controller && Value != 0.f) {
 		if (CheckActionableState() && !GetSprinting() && bLockOn) 
@@ -198,6 +200,7 @@ void APlayerCharacter::MoveRight(float Value)
 	if (CombatState == ECombatState::ECS_Roll)return;
 	if (CombatState == ECombatState::ECS_Impact)return;
 	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
+	if (CombatState == ECombatState::ECS_RestInteraction)return;
 
 	if (Controller && Value != 0.f) {
 		if (CombatState == ECombatState::ECS_Unoccupied && !GetSprinting() && bLockOn)
@@ -1566,9 +1569,11 @@ void APlayerCharacter::PressedEventMotion()
 	}
 
 	// 조건 확인
-	if (bEventAble && CheckActionableState() && CheckLand())
+	if (bEventAble && CheckActionableState() && CheckLand() && LastCloseCheckPoint)
 	{
 		bRest = true;
 		CombatState = ECombatState::ECS_RestInteraction;
+
+		LastCloseCheckPoint->ClosePlayerEffect();
 	}
 }
