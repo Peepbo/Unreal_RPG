@@ -59,6 +59,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
 	bool bGuardBreak;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bRest;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, meta = (AllowPrivateAccess = "true"))
+	bool bRestState;
+
 
 	/* IK_Foot 전용 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "IK_Foot", meta = (AllowPrivateAccess = "true"))

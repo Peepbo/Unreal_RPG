@@ -59,6 +59,10 @@ void UPlayerAnimInstance::UpdateAnimationProperties(float DeltaTime)
 
 		bGuardBreak = PlayerCharacter->GuardBreaking();
 
+		bRest = PlayerCharacter->GetResting();
+
+		bRestState = (PlayerCharacter->GetCombatState() == ECombatState::ECS_RestInteraction);
+
 		
 		IKLeftFootEffector.X = PlayerCharacter->GetIKLeftFootOffset();
 		IKRightFootEffector.X = -(PlayerCharacter->GetIKRightFootOffset());

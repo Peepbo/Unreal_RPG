@@ -11,7 +11,23 @@
 /**
  * 
  */
-class UKismetMathLibrary;
+USTRUCT(BlueprintType)
+struct FPlayerData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+		FName Name;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+		int32 Level;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+		FName MapName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+		float Gold;
+};
 
 UCLASS()
 class UNREALRPG_API APlayerCharacter : public AMeleeCharacter
@@ -191,6 +207,22 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndGuardBreak() { bGuardBreak = false; }
 
+	/* 캐릭터의 정보를 로드하여 적용할 때 호출 */
+	UFUNCTION(BlueprintCallable)
+	void InitPlayerData(FPlayerData InputPlayerData);
+
+	UFUNCTION(BlueprintCallable)
+	void EndRestMode();
+
+	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
+	UFUNCTION(BlueprintCallable)
+	void SetEventAble(bool bNext) { bEventAble = bNext; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetCloseSavePoint(FVector Point) { LastCloseCheckPoint = Point; }
+	UFUNCTION(BlueprintCallable)
+	FVector GetCloseSavePoint() const { return LastCloseCheckPoint; }
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -250,6 +282,8 @@ private:
 
 	bool CheckActionableState();
 	void EndToIdleState(bool bForceStopMontage = false);
+
+	void PressedEventMotion();
 
 private:
 	/* Camera Variable */
@@ -493,6 +527,16 @@ private:
 		FName RightFootSocketName;
 
 
+	/* Player Data */
+	UPROPERTY(BlueprintReadOnly, Category = IK, meta = (AllowPrivateAccess = "true"))
+	FPlayerData PlayerData;
+
+
+	/* Event Motion */
+	bool bEventAble;
+	bool bRest;
+	FVector LastCloseCheckPoint;
+
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
 	FORCEINLINE FVector2D GetThumStickAxisForce() const { return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") }; }
@@ -506,6 +550,8 @@ public:
 	FORCEINLINE bool GetDrinking() const { return bDrinkingPotion; }
 
 	FORCEINLINE float GetMaximumZValue() const { return MaximumZVelocity; }
+
+	FORCEINLINE bool GetResting() const { return bRest; }
 
 	/* IK_Foot 전용 인라인 함수 */
 	FORCEINLINE float GetIKLeftFootOffset() const { return IKLeftFootOffset; }

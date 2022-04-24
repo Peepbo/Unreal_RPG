@@ -91,7 +91,11 @@ APlayerCharacter::APlayerCharacter() :
 	IKInterpSpeed(15.f),
 	IKLeftFootRotator(0.f, 0.f, 0.f),
 	IKRightFootRotator(0.f, 0.f, 0.f),
-	IKFootAlpha(0.f)
+	IKFootAlpha(0.f),
+
+	//bEventAble
+	bEventAble(false),
+	bRest(false)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -1090,6 +1094,16 @@ void APlayerCharacter::ApplyLockOnAttackSetting(bool bStartAttack)
 	}
 }
 
+void APlayerCharacter::InitPlayerData(FPlayerData InputPlayerData)
+{
+	PlayerData = InputPlayerData;
+}
+
+void APlayerCharacter::EndRestMode()
+{
+	bRest = false;
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -1150,6 +1164,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// Jump
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::PressedJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::ReleasedJump);
+
+	// EventMotionButton
+	PlayerInputComponent->BindAction("EventMotionButton", IE_Pressed, this, &APlayerCharacter::PressedEventMotion);
+	//PlayerInputComponent->BindAction("EventMotionButton", IE_Released, this, &APlayerCharacter::ReleasedJump);
 }
 
 bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
@@ -1537,5 +1555,20 @@ void APlayerCharacter::EndToIdleState(bool bForceStopMontage)
 		{
 			CombatState = ECombatState::ECS_Unoccupied;
 		}
+	}
+}
+
+void APlayerCharacter::PressedEventMotion()
+{
+	if (bRest)
+	{
+		return;
+	}
+
+	// 조건 확인
+	if (bEventAble && CheckActionableState() && CheckLand())
+	{
+		bRest = true;
+		CombatState = ECombatState::ECS_RestInteraction;
 	}
 }

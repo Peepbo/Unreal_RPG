@@ -15,6 +15,7 @@ ADarkKnight::ADarkKnight() :
 	DirectionLerpSpeed(1.f),
 	TurnTime(1.2f)
 {
+	AD = 20.f;
 	GetWeapon()->SetVisibility(false);
 	GetLockOnWidget()->SetRelativeLocation({ 0.f,0.f,100.f });
 
@@ -26,8 +27,8 @@ void ADarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AD = 20.f;
-
+	//AD = 20.f;
+	UE_LOG(LogTemp, Warning, TEXT("%f"), AD);
 	if (AnimInstance) {
 		UKnightAnimInstance* KnightAnimInst = Cast<UKnightAnimInstance>(AnimInstance);
 
