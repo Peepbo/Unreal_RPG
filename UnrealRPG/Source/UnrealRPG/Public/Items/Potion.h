@@ -16,7 +16,7 @@ struct FPotionDataTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	
 	FString PotionName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

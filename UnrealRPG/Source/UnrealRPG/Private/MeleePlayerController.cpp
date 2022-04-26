@@ -3,6 +3,7 @@
 
 #include "MeleePlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "Player/PlayerCharacter.h"
 
 AMeleePlayerController::AMeleePlayerController()
 {
@@ -12,8 +13,11 @@ AMeleePlayerController::AMeleePlayerController()
 void AMeleePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	if (HubOverlayClass) 
+void AMeleePlayerController::CreateHubOverlay()
+{
+	if (HubOverlayClass)
 	{
 		HUDOverlay = CreateWidget<UUserWidget>(this, HubOverlayClass);
 		if (HUDOverlay)

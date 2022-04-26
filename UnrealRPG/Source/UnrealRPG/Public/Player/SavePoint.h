@@ -4,7 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Engine/DataTable.h"
 #include "SavePoint.generated.h"
+
+USTRUCT(BlueprintType)
+struct FCheckPointTable : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName LevelName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector DefaultLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVector> Location;
+};
 
 UCLASS()
 class UNREALRPG_API ASavePoint : public AActor
@@ -17,6 +33,8 @@ public:
 
 UFUNCTION(BlueprintImplementableEvent)
 	void ClosePlayerEffect();
+
+	void ChangeOverlapSetting(class APlayerCharacter* Player);
 
 protected:
 	// Called when the game starts or when spawned
@@ -68,11 +86,21 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	class USceneComponent* ResponPoint;
 
-
 	class APlayerCharacter* PlayerCharacter;
+
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	//	UDataTable* DataTable;
+
+	bool bClosePlayer;
+
+	UPROPERTY(EditAnywhere, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
+	FName SavePointName;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+public:
+	FORCEINLINE FName GetSavePointName() const { return SavePointName; }
+	FORCEINLINE FTransform GetResponPointTransform() const { return ResponPoint->GetComponentTransform(); }
 };

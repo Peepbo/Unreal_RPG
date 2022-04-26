@@ -20,6 +20,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/WidgetComponent.h"
 #include "Player/SavePoint.h"
+#include "GameFramework/PlayerStart.h"
 
 
 APlayerCharacter::APlayerCharacter() :
@@ -96,7 +97,9 @@ APlayerCharacter::APlayerCharacter() :
 
 	//bEventAble
 	bEventAble(false),
-	bRest(false)
+	bRest(false),
+	RestEndPoint(0.f, 0.f, 0.f),
+	ToRestRotator(0.f, 0.f, 0.f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -160,6 +163,14 @@ void APlayerCharacter::BeginPlay()
 
 	// IK Variable 초기화
 	IKTraceDistance = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+
+	//// Overlap을 검사하여 SavePoint가 근처에 있는지 검사한다.
+	//UKismetSystemLibrary::SphereOverlapActors(
+	//	GetWorld(),
+	//	GetActorLocation(),
+	//	150.f,
+	//
+	//)
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -1107,6 +1118,38 @@ void APlayerCharacter::EndRestMode()
 	bRest = false;
 }
 
+void APlayerCharacter::SetCheckPoint(ASavePoint* Point)
+{
+	if (Point)
+	{
+		CheckPoint = Point;
+		PlayerData.SavePointTransform = CheckPoint->GetResponPointTransform();
+		PlayerData.SavePointName = CheckPoint->GetSavePointName();
+	}
+}
+
+void APlayerCharacter::InitRestPositionAndRotation(float Distance)
+{
+	const FVector2D CheckPointLocation2D{ LastCloseCheckPoint->GetActorLocation() };
+	const FVector2D Location2D{ GetActorLocation() };
+
+	const FVector2D RestToPlayer2D{ UKismetMathLibrary::Normal2D(Location2D - CheckPointLocation2D) };
+	const FVector RestToPlayerIgnoreZ{ RestToPlayer2D.X, RestToPlayer2D.Y, 0.f };
+
+	// 최종 회전 값을 구한다.
+	ToRestRotator.Yaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LastCloseCheckPoint->GetActorLocation()).Yaw;
+
+	// 최종 휴식 위치를 구한다.
+	RestEndPoint = LastCloseCheckPoint->GetActorLocation() + (RestToPlayerIgnoreZ * Distance);
+}
+
+void APlayerCharacter::UpdateRestPositionAndRotation(float DeltaTime)
+{
+	const float NowDelta{ DeltaTime * 2.f };
+	SetActorLocation(UKismetMathLibrary::VLerp(GetActorLocation(), RestEndPoint, NowDelta));
+	SetActorRotation(UKismetMathLibrary::RLerp(GetActorRotation(), ToRestRotator, NowDelta, true));
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -1574,6 +1617,6 @@ void APlayerCharacter::PressedEventMotion()
 		bRest = true;
 		CombatState = ECombatState::ECS_RestInteraction;
 
-		LastCloseCheckPoint->ClosePlayerEffect();
+		//LastCloseCheckPoint->ClosePlayerEffect();
 	}
 }

@@ -8,19 +8,27 @@
 #include "Player/PlayerCharacter.h"
 #include "Components/SpotLightComponent.h"
 
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
+
 // Sets default values
-ASavePoint::ASavePoint()
+ASavePoint::ASavePoint():
+	bClosePlayer(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	DecolationMesh1 = CreateDefaultSubobject<UStaticMeshComponent>("DecolateMesh1");
 	DecolationMesh1->SetupAttachment(RootComponent);
+	DecolationMesh1->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 	DecolationMesh2 = CreateDefaultSubobject<UStaticMeshComponent>("DecolateMesh2");
 	DecolationMesh2->SetupAttachment(DecolationMesh1);
+	DecolationMesh2->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	DecolationPlane = CreateDefaultSubobject<UStaticMeshComponent>("DecolatePlane");
 	DecolationPlane->SetupAttachment(DecolationMesh1);
+	DecolationPlane->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	FX = CreateDefaultSubobject<UNiagaraComponent>("FX");
 	FX->SetupAttachment(DecolationMesh1);
@@ -30,7 +38,7 @@ ASavePoint::ASavePoint()
 
 	OverlapSphere = CreateDefaultSubobject<USphereComponent>("OverlapSphere");
 	OverlapSphere->SetupAttachment(DecolationMesh1);
-	OverlapSphere->SetSphereRadius(100.f);
+	OverlapSphere->SetSphereRadius(250.f);
 
 	ResponPoint = CreateDefaultSubobject<USceneComponent>("ResponPoint");
 	ResponPoint->SetupAttachment(DecolationMesh1);
@@ -39,7 +47,7 @@ ASavePoint::ASavePoint()
 	SpotLight = CreateDefaultSubobject<USpotLightComponent>("SpotLight");
 	SpotLight->SetupAttachment(DecolationMesh1);
 	SpotLight->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
-	SpotLight->Mobility = EComponentMobility::Static;
+	SpotLight->Mobility = EComponentMobility::Stationary;
 	SpotLight->Intensity = 20.f;
 	SpotLight->AttenuationRadius = 265.f;
 	SpotLight->InnerConeAngle = 32.f;
@@ -47,9 +55,17 @@ ASavePoint::ASavePoint()
 
 	PointLight = CreateDefaultSubobject<UPointLightComponent>("PointLight");
 	PointLight->SetupAttachment(SpotLight);
-	PointLight->Mobility = EComponentMobility::Static;
+	PointLight->Mobility = EComponentMobility::Stationary;
 	PointLight->Intensity = 25.f;
 	PointLight->AttenuationRadius = 400.f;
+}
+
+void ASavePoint::ChangeOverlapSetting(APlayerCharacter* Player)
+{
+	bClosePlayer = true;
+
+	Player->SetEventAble(true);
+	Player->SetCloseSavePoint(this);
 }
 
 // Called when the game starts or when spawned
@@ -63,9 +79,17 @@ void ASavePoint::BeginPlay()
 
 void ASavePoint::PlayerRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (bClosePlayer)
+	{
+		return;
+	}
+
 	APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor);
 	if (Player)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("You can Rest"));
+		bClosePlayer = true;
+
 		Player->SetEventAble(true);
 		Player->SetCloseSavePoint(this);
 	}
@@ -73,11 +97,18 @@ void ASavePoint::PlayerRangeOverlap(UPrimitiveComponent* OverlappedComponent, AA
 
 void ASavePoint::PlayerRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (!bClosePlayer)
+	{
+		return;
+	}
+
 	APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor);
 	if (Player)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("You can't Rest"));
+		bClosePlayer = false;
+
 		Player->SetEventAble(false);
-		//Player->SetCloseSavePoint(nullptr);
 	}
 }
 

@@ -27,6 +27,12 @@ struct FPlayerData
 		FName MapName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+		FName SavePointName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+		FTransform SavePointTransform;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 		float Gold;
 };
 
@@ -216,10 +222,18 @@ protected:
 	void EndRestMode();
 
 	UFUNCTION(BlueprintCallable)
-		void SetCheckPoint(ASavePoint* Point) { CheckPoint = Point; }
+	void SetCheckPoint(ASavePoint* Point);
 
 	UFUNCTION(BlueprintCallable)
-		ASavePoint* GetLastCloseCheckPoint() const { return LastCloseCheckPoint; }
+	ASavePoint* GetLastCloseCheckPoint() const { return LastCloseCheckPoint; }
+
+	/* 휴식 최종 위치 및 방향을 저장한다. */
+	UFUNCTION(BlueprintCallable)
+	void InitRestPositionAndRotation(float Distance);
+
+	/* 휴식 최종 위치 및 방향으로 이동한다. */
+	UFUNCTION(BlueprintCallable)
+	void UpdateRestPositionAndRotation(float DeltaTime);
 
 public:
 	// Called every frame
@@ -535,6 +549,9 @@ private:
 	bool bRest;
 	ASavePoint* LastCloseCheckPoint;
 	ASavePoint* CheckPoint;
+
+	FVector RestEndPoint;
+	FRotator ToRestRotator;
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }
