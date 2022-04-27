@@ -297,6 +297,8 @@ private:
 
 	void PressedEventMotion();
 
+	void UpdateListenerRotation();
+
 private:
 	/* Camera Variable */
 	/* 카메라를 달아 놓을 카메라 팔 추가 (카메라와 캐릭터 사이에 일정 거리를 두기위해 만든 컴포넌트) */
@@ -552,6 +554,13 @@ private:
 
 	FVector RestEndPoint;
 	FRotator ToRestRotator;
+
+
+	/* Sound Listner */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Sound, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* ListenerComponent;
+
+	class AMeleePlayerController* PlayerController;
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }

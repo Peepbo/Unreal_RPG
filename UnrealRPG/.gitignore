@@ -92,6 +92,8 @@ Content/AnimationAsset/*
 Content/FXAsset/*
 Content/InfinityBladeEffects/*
 Content/A_Surface_Footstep/*
+Content/Effects/*
+Content/Environment/*
 
 # Others
 Content/Assets/*
@@ -101,3 +103,6 @@ Content/KiteDemo/*
 Content/ParagonProps/*
 Content/Maps/*
 Content/Megascans/*
+Content/SoulCave/*
+Content/Elemental/*
+Content/InfinityBladeFireLands/*

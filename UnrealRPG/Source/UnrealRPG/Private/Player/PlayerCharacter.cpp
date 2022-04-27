@@ -21,6 +21,7 @@
 #include "Components/WidgetComponent.h"
 #include "Player/SavePoint.h"
 #include "GameFramework/PlayerStart.h"
+#include "MeleePlayerController.h"
 
 
 APlayerCharacter::APlayerCharacter() :
@@ -130,6 +131,10 @@ APlayerCharacter::APlayerCharacter() :
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 	GetCharacterMovement()->MaxWalkSpeed = MaximumWalkSpeed;
+
+
+	ListenerComponent = CreateDefaultSubobject<USceneComponent>("Listener");
+	ListenerComponent->SetupAttachment(GetMesh(), FName("head"));
 }
 
 void APlayerCharacter::BeginPlay()
@@ -164,13 +169,7 @@ void APlayerCharacter::BeginPlay()
 	// IK Variable 초기화
 	IKTraceDistance = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 
-	//// Overlap을 검사하여 SavePoint가 근처에 있는지 검사한다.
-	//UKismetSystemLibrary::SphereOverlapActors(
-	//	GetWorld(),
-	//	GetActorLocation(),
-	//	150.f,
-	//
-	//)
+	PlayerController = Cast<AMeleePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -1174,6 +1173,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 		RecoverStamina();
 	}
 
+	// Audio Listener Update
+	if (PlayerController)
+	{
+		UpdateListenerRotation();
+	}
+
 	UpdateIKFootData(DeltaTime);
 }
 
@@ -1619,4 +1624,10 @@ void APlayerCharacter::PressedEventMotion()
 
 		//LastCloseCheckPoint->ClosePlayerEffect();
 	}
+}
+
+void APlayerCharacter::UpdateListenerRotation()
+{
+	const FRotator ListenerRot{ UKismetMathLibrary::ComposeRotators(GetActorRotation(), GetControlRotation()) };
+	PlayerController->SetAudioListenerOverride(ListenerComponent, { 0.f,0.f,0.f }, ListenerRot);
 }
