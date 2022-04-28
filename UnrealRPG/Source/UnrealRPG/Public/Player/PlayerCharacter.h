@@ -244,6 +244,8 @@ public:
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
+	virtual bool FallingDamage(float LastMaxmimumZVelocity) override;
+
 	/* 델리게이트에 Enemy의 데미지 타입 초기화 함수를 넣는다 */
 	void AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName);
 
@@ -354,13 +356,13 @@ private:
 		float MaximumStamina;
 
 	/* 플레이어가 착용하고있는 무기 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Item, meta = (AllowPrivateAccess = "true"))
 		AWeapon* EquippedWeapon;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Item, meta = (AllowPrivateAccess = "true"))
 		AShield* EquippedShield;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Item, meta = (AllowPrivateAccess = "true"))
 		APotion* EquippedPotion;
 
 
@@ -507,6 +509,7 @@ private:
 	float RollDelay;
 
 	/* 점프 착지 시 필요함 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float MaximumZVelocity;
 
 	bool bGuardBreak;

@@ -7,6 +7,8 @@
 #include "RPGTypes.h"
 #include "MeleeCharacter.generated.h"
 
+class UAnimMontage;
+
 UCLASS()
 class UNREALRPG_API AMeleeCharacter : public ACharacter
 {
@@ -49,11 +51,17 @@ protected:
 		void SaveRelativeVelocityAngle();
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+	
+	UFUNCTION(BlueprintCallable)
+	virtual bool FallingDamage(float LastMaxmimumZVelocity);
 
 protected:
 	/* 캐릭터의 상태 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		ECombatState CombatState;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* DieMontage;
 
 	/* Health Point */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Stat, meta = (AllowPrivateAccess = "true"))

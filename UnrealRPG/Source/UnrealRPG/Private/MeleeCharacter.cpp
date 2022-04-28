@@ -60,12 +60,40 @@ void AMeleeCharacter::Tick(float DeltaTime)
 
 bool AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
-	if (DamagedActor == nullptr || DamageCauser == nullptr)
+	if (DamagedActor == nullptr || DamageCauser == nullptr || bDying)
 	{
 		return false;
 	}
 
 	return CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
+}
+
+bool AMeleeCharacter::FallingDamage(float LastMaxmimumZVelocity)
+{
+	if (bDying)
+	{
+		return false;
+	}
+
+	const float DamagePercentage{ UKismetMathLibrary::NormalizeToRange(LastMaxmimumZVelocity, 1500.f, 2500.f) };
+	if (DamagePercentage <= 0.f)
+	{
+		return false;
+	}
+	else
+	{
+		const  float DamageAmount{ MaximumHP * DamagePercentage };
+
+		if (HP - DamageAmount > 0.f) {
+			HP -= DamageAmount;
+		}
+		else {
+			HP = 0.f;
+			bDying = true;
+		}
+
+		return true;
+	}
 }
 
 bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)

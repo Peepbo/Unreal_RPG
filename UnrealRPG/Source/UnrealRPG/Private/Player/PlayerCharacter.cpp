@@ -1287,6 +1287,31 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 	return true;
 }
 
+bool APlayerCharacter::FallingDamage(float LastMaxmimumZVelocity)
+{
+	if (bDying)
+	{
+		return false;
+	}
+
+	const bool bDamaged{ Super::FallingDamage(LastMaxmimumZVelocity) };
+
+	if (bDamaged && bDying)
+	{
+		// Die Montage 호출
+		if (DieMontage)
+		{
+			AnimInstance->Montage_Play(DieMontage);
+		}
+		//PlayerController->DisableInput()
+
+		UnPossessed();
+		//DisableInput(PlayerController);
+	}
+
+	return bDamaged;
+}
+
 void APlayerCharacter::AddFunctionToDamageTypeResetDelegate(AEnemy* Enemy, const FName& FunctionName)
 {
 	EnemyDamageTypeResetDelegate.AddUFunction(Enemy, FunctionName);
