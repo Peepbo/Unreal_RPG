@@ -53,9 +53,6 @@ void AMeleeCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//if (bSprinting && GetCharacterMovement()->GetCurrentAcceleration().IsNearlyZero()) {
-	//	HardResetSprint();
-	//}
 	ChangeMaximumSpeedForSmoothSpeed(DeltaTime);
 }
 
