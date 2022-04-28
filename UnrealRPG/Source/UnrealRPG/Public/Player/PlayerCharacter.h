@@ -235,11 +235,11 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void UpdateRestPositionAndRotation(float DeltaTime);
 
-	//UFUNCTION(BlueprintCallable)
-	//float GetHpPercentage();
-	//
-	//UFUNCTION(BlueprintCallable)
-	//float GetStPercentage();
+	UFUNCTION(BlueprintCallable)
+	float GetHpPercentage();
+	
+	UFUNCTION(BlueprintCallable)
+	float GetStPercentage();
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void UpdateHpBar();
