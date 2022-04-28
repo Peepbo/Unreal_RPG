@@ -14,6 +14,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "..\Public\MeleeCharacter.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AMeleeCharacter::AMeleeCharacter() :
@@ -86,10 +87,20 @@ bool AMeleeCharacter::FallingDamage(float LastMaxmimumZVelocity)
 
 		if (HP - DamageAmount > 0.f) {
 			HP -= DamageAmount;
+
+			if (BloodSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, BloodSound, GetActorLocation());
+			}
 		}
 		else {
 			HP = 0.f;
 			bDying = true;
+
+			if (LastBloodSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, LastBloodSound, GetActorLocation());
+			}
 		}
 
 		return true;
@@ -102,7 +113,6 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 	{
 		return false;
 	}
-
 
 	const FVector HitDir{ UKismetMathLibrary::Normal(DamageCauser->GetActorLocation() - GetActorLocation()) };
 	const FVector ForwardVector{ GetActorForwardVector() };
@@ -122,10 +132,20 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 
 	if (HP - DamageAmount > 0.f) {
 		HP -= DamageAmount;
+
+		if (BloodSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, BloodSound, GetActorLocation());
+		}
 	}
 	else {
 		HP = 0.f;
 		bDying = true;
+
+		if (LastBloodSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, LastBloodSound, GetActorLocation());
+		}
 	}
 
 	return true;

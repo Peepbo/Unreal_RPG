@@ -97,6 +97,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	class USoundCue* BloodSound;
 
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* LastBloodSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
+		class USoundAttenuation* SoundAttenuation;
+
 	/* 공격 시 TraceSphere를 시각화할지 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bVisibleTraceSphere;
@@ -141,6 +147,7 @@ public:
 	FORCEINLINE bool GetDying() const { return bDying; }
 	FORCEINLINE UParticleSystem* GetBloodParticle() const { return BloodParticle; }
 	FORCEINLINE USoundCue* GetBloodSound() const { return BloodSound; }
+	FORCEINLINE USoundCue* GetLastBloodSound() const { return LastBloodSound; }
 	FORCEINLINE FVector GetLastHitDirection() const { return LastHitDirection; }
 	FORCEINLINE EAttackType GetLastDamagedAttackType() const { return LastDamagedAttackType; }
 };

@@ -287,14 +287,14 @@ void AEnemy::TracingAttackSphere(float Damage)
 								Player->GetBloodParticle(),
 								HitResult.ImpactPoint);
 						}
-						// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
-						if (Player->GetBloodSound())
-						{
-							UGameplayStatics::PlaySoundAtLocation(
-								this,
-								Player->GetBloodSound(),
-								HitResult.ImpactPoint);
-						}
+						//// 피해 사운드가 존재할 때 타격 위치에 사운드를 생성한다.
+						//if (Player->GetBloodSound())
+						//{
+						//	UGameplayStatics::PlaySoundAtLocation(
+						//		this,
+						//		Player->GetBloodSound(),
+						//		HitResult.ImpactPoint);
+						//}
 					}
 
 					bAttackable = false;

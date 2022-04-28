@@ -268,9 +268,6 @@ private:
 	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float LastHitBoneOffset;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class USoundCue* LastBloodSound;
-
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -306,6 +303,4 @@ public:
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
 
 	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }
-
-	FORCEINLINE USoundCue* GetLastBloodSound() const { return LastBloodSound; }
 };
