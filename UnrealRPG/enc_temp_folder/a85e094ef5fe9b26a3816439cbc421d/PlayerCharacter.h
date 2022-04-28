@@ -241,6 +241,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	float GetStPercentage();
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void UpdateHpBar();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void UpdateStaminaBar();
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

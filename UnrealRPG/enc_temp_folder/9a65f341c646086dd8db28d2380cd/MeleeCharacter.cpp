@@ -85,10 +85,10 @@ bool AMeleeCharacter::FallingDamage(float LastMaxmimumZVelocity)
 		if (HP - DamageAmount > 0.f) {
 			HP -= DamageAmount;
 
-			//if (BloodSound)
-			//{
-			//	UGameplayStatics::PlaySoundAtLocation(this, BloodSound, GetActorLocation());
-			//}
+			if (BloodSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, BloodSound, GetActorLocation());
+			}
 		}
 		else {
 			HP = 0.f;
