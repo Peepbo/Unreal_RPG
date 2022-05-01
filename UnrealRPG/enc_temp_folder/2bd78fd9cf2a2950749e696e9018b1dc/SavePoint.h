@@ -31,6 +31,11 @@ public:
 	// Sets default values for this actor's properties
 	ASavePoint();
 
+UFUNCTION(BlueprintImplementableEvent)
+	void ClosePlayerEffect();
+
+	void ChangeOverlapSetting(class APlayerCharacter* Player);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

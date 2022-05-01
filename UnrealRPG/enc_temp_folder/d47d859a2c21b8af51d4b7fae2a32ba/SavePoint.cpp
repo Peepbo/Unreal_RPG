@@ -60,6 +60,14 @@ ASavePoint::ASavePoint():
 	PointLight->AttenuationRadius = 400.f;
 }
 
+void ASavePoint::ChangeOverlapSetting(APlayerCharacter* Player)
+{
+	bClosePlayer = true;
+
+	Player->SetEventAble(true);
+	Player->SetCloseSavePoint(this);
+}
+
 // Called when the game starts or when spawned
 void ASavePoint::BeginPlay()
 {

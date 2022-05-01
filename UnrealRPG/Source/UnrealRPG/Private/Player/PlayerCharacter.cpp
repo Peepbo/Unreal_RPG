@@ -1656,8 +1656,7 @@ void APlayerCharacter::PressedEventMotion()
 	{
 		bRest = true;
 		CombatState = ECombatState::ECS_RestInteraction;
-
-		//LastCloseCheckPoint->ClosePlayerEffect();
+		SetButtonEventUIVisibility(false);
 	}
 }
 

@@ -146,6 +146,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void PrepareShieldAttack();
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+		void SetButtonEventUIVisibility(bool bOpen);
+
 
 	/* Stamina Function */
 	/* 스태미나 회복 */
@@ -588,7 +591,11 @@ public:
 	FORCEINLINE bool GetResting() const { return bRest; }
 
 	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
-	FORCEINLINE void SetEventAble(bool bNext) { bEventAble = bNext; }
+	FORCEINLINE void SetEventAble(bool bNext) 
+	{ 
+		bEventAble = bNext; 
+		SetButtonEventUIVisibility(bEventAble);
+	}
 	FORCEINLINE void SetCloseSavePoint(ASavePoint* SavePoint) { LastCloseCheckPoint = SavePoint; }
 
 
