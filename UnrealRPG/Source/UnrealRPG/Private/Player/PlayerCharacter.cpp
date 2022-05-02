@@ -1347,6 +1347,13 @@ float APlayerCharacter::GetMoveAngle()
 	return UKismetMathLibrary::DegAtan2(Axis.Y, Axis.X);
 }
 
+void APlayerCharacter::SetEventAble(bool bNext, FName NextEventText)
+{
+	bEventAble = bNext;
+	SetButtonEventUIVisibility(bEventAble);
+	EventText = NextEventText;
+}
+
 void APlayerCharacter::HardResetSprint()
 {
 	Super::HardResetSprint();

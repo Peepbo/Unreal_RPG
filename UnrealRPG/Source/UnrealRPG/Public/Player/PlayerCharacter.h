@@ -263,6 +263,9 @@ public:
 
 	float GetMoveAngle();
 
+	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
+	void SetEventAble(bool bNext, FName NextEventText);
+
 private:
 	virtual void HardResetSprint() override;
 
@@ -559,6 +562,8 @@ private:
 
 
 	/* Event Motion */
+	UPROPERTY(BlueprintReadOnly, Category = Event, meta = (AllowPrivateAccess = "true"))
+	FName EventText;
 	bool bEventAble;
 	bool bRest;
 	ASavePoint* LastCloseCheckPoint;
@@ -590,12 +595,6 @@ public:
 
 	FORCEINLINE bool GetResting() const { return bRest; }
 
-	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
-	FORCEINLINE void SetEventAble(bool bNext) 
-	{ 
-		bEventAble = bNext; 
-		SetButtonEventUIVisibility(bEventAble);
-	}
 	FORCEINLINE void SetCloseSavePoint(ASavePoint* SavePoint) { LastCloseCheckPoint = SavePoint; }
 
 

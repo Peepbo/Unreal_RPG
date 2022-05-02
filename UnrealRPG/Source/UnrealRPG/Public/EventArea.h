@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "EventArea.generated.h"
 
+class UStaticMeshComponent;
 class USphereComponent;
 class APlayerCharacter;
 
@@ -24,7 +25,7 @@ protected:
 
 private:
 	UFUNCTION()
-		void PlayerRangeOverlap(
+	virtual	void PlayerRangeOverlap(
 			UPrimitiveComponent* OverlappedComponent,
 			AActor* OtherActor,
 			UPrimitiveComponent* OtherComp,
@@ -42,17 +43,15 @@ private:
 protected:
 	APlayerCharacter* PlayerCharacter;
 
-private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* DecolationMesh;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = EventArea, meta = (AllowPrivateAccess = "true"))
 	USphereComponent* OverlapSphere;
 
 	bool bClosePlayer;
 
+	/* 이벤트 위젯에 띄울 설명 텍스트 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = EventArea, meta = (AllowPrivateAccess = "true"))
 	FName EventText;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 };
