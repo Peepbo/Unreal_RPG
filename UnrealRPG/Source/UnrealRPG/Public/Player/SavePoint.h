@@ -66,15 +66,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	class UAudioComponent* Audio;
 
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	//class USphereComponent* OverlapSphere;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	class USceneComponent* ResponPoint;
-
-	//class APlayerCharacter* PlayerCharacter;
-
-	//bool bClosePlayer;
 
 	UPROPERTY(EditAnywhere, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	FName SavePointName;

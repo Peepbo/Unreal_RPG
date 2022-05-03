@@ -64,6 +64,7 @@ AEnemy::AEnemy() :
 	LockOnWidget->SetVisibility(false);
 
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidget"));
+	HealthBar->SetupAttachment(GetMesh());
 	HealthBar->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthBar->SetDrawSize({ 150.f,10.f });
 	HealthBar->SetVisibility(false);

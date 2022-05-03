@@ -29,6 +29,9 @@ APlayerCharacter::APlayerCharacter() :
 	BaseTurnRate(45.f),
 	BaseLookUpRate(45.f),
 
+	// Control
+	bControl(false),
+
 	// Stamina
 	Stamina(50.f),
 	MaximumStamina(50.f),
@@ -174,6 +177,7 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::MoveForward(float Value)
 {
+	if (!bControl)return;
 	if (CombatState == ECombatState::ECS_Attack)return;
 	if (CombatState == ECombatState::ECS_Roll)return;
 	if (CombatState == ECombatState::ECS_Impact)return;
@@ -206,6 +210,7 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
+	if (!bControl)return;
 	if (CombatState == ECombatState::ECS_Attack)return;
 	if (CombatState == ECombatState::ECS_Roll)return;
 	if (CombatState == ECombatState::ECS_Impact)return;
@@ -238,6 +243,7 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::TurnAtRate(float Rate)
 {
+	if (!bControl)return;
 	if (bLockOn || GetAttacking())
 	{
 		return;
@@ -250,6 +256,7 @@ void APlayerCharacter::TurnAtRate(float Rate)
 
 void APlayerCharacter::LookUpAtRate(float Rate)
 {
+	if (!bControl)return;
 	if (bLockOn || GetAttacking())
 	{
 		return;
@@ -262,6 +269,7 @@ void APlayerCharacter::LookUpAtRate(float Rate)
 
 void APlayerCharacter::TurnAtRateInMouse(float Rate)
 {
+	if (!bControl)return;
 	if (bLockOn)
 	{
 		return;
@@ -272,6 +280,7 @@ void APlayerCharacter::TurnAtRateInMouse(float Rate)
 
 void APlayerCharacter::LookUpAtRateInMouse(float Rate)
 {
+	if (!bControl)return;
 	if (bLockOn)
 	{
 		return;
@@ -284,6 +293,7 @@ bool APlayerCharacter::MainAttack()
 {
 	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Normal))
 	{
+		EndToIdleState(false);
 		UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Normal));
 
 		AnimInstance->Montage_Play(MainComboMontages[ComboAttackMontageIndex]);
@@ -308,9 +318,9 @@ void APlayerCharacter::PressedAttack()
 {
 	bPressedAttackButton = true;
 
-	EndToIdleState(false);
+	if (!bControl)return;
 
-	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr || AnimInstance == nullptr)
+	if (!CheckActionableState() || EquippedWeapon == nullptr || AnimInstance == nullptr)
 	{
 		return;
 	}
@@ -499,6 +509,8 @@ void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
 
 void APlayerCharacter::Roll()
 {
+	if (!bControl)return;
+
 	if (AnimInstance) {
 		UseStaminaAndStopRecovery(RollRequiredStamina);
 
@@ -542,16 +554,17 @@ void APlayerCharacter::PressedRollAndSprint()
 {
 	bPressedRollAndSprintButton = true;
 
-	EndToIdleState(true);
+	if (!bControl)return;
 
 	// 구르기와 뛰기는 둘 다 특정 모션을 취하고 있으면 안되고, 공중에 있으면 안된다. 
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (!CheckActionableState())return;
 	if (GetCharacterMovement()->IsFalling())return;
-	if (!bCanRoll)return;
+	//if (!bCanRoll)return;
 	// 여기에 스테미나 검사도 포함
 
 	bCanRoll = false;
 
+	//EndToIdleState(true);
 	ForceStopAllMontage();
 
 	UE_LOG(LogTemp, Warning, TEXT("롤 앤 스프린트 타이머 시작"));
@@ -570,7 +583,8 @@ void APlayerCharacter::ReleasedRollAndSprint()
 {
 	bPressedRollAndSprintButton = false;
 
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (!bControl)return;
+	if (!CheckActionableState())return;
 	if (GetCharacterMovement()->IsFalling())return;
 
 	// 1. 뛰고 있을 때(sprint)
@@ -652,6 +666,8 @@ void APlayerCharacter::ResetDamageState()
 void APlayerCharacter::PressedSubAttack()
 {
 	bPressedSubAttackButton = true;
+
+	if (!bControl)return;
 
 	if (EquippedShield == nullptr)return;
 
@@ -756,6 +772,7 @@ void APlayerCharacter::PressedChargedAttack()
 {
 	bPressedChargedAttackButton = true;
 
+	if (!bControl)return;
 	if (!CheckActionableState())return;
 	if (EquippedWeapon == nullptr)return;
 	if (!CheckLand())return;
@@ -865,6 +882,8 @@ void APlayerCharacter::EndAttackCheckTime()
 
 void APlayerCharacter::PressedLockOn()
 {
+	if (!bControl)return;
+
 	if (bLockOn) 
 	{
 		// 락온 취소
@@ -977,6 +996,8 @@ void APlayerCharacter::PressedUseItem()
 {
 	bPressedUseItemButton = true;
 
+	if (!bControl)return;
+
 	if (EquippedPotion) 
 	{
 		// 특정 액션(공격, 구르기, 점프 상태)을 취하고 있지 않을 때만 사용 가능
@@ -1055,6 +1076,7 @@ void APlayerCharacter::DashAttack()
 	{
 		if (DashAttackMontage)
 		{
+			EndToIdleState(false);
 			UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash));
 
 			bShouldContinueAttack = false;
@@ -1292,7 +1314,18 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 	}
 
 	// 데미지 적용
-	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
+	const bool bDamaged{ Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType) };
+
+	if (bDamaged && bDying)
+	{
+		// Die Montage 호출
+		if (DieMontage)
+		{
+			AnimInstance->Montage_Play(DieMontage);
+		}
+
+		UnPossessed();
+	}
 
 	return true;
 }
@@ -1313,10 +1346,8 @@ bool APlayerCharacter::FallingDamage(float LastMaxmimumZVelocity)
 		{
 			AnimInstance->Montage_Play(DieMontage);
 		}
-		//PlayerController->DisableInput()
 
 		UnPossessed();
-		//DisableInput(PlayerController);
 	}
 
 	return bDamaged;
@@ -1350,8 +1381,17 @@ float APlayerCharacter::GetMoveAngle()
 void APlayerCharacter::SetEventAble(bool bNext, FName NextEventText)
 {
 	bEventAble = bNext;
-	SetButtonEventUIVisibility(bEventAble);
 	EventText = NextEventText;
+	SetButtonEventUIVisibility(bEventAble);
+}
+
+void APlayerCharacter::WaitControlFadeTime(float FadeTime)
+{
+	GetWorldTimerManager().SetTimer(
+		ControlDelayTimer,
+		this,
+		&APlayerCharacter::TurnOnControl,
+		FadeTime);
 }
 
 void APlayerCharacter::HardResetSprint()
@@ -1379,6 +1419,11 @@ void APlayerCharacter::EndDamageImpact()
 	CombatState = ECombatState::ECS_ToIdle;
 }
 
+void APlayerCharacter::TurnOnControl()
+{
+	bControl = true;
+}
+
 const FVector2D APlayerCharacter::GetMovementLocalAxis()
 {
 	return { GetInputAxisValue("MoveForward"), GetInputAxisValue("MoveRight") };
@@ -1404,7 +1449,14 @@ void APlayerCharacter::Sprint()
 {
 	bCanRoll = true;
 
-	if (CombatState != ECombatState::ECS_Unoccupied)return;
+	if (CheckActionableState())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	else
+	{
+		return;
+	}
 	if (GetCharacterMovement()->IsFalling())return;
 
 	if (GetMovementComponent()->Velocity.Size() > 0.f) 
@@ -1451,6 +1503,7 @@ void APlayerCharacter::PressedJump()
 	bPressedJumpButton = true;
 
 	// 조건 검사
+	if (!bControl)return;
 	if (Stamina < JumpRequiredStamina)return;
 	if (!CheckActionableState())return;
 	if (!CheckLand())return;
@@ -1475,6 +1528,8 @@ void APlayerCharacter::PrepareJumpAttack()
 	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash))
 	{
 		if (PrepareJumpAttackMontage) {
+			EndToIdleState(false);
+
 			CombatState = ECombatState::ECS_NonMovingInteraction;
 			AnimInstance->Montage_Play(PrepareJumpAttackMontage);
 		}
@@ -1653,6 +1708,8 @@ void APlayerCharacter::EndToIdleState(bool bForceStopMontage)
 
 void APlayerCharacter::PressedEventMotion()
 {
+	if (!bControl)return;
+
 	if (bRest)
 	{
 		return;

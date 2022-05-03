@@ -146,10 +146,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		void PrepareShieldAttack();
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-		void SetButtonEventUIVisibility(bool bOpen);
-
-
 	/* Stamina Function */
 	/* 스태미나 회복 */
 	void RecoverStamina();
@@ -266,12 +262,23 @@ public:
 	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
 	void SetEventAble(bool bNext, FName NextEventText);
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+		void SetButtonEventUIVisibility(bool bOpen);
+
+	/* FadeTime동안 컨트롤을 막는 하는 함수 */
+	UFUNCTION(BlueprintCallable)
+	void WaitControlFadeTime(float FadeTime);
+
 private:
 	virtual void HardResetSprint() override;
 
 	virtual void EndShieldImpact() override;
 
 	virtual void EndDamageImpact() override;
+
+	/* Control Function */
+	void TurnOnControl();
+
 
 	/* ThumbStick의 Axis를 가져온다. (local direction) */
 	const FVector2D GetMovementLocalAxis();
@@ -333,6 +340,11 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		float LockOnCameraSpeed;
+
+
+	/* Control Variable */
+	bool bControl;
+	FTimerHandle ControlDelayTimer;
 
 
 	/* Button Variable */
@@ -596,6 +608,8 @@ public:
 	FORCEINLINE bool GetResting() const { return bRest; }
 
 	FORCEINLINE void SetCloseSavePoint(ASavePoint* SavePoint) { LastCloseCheckPoint = SavePoint; }
+
+	FORCEINLINE FName GetEventText() const { return EventText; }
 
 
 	/* IK_Foot 전용 인라인 함수 */
