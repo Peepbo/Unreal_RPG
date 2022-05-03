@@ -1,7 +1,17 @@
 # UnrealRPG
 
-기간 : 22-02-04 ~    
-조작 컨트롤러 : 키보드, 마우스 혹은 게임 패드   
+게임 제목 : 미정  
+게임 종류 : 소울 라이크 장르 게임  
+사용 엔진 : Unreal Engine 4.27.2  
+제작 기간 : 22-02-04 ~   
+일정 관리 : Trello  
+팀원 : 개인  
+조작 : 키보드, 마우스 혹은 게임 패드   
+
+
+Trello : https://trello.com/b/tThGDM2D/unreal-rpg  
+WepPage :  https://blog.naver.com/tngus1140  
+
 
 ### 조작법
 
