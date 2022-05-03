@@ -150,14 +150,23 @@ protected:
 
 	void SetVisibleHealthBar(bool bVisible);
 
+	void StartResetTransformTimer(float Delay);
+
 private:
 	void CombatTurn(float DeltaTime);
 	virtual void CheckCombatReset(float DeltaTime);
+	UFUNCTION(BlueprintCallable)
+	virtual void ResetCombat();
+	void ResetTransform();
+
+	virtual void TargetDeath() override;
 
 protected:
 	class UAnimInstance* AnimInstance;
 
 	class AEnemyAIController* EnemyAIController;
+
+	FTimerHandle EndCombatTimer;
 
 	/* 전투 이동속도 관련 변수 (RootMotion을 사용하지 않는 Enemy가 사용) */
 	float BattleWalkSpeed;
@@ -194,6 +203,9 @@ protected:
 	float CombatResetTime;
 	float MaximumCombatResetTime;
 	float MaximumCombatDistance;
+
+	FTransform FirstTransform;
+	bool bPatrol;
 
 private:
 

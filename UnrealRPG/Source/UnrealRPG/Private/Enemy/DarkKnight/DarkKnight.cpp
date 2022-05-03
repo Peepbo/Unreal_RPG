@@ -98,16 +98,17 @@ void ADarkKnight::EndDraw()
 {
 	// 강제로 Impact State를 막았던 설정을 되돌려놓는다.
 	bAvoidImpactState = false;
+	ChangeBattleMode();
 }
 
 void ADarkKnight::StartSheath()
 {
 	GetCharacterMovement()->StopActiveMovement();
 	SetMove(false);
-	if (DrawMontage) {
+	if (SheathMontage) {
 		if (AnimInstance) {
 			AnimInstance->Montage_Play(SheathMontage);
-			UE_LOG(LogTemp, Warning, TEXT("Montage Play"));
+			UE_LOG(LogTemp, Warning, TEXT("Sheath Montage Play"));
 		}
 	}
 }
@@ -116,6 +117,7 @@ void ADarkKnight::EndSheath()
 {
 	bShouldDrawWeapon = true;
 	OverlapCharacter = nullptr;
+	ChangeBattleMode();
 }
 
 void ADarkKnight::EndDamageImpact()
@@ -185,23 +187,18 @@ void ADarkKnight::FindCharacter()
 	}
 }
 
-void ADarkKnight::CheckCombatReset(float DeltaTime)
+void ADarkKnight::ResetCombat()
 {
-	// 이 함수는 Target이 존재할 때만 호출하는 함수입니다.
-	if (CombatState == ECombatState::ECS_Chase)
+	CombatResetTime = 0.f;
+	Target = nullptr;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
+
+	SetVisibleHealthBar(false);
+	StartSheath();
+
+	if (!bPatrol)
 	{
-		CombatResetTime += DeltaTime;
-
-		if (CombatResetTime > MaximumCombatResetTime || GetDistanceToTarget() > MaximumCombatDistance)
-		{
-			CombatResetTime = 0.f;
-			Target = nullptr;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
-
-			SetVisibleHealthBar(false);
-			StartSheath();
-			ChangeBattleMode();
-		}
+		StartResetTransformTimer(2.f);
 	}
 }
 
@@ -222,14 +219,28 @@ bool ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 
 	UE_LOG(LogTemp, Warning, TEXT("DarkKnight Damaged!"));
 
-	if (!bDying && bShouldDrawWeapon) {
+	if (!bDying) 
+	{
 		GetWorldTimerManager().ClearTimer(SearchTimer);
-		APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser);
-		Target = Player;
+		if (Target == nullptr)
+		{
+			APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser);
+			if (Player)
+			{
+				Target = Player;
+			}
+			else
+			{
+				return false;
+			}
+		}
 
 		// 강제로 ImpactState로 전환되는 것을 막는다. (데미지는 들어감)
 		// Non-Battle Impact, DrawAnimation 모두 끝나면 false로 바뀐다.
-		bAvoidImpactState = true;
+		if (bShouldDrawWeapon)
+		{
+			bAvoidImpactState = true;
+		}
 	}
 
 

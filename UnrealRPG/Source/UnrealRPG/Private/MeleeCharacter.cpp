@@ -66,6 +66,10 @@ bool AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount
 	return CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 }
 
+void AMeleeCharacter::TargetDeath()
+{
+}
+
 bool AMeleeCharacter::FallingDamage(float LastMaxmimumZVelocity)
 {
 	if (bDying)
@@ -138,6 +142,11 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 	else {
 		HP = 0.f;
 		bDying = true;
+		AMeleeCharacter* DamageCharacter = Cast<AMeleeCharacter>(DamageCauser);
+		if (DamageCharacter)
+		{
+			DamageCharacter->TargetDeath();
+		}
 
 		if (LastBloodSound)
 		{

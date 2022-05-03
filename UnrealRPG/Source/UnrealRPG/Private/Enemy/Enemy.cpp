@@ -39,7 +39,8 @@ AEnemy::AEnemy() :
 	bActiveBoneOffset(false),
 	MaximumCombatResetTime(20.f),
 	MaximumCombatDistance(2500.f),
-	CombatResetTime(0.f)
+	CombatResetTime(0.f),
+	bPatrol(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -99,6 +100,8 @@ void AEnemy::BeginPlay()
 	}
 
 	AnimInstance = GetMesh()->GetAnimInstance();
+
+	FirstTransform = GetActorTransform();
 }
 
 void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -495,6 +498,19 @@ void AEnemy::SetVisibleHealthBar(bool bVisible)
 	HealthBar->SetVisibility(bVisible);
 }
 
+void AEnemy::StartResetTransformTimer(float Delay)
+{
+	if (!bPatrol)
+	{
+		// x초 뒤 원래 있던 위치 및 방향을 캐릭터에 적용시킨다.
+		GetWorldTimerManager().SetTimer(
+			EndCombatTimer,
+			this,
+			&AEnemy::ResetTransform,
+			Delay);
+	}
+}
+
 void AEnemy::CombatTurn(float DeltaTime)
 {
 	// 이 함수는 Target이 존재할 때만 호출하는 함수입니다.
@@ -525,14 +541,38 @@ void AEnemy::CheckCombatReset(float DeltaTime)
 
 		if (CombatResetTime > MaximumCombatResetTime || GetDistanceToTarget() > MaximumCombatDistance)
 		{
-			CombatResetTime = 0.f;
-			Target = nullptr;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
-
-			SetVisibleHealthBar(false);
-			ChangeBattleMode();
+			ResetCombat();
 		}
 	}
+}
+
+void AEnemy::ResetCombat()
+{
+	CombatResetTime = 0.f;
+	Target = nullptr;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
+
+	SetVisibleHealthBar(false);
+	ChangeBattleMode();
+	UE_LOG(LogTemp, Warning, TEXT("AEnemy::ResetCombat()"));
+
+
+	// Patrol이 적용된 Enemy가 아니면 아직까진 원래 위치로 돌아가는 알고리즘이 없다.
+	StartResetTransformTimer(2.f);
+}
+
+void AEnemy::ResetTransform()
+{
+	SetActorTransform(FirstTransform);
+}
+
+void AEnemy::TargetDeath()
+{
+	GetWorldTimerManager().SetTimer(
+		EndCombatTimer,
+		this,
+		&AEnemy::ResetCombat,
+		2.f);
 }
 
 // Called every frame

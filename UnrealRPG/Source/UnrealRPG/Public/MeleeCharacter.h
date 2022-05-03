@@ -81,7 +81,7 @@ protected:
 	
 
 	/* 전투 모드인지 */
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool bIsBattleMode;
 
 	/* 죽었는지 */
@@ -120,11 +120,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	//virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
 	// Custom Damage function
 	UFUNCTION(BlueprintCallable)
 	bool CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+
+	/* 공격한 대상이 사망했을 때 호출되는 함수 (dispatcher) */
+	virtual void TargetDeath();
 
 private:
 

@@ -59,10 +59,10 @@ protected:
 
 	virtual void FindCharacter() override;
 
-	//virtual void ChangeBattleMode() override;
+	
 
 private:
-	virtual void CheckCombatReset(float DeltaTime) override;
+	virtual void ResetCombat() override;
 
 	void DropWeapon();
 
