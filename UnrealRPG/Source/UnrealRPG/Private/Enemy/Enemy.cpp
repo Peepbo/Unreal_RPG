@@ -40,7 +40,7 @@ AEnemy::AEnemy() :
 	MaximumCombatResetTime(20.f),
 	MaximumCombatDistance(2500.f),
 	CombatResetTime(0.f),
-	bPatrol(false)
+	bPatrolableEnemy(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -361,18 +361,20 @@ void AEnemy::StartRestTimer()
 	CombatState = ECombatState::ECS_Unoccupied;
 
 	bRestTime = true;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRest"), bRestTime);
 
 	GetWorldTimerManager().SetTimer(
 		RestTimer,
 		this,
 		&AEnemy::EndRestTimer,
-		1.5f,
+		1.1f,
 		false);
 }
 
 void AEnemy::EndRestTimer()
 {
 	bRestTime = false;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRest"), bRestTime);
 
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
 	ChangeCombatState(ECombatState::ECS_Unoccupied);
@@ -425,9 +427,11 @@ float AEnemy::GetDegreeForwardToTarget()
 	if (Target == nullptr)return 0.f;
 
 	const FVector ActorForward{ GetActorForwardVector() };
-	const FVector ActorToTarget{ UKismetMathLibrary::Normal(Target->GetActorLocation() - GetActorLocation()) };
+	FVector ActorToTarget{ Target->GetActorLocation() - GetActorLocation() };
+	ActorToTarget.Z = 0.f;
+
 	const FVector2D ActorForward2D{ ActorForward };
-	const FVector2D ActorToTarget2D{ ActorToTarget };
+	const FVector2D ActorToTarget2D{ UKismetMathLibrary::Normal(ActorToTarget) };
 
 	const float DotProductRadian{ UKismetMathLibrary::DotProduct2D(ActorForward2D,ActorToTarget2D) };
 	float ResultDegree{ UKismetMathLibrary::DegAcos(DotProductRadian) };
@@ -500,7 +504,7 @@ void AEnemy::SetVisibleHealthBar(bool bVisible)
 
 void AEnemy::StartResetTransformTimer(float Delay)
 {
-	if (!bPatrol)
+	if (!bPatrolableEnemy)
 	{
 		// x초 뒤 원래 있던 위치 및 방향을 캐릭터에 적용시킨다.
 		GetWorldTimerManager().SetTimer(
@@ -558,7 +562,10 @@ void AEnemy::ResetCombat()
 
 
 	// Patrol이 적용된 Enemy가 아니면 아직까진 원래 위치로 돌아가는 알고리즘이 없다.
-	StartResetTransformTimer(2.f);
+	if (!bPatrolableEnemy)
+	{
+		StartResetTransformTimer(2.f);
+	}
 }
 
 void AEnemy::ResetTransform()
@@ -568,11 +575,15 @@ void AEnemy::ResetTransform()
 
 void AEnemy::TargetDeath()
 {
-	GetWorldTimerManager().SetTimer(
-		EndCombatTimer,
-		this,
-		&AEnemy::ResetCombat,
-		2.f);
+	//GetWorldTimerManager().SetTimer(
+	//	EndCombatTimer,
+	//	this,
+	//	&AEnemy::ResetCombat,
+	//	2.f);
+	if (Target)
+	{
+		Target->ResetLockOn();
+	}
 }
 
 // Called every frame
@@ -582,8 +593,21 @@ void AEnemy::Tick(float DeltaTime)
 
 	if (Target)
 	{
-		CombatTurn(DeltaTime);
-		CheckCombatReset(DeltaTime);
+		if (Target->GetDying())
+		{
+			GetWorldTimerManager().SetTimer(
+				EndCombatTimer,
+				this,
+				&AEnemy::ResetCombat,
+				2.f);
+
+			Target = nullptr;
+		}
+		else
+		{
+			CombatTurn(DeltaTime);
+			CheckCombatReset(DeltaTime);
+		}
 	}
 }
 

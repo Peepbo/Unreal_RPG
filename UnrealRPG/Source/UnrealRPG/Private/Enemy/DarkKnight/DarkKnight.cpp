@@ -27,8 +27,6 @@ void ADarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//AD = 20.f;
-	UE_LOG(LogTemp, Warning, TEXT("%f"), AD);
 	if (AnimInstance) {
 		UKnightAnimInstance* KnightAnimInst = Cast<UKnightAnimInstance>(AnimInstance);
 
@@ -196,7 +194,7 @@ void ADarkKnight::ResetCombat()
 	SetVisibleHealthBar(false);
 	StartSheath();
 
-	if (!bPatrol)
+	if (!bPatrolableEnemy)
 	{
 		StartResetTransformTimer(2.f);
 	}

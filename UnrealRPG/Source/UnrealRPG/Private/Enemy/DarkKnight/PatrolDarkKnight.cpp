@@ -19,7 +19,7 @@ void APatrolDarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	bPatrol = true;
+	bPatrolableEnemy = true;
 	RetargetPatrolPath();
 }
 

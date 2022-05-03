@@ -205,7 +205,7 @@ protected:
 	float MaximumCombatDistance;
 
 	FTransform FirstTransform;
-	bool bPatrol;
+	bool bPatrolableEnemy;
 
 private:
 

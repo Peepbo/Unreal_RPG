@@ -218,7 +218,7 @@ void APlayerCharacter::MoveRight(float Value)
 	if (CombatState == ECombatState::ECS_RestInteraction)return;
 
 	if (Controller && Value != 0.f) {
-		if (CombatState == ECombatState::ECS_Unoccupied && !GetSprinting() && bLockOn)
+		if (CheckActionableState() && !GetSprinting() && bLockOn)
 		{
 			ApplyLockOnAttackSetting(false);
 		}
@@ -514,8 +514,8 @@ void APlayerCharacter::Roll()
 	if (AnimInstance) {
 		UseStaminaAndStopRecovery(RollRequiredStamina);
 
-		const FVector2D ThumbAxis{ GetMovementLocalAxis() };
-		if (ThumbAxis.IsNearlyZero()) 
+		const FVector2D MoveAxis{ GetMovementLocalAxis() };
+		if (MoveAxis.IsNearlyZero())
 		{
 			bBackDodge = true;
 		}
@@ -1184,6 +1184,8 @@ float APlayerCharacter::GetStPercentage()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bDying)return;
 
 	if (GetSprinting() && GetCharacterMovement()->GetCurrentAcceleration().IsNearlyZero())
 	{
