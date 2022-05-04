@@ -142,6 +142,9 @@ protected:
 		void UpdateRightItemIcon();
 	UFUNCTION(BlueprintImplementableEvent)
 		void UpdateBottomItemIcon();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+		void PlayPlusGoldAnimation(float TargetRewardGold);
 
 	UFUNCTION(BlueprintCallable)
 		void PrepareShieldAttack();
@@ -240,6 +243,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	float GetStPercentage();
 
+	UFUNCTION(BlueprintCallable)
+		void IncreaseGold(float Value);
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -319,6 +325,11 @@ private:
 	void PressedEventMotion();
 
 	void UpdateListenerRotation();
+
+	UFUNCTION(BlueprintCallable)
+	float GetPlayerGold();
+
+	virtual void TargetDeath(float TargetRewardGold) override;
 
 private:
 	/* Camera Variable */

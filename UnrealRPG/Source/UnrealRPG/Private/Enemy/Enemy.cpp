@@ -573,7 +573,7 @@ void AEnemy::ResetTransform()
 	SetActorTransform(FirstTransform);
 }
 
-void AEnemy::TargetDeath()
+void AEnemy::TargetDeath(float TargetRewardGold)
 {
 	//GetWorldTimerManager().SetTimer(
 	//	EndCombatTimer,

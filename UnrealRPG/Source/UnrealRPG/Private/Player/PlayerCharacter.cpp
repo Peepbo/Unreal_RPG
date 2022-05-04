@@ -671,7 +671,7 @@ void APlayerCharacter::PressedSubAttack()
 
 	if (EquippedShield == nullptr)return;
 
-	if (CombatState == ECombatState::ECS_Unoccupied)
+	if (CheckActionableState())
 	{
 		ForceStopAllMontage();
 
@@ -1181,6 +1181,11 @@ float APlayerCharacter::GetStPercentage()
 	return Stamina / MaximumStamina;
 }
 
+void APlayerCharacter::IncreaseGold(float Value)
+{
+	PlayerData.Gold += Value;
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -1364,8 +1369,11 @@ void APlayerCharacter::ResetLockOn()
 {
 	// 락온 취소
 	bLockOn = false;
-	LockOnWidgetData->SetVisibility(false);
-	LockOnWidgetData = nullptr;
+	if (LockOnWidgetData)
+	{
+		LockOnWidgetData->SetVisibility(false);
+		LockOnWidgetData = nullptr;
+	}
 
 	EnemyLockOnResetDelegate.ExecuteIfBound();
 	EnemyLockOnResetDelegate.Unbind();
@@ -1723,6 +1731,7 @@ void APlayerCharacter::PressedEventMotion()
 		bRest = true;
 		CombatState = ECombatState::ECS_RestInteraction;
 		SetButtonEventUIVisibility(false);
+		HP = MaximumHP;
 	}
 }
 
@@ -1730,4 +1739,20 @@ void APlayerCharacter::UpdateListenerRotation()
 {
 	const FRotator ListenerRot{ UKismetMathLibrary::ComposeRotators(GetActorRotation(), GetControlRotation()) };
 	PlayerController->SetAudioListenerOverride(ListenerComponent, { 0.f,0.f,0.f }, ListenerRot);
+}
+
+float APlayerCharacter::GetPlayerGold()
+{
+	return PlayerData.Gold;
+}
+
+void APlayerCharacter::TargetDeath(float TargetRewardGold)
+{
+	if (TargetRewardGold == 0.f)
+	{
+		return;
+	}
+
+	PlayerData.Gold += TargetRewardGold;
+	PlayPlusGoldAnimation(TargetRewardGold);
 }

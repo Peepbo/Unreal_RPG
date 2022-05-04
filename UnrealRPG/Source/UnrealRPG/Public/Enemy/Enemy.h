@@ -159,7 +159,7 @@ private:
 	virtual void ResetCombat();
 	void ResetTransform();
 
-	virtual void TargetDeath() override;
+	virtual void TargetDeath(float RewardGold) override;
 
 protected:
 	class UAnimInstance* AnimInstance;

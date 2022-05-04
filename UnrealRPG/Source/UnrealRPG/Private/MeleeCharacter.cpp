@@ -29,7 +29,8 @@ AMeleeCharacter::AMeleeCharacter() :
 	bIsShieldImpact(false),
 	LastHitDirection(0.f,0.f,0.f),
 	ChangeSpeed(false),
-	LastDamagedAttackType(EAttackType::EAT_Light)
+	LastDamagedAttackType(EAttackType::EAT_Light),
+	RewardGold(0.f)
 {
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 	GetCharacterMovement()->JumpZVelocity = 600.f;
@@ -66,7 +67,7 @@ bool AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount
 	return CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 }
 
-void AMeleeCharacter::TargetDeath()
+void AMeleeCharacter::TargetDeath(float TargetRewardGold)
 {
 }
 
@@ -145,7 +146,7 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 		AMeleeCharacter* DamageCharacter = Cast<AMeleeCharacter>(DamageCauser);
 		if (DamageCharacter)
 		{
-			DamageCharacter->TargetDeath();
+			DamageCharacter->TargetDeath(RewardGold);
 		}
 
 		if (LastBloodSound)

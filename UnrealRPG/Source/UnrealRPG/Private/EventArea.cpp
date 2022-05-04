@@ -55,7 +55,7 @@ void AEventArea::PlayerRangeEndOverlap(UPrimitiveComponent* OverlappedComponent,
 	if (Player)
 	{
 		bClosePlayer = false;
-		Player->SetEventAble(true, FName());
+		Player->SetEventAble(false, FName());
 		Player->SetButtonEventUIVisibility(false);
 	}
 }

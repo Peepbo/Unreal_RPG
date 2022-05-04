@@ -116,6 +116,9 @@ protected:
 
 	EAttackType LastDamagedAttackType;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float RewardGold;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -125,16 +128,13 @@ public:
 	bool CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
 
 	/* 공격한 대상이 사망했을 때 호출되는 함수 (dispatcher) */
-	virtual void TargetDeath();
+	virtual void TargetDeath(float TargetRewardGold);
 
 private:
 
 private:
 
 	bool ChangeSpeed;
-
-	//FName LeftFootSocketName = FName("Foot_LSocket");
-	//FName RightFootSocketName = FName("Foot_RSocket");
 
 public:
 	FORCEINLINE bool GetSprinting() const { return bSprinting; }
