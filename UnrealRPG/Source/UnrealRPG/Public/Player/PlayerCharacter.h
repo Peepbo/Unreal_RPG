@@ -238,9 +238,6 @@ protected:
 	void UpdateRestPositionAndRotation(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable)
-	float GetHpPercentage();
-	
-	UFUNCTION(BlueprintCallable)
 	float GetStPercentage();
 
 	UFUNCTION(BlueprintCallable)

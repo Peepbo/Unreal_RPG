@@ -502,6 +502,15 @@ void AEnemy::SetVisibleHealthBar(bool bVisible)
 	HealthBar->SetVisibility(bVisible);
 }
 
+void AEnemy::StartResetBattleModeTimer(float Delay)
+{
+	GetWorldTimerManager().SetTimer(
+		ResetBattleModeTimer,
+		this,
+		&AEnemy::ChangeBattleMode,
+		Delay);
+}
+
 void AEnemy::StartResetTransformTimer(float Delay)
 {
 	if (!bPatrolableEnemy)
@@ -557,10 +566,9 @@ void AEnemy::ResetCombat()
 	EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
 
 	SetVisibleHealthBar(false);
-	ChangeBattleMode();
 	UE_LOG(LogTemp, Warning, TEXT("AEnemy::ResetCombat()"));
 
-
+	StartResetBattleModeTimer(2.f);
 	// Patrol이 적용된 Enemy가 아니면 아직까진 원래 위치로 돌아가는 알고리즘이 없다.
 	if (!bPatrolableEnemy)
 	{
@@ -583,6 +591,23 @@ void AEnemy::TargetDeath(float TargetRewardGold)
 	if (Target)
 	{
 		Target->ResetLockOn();
+	}
+}
+
+void AEnemy::ActiveEnemy(APlayerCharacter* Player)
+{
+	if (Player)
+	{
+		if (EnemyAIController)
+		{
+			Target = Player;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
+
+			if (!bIsBattleMode)
+			{
+				ChangeBattleMode();
+			}
+		}
 	}
 }
 

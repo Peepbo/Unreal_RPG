@@ -22,6 +22,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void RespondTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+
 	UFUNCTION(BlueprintCallable)
 		void ChangeCombatState(ECombatState NextCombatState);
 
@@ -44,8 +47,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual	FVector GetFootLocation(bool bLeft);
-	//UFUNCTION(BlueprintCallable)
-	//	bool CheckFootCollision(bool bLeft, FVector& Out_HitPoint);
 
 	UFUNCTION(BlueprintCallable)
 		void SaveRelativeVelocityAngle();
@@ -54,6 +55,9 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	virtual bool FallingDamage(float LastMaxmimumZVelocity);
+
+	UFUNCTION(BlueprintCallable)
+		float GetHpPercentage();
 
 protected:
 	/* 캐릭터의 상태 */

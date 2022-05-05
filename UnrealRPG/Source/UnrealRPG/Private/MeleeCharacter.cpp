@@ -109,12 +109,18 @@ bool AMeleeCharacter::FallingDamage(float LastMaxmimumZVelocity)
 	}
 }
 
+float AMeleeCharacter::GetHpPercentage()
+{
+	return HP / MaximumHP;
+}
+
 bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	if (bDying)
 	{
 		return false;
 	}
+	RespondTakeDamage(DamageAmount, DamageCauser, AttackType);
 
 	const FVector HitDir{ UKismetMathLibrary::Normal(DamageCauser->GetActorLocation() - GetActorLocation()) };
 	const FVector ForwardVector{ GetActorForwardVector() };

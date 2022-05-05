@@ -6,6 +6,8 @@
 #include "Enemy/Enemy.h"
 #include "LionKnight.generated.h"
 
+class UStaticMeshComponent;
+class APlayerCharacter;
 /**
  * 
  */
@@ -23,8 +25,18 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void ResetCombat() override;
+
 	UFUNCTION(BlueprintCallable)
 	void UseMagic();
+
+	UFUNCTION(BlueprintCallable)
+	void ReadyToBattle();
+
+	UFUNCTION(BlueprintCallable)
+	void GrapWeapon();
+
+	void ResetBoss();
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Magic", meta = (AllowPrivateAccess = "true"))
@@ -33,6 +45,16 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Magic", meta = (AllowPrivateAccess = "true"))
 		float ProjectileDamage;
 
+	bool bPrepareBattle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* GroundedWeapon;
+
+	FTimerHandle ChangeWeaponSettingTimer;
+
 private:
 	virtual	void PlayAttackMontage() override;
+
+public:
+	FORCEINLINE bool ShouldPrepareBattle() const { return bPrepareBattle; }
 };

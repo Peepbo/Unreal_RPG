@@ -7,6 +7,8 @@
 #include "RPGTypes.h"
 #include "Enemy.generated.h"
 
+class APlayerCharacter;
+
 USTRUCT(BlueprintType)
 struct FEnemyAdvancedAttack
 {
@@ -149,7 +151,7 @@ protected:
 	const float GetAttackableDistance() const;
 
 	void SetVisibleHealthBar(bool bVisible);
-
+	void StartResetBattleModeTimer(float Delay);
 	void StartResetTransformTimer(float Delay);
 
 private:
@@ -160,12 +162,15 @@ private:
 	void ResetTransform();
 
 	virtual void TargetDeath(float RewardGold) override;
+	UFUNCTION(BlueprintCallable)
+	virtual void ActiveEnemy(APlayerCharacter* Player);
 
 protected:
 	class UAnimInstance* AnimInstance;
 
 	class AEnemyAIController* EnemyAIController;
 
+	FTimerHandle ResetBattleModeTimer;
 	FTimerHandle EndCombatTimer;
 
 	/* 전투 이동속도 관련 변수 (RootMotion을 사용하지 않는 Enemy가 사용) */
@@ -180,7 +185,7 @@ protected:
 
 	/* 플레이어를 저장하는 변수 */
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree")
-	class APlayerCharacter* Target;
+	APlayerCharacter* Target;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
 		TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
@@ -244,9 +249,6 @@ private:
 	/* 락온 시 최소 Pitch값을 나타내는 변수, 크기에 따라 달라짐 */
 	float LockOnMinimumPitchValue;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* DeathMontage;
-
 	bool bLockOnEnemy;
 
 
@@ -284,6 +286,9 @@ private:
 	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float LastHitBoneOffset;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	FName CharacterName;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -319,4 +324,5 @@ public:
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
 
 	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }
+
 };

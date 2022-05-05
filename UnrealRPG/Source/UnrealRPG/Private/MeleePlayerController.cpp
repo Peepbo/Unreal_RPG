@@ -15,10 +15,10 @@ void AMeleePlayerController::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AMeleePlayerController::CreateHubOverlay()
+UUserWidget* AMeleePlayerController::CreateHubOverlay()
 {
 	// 이미 오버레이를 만들었다면 스킵한다.
-	if (HUDOverlay)return;
+	if (HUDOverlay)return HUDOverlay;
 
 	if (HubOverlayClass)
 	{
@@ -27,6 +27,10 @@ void AMeleePlayerController::CreateHubOverlay()
 		{
 			HUDOverlay->AddToViewport();
 			HUDOverlay->SetVisibility(ESlateVisibility::Visible);
+
+			return HUDOverlay;
 		}
 	}
+
+	return nullptr;
 }

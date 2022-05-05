@@ -94,6 +94,8 @@ Content/InfinityBladeEffects/*
 Content/A_Surface_Footstep/*
 Content/Effects/*
 Content/Environment/*
+Content/sA_Megapack_v1/*
+Content/FXVillesBloodVFXPack/*
 
 # Others
 Content/Assets/*
@@ -110,3 +112,4 @@ Content/AncientTreasures/*
 Content/BossForgeFloor.uasset
 Content/BossCeil.uasset
 Content/BossRoomFoliage.uasset
+Content/Sunset/*

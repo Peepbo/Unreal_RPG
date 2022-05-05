@@ -1171,11 +1171,6 @@ void APlayerCharacter::UpdateRestPositionAndRotation(float DeltaTime)
 	SetActorRotation(UKismetMathLibrary::RLerp(GetActorRotation(), ToRestRotator, NowDelta, true));
 }
 
-float APlayerCharacter::GetHpPercentage()
-{
-	return HP / MaximumHP;
-}
-
 float APlayerCharacter::GetStPercentage()
 {
 	return Stamina / MaximumStamina;

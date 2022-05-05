@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MeleePlayerController.generated.h"
 
+class UUserWidget;
 /**
  * 
  */
@@ -20,10 +21,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void CreateHubOverlay();
+	UUserWidget* CreateHubOverlay();
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class UUserWidget> HubOverlayClass;
+	TSubclassOf<UUserWidget> HubOverlayClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widgets, meta = (AllowPrivateAccess = "true"))
 	UUserWidget* HUDOverlay;
