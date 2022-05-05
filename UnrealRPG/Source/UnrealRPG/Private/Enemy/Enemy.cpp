@@ -40,7 +40,8 @@ AEnemy::AEnemy() :
 	MaximumCombatResetTime(20.f),
 	MaximumCombatDistance(2500.f),
 	CombatResetTime(0.f),
-	bPatrolableEnemy(false)
+	bPatrolableEnemy(false),
+	bRandomAttackMontage(true)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -73,7 +74,6 @@ AEnemy::AEnemy() :
 	// Weapon
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
 	WeaponMesh->SetupAttachment(GetMesh(), TEXT("RightHandSocket"));
-
 }
 
 // Called when the game starts or when spawned
@@ -613,7 +613,6 @@ void AEnemy::Tick(float DeltaTime)
 
 bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Enemy TakeDamage call"));
 	if (bDying)
 	{
 		return false;
@@ -630,10 +629,8 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 		CombatState = ECombatState::ECS_Impact;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Enemy Super(MeleeCharacter) TakeDamage call"));
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
-	UE_LOG(LogTemp, Warning, TEXT("Enemy Change DamageState"));
 	DamageState = EDamageState::EDS_invincibility;
 	if (bDying) 
 	{
@@ -641,9 +638,9 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDying"), true);
 
-		if (AnimInstance && DeathMontage)
+		if (AnimInstance && DieMontage)
 		{
-			AnimInstance->Montage_Play(DeathMontage);
+			AnimInstance->Montage_Play(DieMontage);
 		}
 	}
 

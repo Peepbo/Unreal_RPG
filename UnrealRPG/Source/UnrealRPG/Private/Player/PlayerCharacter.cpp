@@ -1001,7 +1001,7 @@ void APlayerCharacter::PressedUseItem()
 	if (EquippedPotion) 
 	{
 		// 특정 액션(공격, 구르기, 점프 상태)을 취하고 있지 않을 때만 사용 가능
-		if (CheckActionableState())return;
+		if (!CheckActionableState())return;
 		if (!CheckLand())return;
 
 		ForceStopAllMontage();
@@ -1317,21 +1317,45 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 	{
 		// 피해 애니메이션을 실행하기 위해 모든 몽타주 종료
 		AnimInstance->StopAllMontages(0.15f);
-		CombatState = ECombatState::ECS_Impact;
+		//CombatState = ECombatState::ECS_Impact;
 	}
 
 	// 데미지 적용
 	const bool bDamaged{ Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType) };
-
-	if (bDamaged && bDying)
+	
+	if (bDamaged)
 	{
-		// Die Montage 호출
-		if (DieMontage)
+		CombatState = ECombatState::ECS_Impact;
+		if (AttackType == EAttackType::EAT_Strong)
 		{
-			AnimInstance->Montage_Play(DieMontage);
+			FVector ToTarget{ DamageCauser->GetActorLocation() - GetActorLocation() };
+			ToTarget.Z = 0.f;
+			ToTarget = UKismetMathLibrary::Normal(ToTarget);
+
+			float LookAtDegree{ UKismetMathLibrary::DegAtan2(ToTarget.Y,ToTarget.X) };
+
+			// 화면이 잠깐 튀는 이슈가 있음
+			SetActorRotation(FQuat(FVector::UpVector, FMath::DegreesToRadians(LookAtDegree)));
+
+
+			//FVector LaunchVelocity{ DamageCauser->GetActorForwardVector() };
+			//LaunchVelocity.Z = 0.f;
+			//LaunchVelocity = -LaunchVelocity;
+			//LaunchVelocity *= 1000.f;
+			//LaunchVelocity.Z = 200.f;
+			//LaunchCharacter(LaunchVelocity, false, false);
 		}
 
-		UnPossessed();
+ 		if (bDying)
+		{
+			// Die Montage 호출
+			if (DieMontage)
+			{
+				AnimInstance->Montage_Play(DieMontage);
+			}
+
+			UnPossessed();
+		}
 	}
 
 	return true;

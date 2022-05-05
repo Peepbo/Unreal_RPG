@@ -35,13 +35,31 @@ void ADarkKnight::BeginPlay()
 		}
 	}
 
-	AttackIndex = FMath::RandRange(0, AdvancedAttackMontage.Num() - 1);
+	if (bRandomAttackMontage)
+	{
+		AttackIndex = FMath::RandRange(0, AdvancedAttackMontage.Num() - 1);
+	}
 
 	ChangeEnemySize(EEnemySize::EES_Medium);
 
 	EnemyAIController->GetBlackboardComponent()->SetValueAsFloat(TEXT("TurnTime"), TurnTime);
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bFirstPatrol"), true);
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bShouldFaceOff"), true);
+
+	// BattleMode에 해당하는 세팅으로 변경한다.
+	if (bIsBattleMode)
+	{
+		GetWeapon()->SetVisibility(true);
+		WeaponCaseMesh->SetVisibility(false);
+		bShouldDrawWeapon = false;
+	}
+	else
+	{
+		GetWeapon()->SetVisibility(false);
+		WeaponCaseMesh->SetVisibility(true);
+		bShouldDrawWeapon = true;
+	}
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsBattleMode"), bIsBattleMode);
 }
 
 void ADarkKnight::SetBackWeaponVisibility(const bool bNextVisibility)
@@ -56,8 +74,9 @@ void ADarkKnight::SetEquipWeaponVisibility(const bool bNextVisibility)
 
 void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!bShouldDrawWeapon)return;
-	if (bIsBattleMode)return;
+	//if (!bShouldDrawWeapon)return;
+	if (Target != nullptr)return;
+	//if (bIsBattleMode)return;
 	if (OtherActor == nullptr)return;
 
 	auto Character = Cast<APlayerCharacter>(OtherActor);
@@ -123,9 +142,7 @@ void ADarkKnight::EndDamageImpact()
 	Super::EndDamageImpact();
 
 	if (bShouldDrawWeapon) {
-		UE_LOG(LogTemp, Warning, TEXT("Draw해야함"));
 		if (Target && EnemyAIController) {
-			UE_LOG(LogTemp, Warning, TEXT("Target을 지정중"));
 			GetWorldTimerManager().ClearTimer(SearchTimer);
 			ChangeColliderSetting(true);
 		
@@ -133,12 +150,6 @@ void ADarkKnight::EndDamageImpact()
 			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Target);
 		
 			StartDraw();
-		}
-		else {
-			UE_LOG(LogTemp, Warning, TEXT("Target을 지정 실패"));
-			if (Target) {
-				UE_LOG(LogTemp, Warning, TEXT("%s"), *Target->GetName());
-			}
 		}
 	}
 }
@@ -204,6 +215,24 @@ void ADarkKnight::DropWeapon()
 {
 	GetWeapon()->SetSimulatePhysics(true);
 	GetWeapon()->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+}
+
+void ADarkKnight::ChangeBeginBattleMode()
+{
+	ChangeBattleMode();
+
+	if (bIsBattleMode)
+	{
+		GetWeapon()->SetVisibility(true);
+		WeaponCaseMesh->SetVisibility(false);
+		bShouldDrawWeapon = false;
+	}
+	else
+	{
+		GetWeapon()->SetVisibility(false);
+		WeaponCaseMesh->SetVisibility(true);
+		bShouldDrawWeapon = true;
+	}
 }
 
 void ADarkKnight::Tick(float DeltaTime)

@@ -66,6 +66,10 @@ private:
 
 	void DropWeapon();
 
+	/* 시작 전에 나이트의 배틀 모드 상태를 바꾸는 버튼(함수) */
+	UFUNCTION(CallInEditor, Category = "Setting", meta = (AllowPrivateAccess = "true"))
+	void ChangeBeginBattleMode();
+
 private:
 	class UKnightAnimInstance* KnightAnimInstance;
 
@@ -78,6 +82,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* SheathMontage;
 	
+	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
 	bool bShouldDrawWeapon;
 
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))

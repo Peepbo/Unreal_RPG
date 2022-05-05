@@ -149,6 +149,10 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 			DamageCharacter->TargetDeath(RewardGold);
 		}
 
+		if (BloodSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, BloodSound, GetActorLocation());
+		}
 		if (LastBloodSound)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, LastBloodSound, GetActorLocation());

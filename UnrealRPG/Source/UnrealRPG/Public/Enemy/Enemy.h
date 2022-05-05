@@ -207,6 +207,10 @@ protected:
 	FTransform FirstTransform;
 	bool bPatrolableEnemy;
 
+	/* 공격 몽타주를 처음에 섞을지 안섞을지 */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bRandomAttackMontage;
+
 private:
 
 	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */

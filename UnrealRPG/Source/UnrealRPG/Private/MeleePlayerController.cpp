@@ -17,6 +17,9 @@ void AMeleePlayerController::BeginPlay()
 
 void AMeleePlayerController::CreateHubOverlay()
 {
+	// 이미 오버레이를 만들었다면 스킵한다.
+	if (HUDOverlay)return;
+
 	if (HubOverlayClass)
 	{
 		HUDOverlay = CreateWidget<UUserWidget>(this, HubOverlayClass);
