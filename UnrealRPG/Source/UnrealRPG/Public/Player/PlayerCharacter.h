@@ -536,6 +536,7 @@ private:
 	bool bBackDodge;
 
 	bool bCanRoll;
+	bool bShouldPlayRoll;
 	
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float RollDelay;

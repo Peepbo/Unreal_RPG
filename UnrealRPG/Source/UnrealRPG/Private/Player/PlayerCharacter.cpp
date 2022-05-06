@@ -72,6 +72,7 @@ APlayerCharacter::APlayerCharacter() :
 	bCanRoll(true),
 	RollDelay(2.1f),
 	RollRequiredStamina(10.f),
+	bShouldPlayRoll(false),
 
 	// Potion
 	bDrinkingPotion(false),
@@ -193,7 +194,7 @@ void APlayerCharacter::MoveForward(float Value)
 		//EndToIdleState(true);
 		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 		{
-			AnimInstance->StopAllMontages(0.6f);
+			AnimInstance->StopAllMontages(0.2f);
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -226,7 +227,7 @@ void APlayerCharacter::MoveRight(float Value)
 		//EndToIdleState(true);
 		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 		{
-			AnimInstance->StopAllMontages(0.6f);
+			AnimInstance->StopAllMontages(0.2f);
 		}
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
@@ -537,7 +538,7 @@ void APlayerCharacter::Roll()
 
 void APlayerCharacter::EndRoll()
 {
-	CombatState = ECombatState::ECS_Unoccupied;
+	//CombatState = ECombatState::ECS_Unoccupied;
 
 	bBackDodge = false;
 
@@ -545,7 +546,7 @@ void APlayerCharacter::EndRoll()
 		RollDelayTimer,
 		this,
 		&APlayerCharacter::StopDelayForRoll,
-		0.1f,
+		0.2f,
 		false,
 		RollDelay);
 }
@@ -609,6 +610,11 @@ void APlayerCharacter::ReleasedRollAndSprint()
 				CheckActionableState() &&
 				Stamina >= RollRequiredStamina)
 			{
+				if (AnimInstance)
+				{
+					AnimInstance->StopAllMontages(0.f);
+				}
+
 				Roll();
 			}
 			else 
@@ -1499,6 +1505,7 @@ void APlayerCharacter::Sprint()
 
 void APlayerCharacter::StopDelayForRoll()
 {
+	CombatState = ECombatState::ECS_ToIdle;
 	bCanRoll = true;
 }
 
