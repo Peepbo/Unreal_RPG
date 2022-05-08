@@ -43,13 +43,9 @@ protected:
 			bool bFromSweep,
 			const FHitResult& SweepResult) override;
 
-
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* DecolationPlane;
-	
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	//UStaticMeshComponent* DecolationMesh1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* DecolationMesh2;

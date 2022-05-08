@@ -8,6 +8,7 @@
 #include "Enemy.generated.h"
 
 class APlayerCharacter;
+class AExecutionArea;
 
 USTRUCT(BlueprintType)
 struct FEnemyAdvancedAttack
@@ -36,6 +37,13 @@ public:
 	// Sets default values for this character's properties
 	AEnemy();
 
+public:
+	void PlayTakeExecutionMontage();
+	void ClearStunTimer();
+	FVector GetStunAttackLocation();
+	UFUNCTION(BlueprintCallable)
+	void ChangePawnCollision(bool bBlock);
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -154,6 +162,16 @@ protected:
 	void StartResetBattleModeTimer(float Delay);
 	void StartResetTransformTimer(float Delay);
 
+	void RecoverMentality();
+	void StartRecoverMentalityDelayTimer(float Delay);
+
+	UFUNCTION(BlueprintCallable)
+	void RecoverStun();
+	void StartStunRecoveryTimer(float Delay);
+
+	UFUNCTION(BlueprintCallable)
+		void DestroyExecutionArea();
+
 private:
 	void CombatTurn(float DeltaTime);
 	virtual void CheckCombatReset(float DeltaTime);
@@ -164,6 +182,11 @@ private:
 	virtual void TargetDeath(float RewardGold) override;
 	UFUNCTION(BlueprintCallable)
 	virtual void ActiveEnemy(APlayerCharacter* Player);
+
+	UFUNCTION(BlueprintCallable)
+	void CreateExecutionArea();
+
+
 
 protected:
 	class UAnimInstance* AnimInstance;
@@ -289,11 +312,40 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
 	FName CharacterName;
 
+
+	/* 정신력, 데미지를 입으면 정신력이 깎이게 되며 2.5초동안 데미지를 입지 않으면 다시 정신력이 회복된다. */
+	/* 정신력이 0 혹은 그 이하에 도달하면 기절 애니메이션이 실행되며 애니메이션(보스의 1->2페이지 전환 제외)에 상관없이 모든 애니메이션을 스킵하고 실행한다. */
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float Mentality;
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float MaximumMentality;
+	FTimerHandle MentalityRecoveryTimer;
+	bool bRecoverMentality;
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bStun;
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bShouldStopStun;
+	bool bPlaySpecialTakeDamage;
+
+	FTimerHandle StunTimer;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* StunMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* TakeExecutionMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AExecutionArea> TakeExecutionAreaTemplate;
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AExecutionArea* TakeExecutionArea;
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
+
+	void TakeMentalDamage(float DamageAmount);
 
 	UFUNCTION()
 	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
@@ -324,5 +376,7 @@ public:
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
 
 	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }
+
+	FORCEINLINE bool ValidTakeExecutionMontage() const { return TakeExecutionMontage != nullptr; }
 
 };

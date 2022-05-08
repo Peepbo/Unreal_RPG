@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/PlayerCharacter.h"
 #include "Sound/SoundCue.h"
+#include "Kismet/KismetMathLibrary.h"
 //
 
 AWeapon::AWeapon() :
@@ -44,6 +45,8 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			NormalDamage = WeaponDataRow->NormalDamage;
 			ChargedDamage = WeaponDataRow->ChargedDamage;
 			DashDamage = WeaponDataRow->DashDamage;
+			ExecutionFirstDamage = WeaponDataRow->ExecutionFirstDamage;
+			ExecutionSecondDamage = WeaponDataRow->ExecutionSecondDamage;
 
 			NormalAttackStamina = WeaponDataRow->NormalAttackStamina;
 			DashAttackStamina = WeaponDataRow->DashAttackStamina;
@@ -151,7 +154,9 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 						UGameplayStatics::SpawnEmitterAtLocation(
 							GetWorld(),
 							Enemy->GetBloodParticle(),
-							HitResult.ImpactPoint);
+							HitResult.ImpactPoint,
+							UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal),
+							true);
 					}
 
 					// 방금 일격으로 락온된 몬스터가 사망했다면

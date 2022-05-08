@@ -46,6 +46,12 @@ struct FWeaponDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ChargedAttackStamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ExecutionFirstDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ExecutionSecondDamage;
 };
 
 UCLASS()
@@ -89,6 +95,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	float DashDamage;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float ExecutionFirstDamage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
+	float ExecutionSecondDamage;
+
 	FName WeaponTopSocketName;
 	FName WeaponBottomSocketName;
 
@@ -107,4 +119,9 @@ private:
 
 public:
 	FORCEINLINE FTimerDelegate GetAttackDelegate() { return AttackDelegate; }
+	FORCEINLINE void GetExecutionDamage(float& FirstDamage, float& SecondDamage)
+	{
+		FirstDamage = ExecutionFirstDamage;
+		SecondDamage = ExecutionSecondDamage;
+	}
 };

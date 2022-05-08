@@ -43,6 +43,7 @@ enum class ECombatState : uint8
 	// Enemy State
 	ECS_FaceOff UMETA(DisplayName = "FaceOff"),
 	ECS_Chase UMETA(DisplayName = "Chase"),
+	ECS_Stun UMETA(DisplayName = "Stun"),
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };
 

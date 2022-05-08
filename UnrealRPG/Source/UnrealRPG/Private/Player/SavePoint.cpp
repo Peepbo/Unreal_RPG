@@ -13,13 +13,6 @@
 // Sets default values
 ASavePoint::ASavePoint()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-
-	//DecolationMesh1 = CreateDefaultSubobject<UStaticMeshComponent>("DecolateMesh1");
-	//DecolationMesh1->SetupAttachment(OverlapSphere);
-	//DecolationMesh1->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
 	DecolationMesh2 = CreateDefaultSubobject<UStaticMeshComponent>("DecolateMesh2");
 	DecolationMesh2->SetupAttachment(DecolationMesh);
 	DecolationMesh2->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -70,9 +63,9 @@ void ASavePoint::PlayerRangeOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor);
 	if (Player)
 	{
+		PlayerCharacter = Player;
 		bClosePlayer = true;
 
-		Player->SetEventAble(true, EventText);
-		Player->SetCloseSavePoint(this);
+		PlayerCharacter->SetEventAble(true, this);
 	}
 }

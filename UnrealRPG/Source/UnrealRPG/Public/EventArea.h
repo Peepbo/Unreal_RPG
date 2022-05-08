@@ -19,6 +19,8 @@ public:
 	// Sets default values for this actor's properties
 	AEventArea();
 
+	void ActiveAutoArrange(float Dist = 0.f);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -34,11 +36,16 @@ private:
 			const FHitResult& SweepResult);
 
 	UFUNCTION()
-		void PlayerRangeEndOverlap(
+	virtual	void PlayerRangeEndOverlap(
 			UPrimitiveComponent* OverlappedComponent,
 			AActor* OtherActor,
 			UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable)
+	virtual bool MoveTargetEventLocation();
+
+	virtual void InitEventLocationAndRotation();
 
 protected:
 	APlayerCharacter* PlayerCharacter;
@@ -54,4 +61,14 @@ protected:
 	/* 이벤트 위젯에 띄울 설명 텍스트 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = EventArea, meta = (AllowPrivateAccess = "true"))
 	FName EventText;
+
+	FVector EventLocation;
+	FRotator EventRotator;
+
+private:
+	float Distance;
+
+public:
+
+	FORCEINLINE FName GetEventText() const { return EventText; }
 };

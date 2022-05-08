@@ -18,6 +18,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 
+#include "TimerManager.h"
+
+#include "ExecutionArea.h"
+
 // Sets default values
 AEnemy::AEnemy() :
 	bInAttackRange(false),
@@ -41,7 +45,13 @@ AEnemy::AEnemy() :
 	MaximumCombatDistance(2500.f),
 	CombatResetTime(0.f),
 	bPatrolableEnemy(false),
-	bRandomAttackMontage(true)
+	bRandomAttackMontage(true),
+
+	Mentality(0.f),
+	MaximumMentality(0.f),
+	bRecoverMentality(false),
+	bStun(false),
+	bShouldStopStun(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -75,6 +85,17 @@ AEnemy::AEnemy() :
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
 	WeaponMesh->SetupAttachment(GetMesh(), TEXT("RightHandSocket"));
 }
+
+void AEnemy::PlayTakeExecutionMontage()
+{
+	if (TakeExecutionMontage)
+	{
+		//SetActorLocation(GetActorLocation() + (GetActorForwardVector()) * 120.f);
+		AnimInstance->Montage_Play(TakeExecutionMontage);
+	}
+}
+
+//void AEnemy::
 
 // Called when the game starts or when spawned
 void AEnemy::BeginPlay()
@@ -344,6 +365,7 @@ void AEnemy::FaceOff(float NextWalkDirection)
 
 void AEnemy::EndFaceOff()
 {
+	UE_LOG(LogTemp, Warning, TEXT("EndFaceOff::ECS_Unoccupied"));
 	CombatState = ECombatState::ECS_Unoccupied;
 
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
@@ -358,17 +380,21 @@ void AEnemy::Chase()
 
 void AEnemy::StartRestTimer()
 {
-	CombatState = ECombatState::ECS_Unoccupied;
+	if (CombatState != ECombatState::ECS_Stun)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StartRestTimer::ECS_Unoccupied"));
+		CombatState = ECombatState::ECS_Unoccupied;
 
-	bRestTime = true;
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRest"), bRestTime);
+		bRestTime = true;
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRest"), bRestTime);
 
-	GetWorldTimerManager().SetTimer(
-		RestTimer,
-		this,
-		&AEnemy::EndRestTimer,
-		1.1f,
-		false);
+		GetWorldTimerManager().SetTimer(
+			RestTimer,
+			this,
+			&AEnemy::EndRestTimer,
+			1.1f,
+			false);
+	}
 }
 
 void AEnemy::EndRestTimer()
@@ -377,7 +403,13 @@ void AEnemy::EndRestTimer()
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bRest"), bRestTime);
 
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
-	ChangeCombatState(ECombatState::ECS_Unoccupied);
+
+	UE_LOG(LogTemp, Warning, TEXT("EndRestTimer::ECS_Unoccupied"));
+
+	if (CombatState != ECombatState::ECS_Stun)
+	{
+		ChangeCombatState(ECombatState::ECS_Unoccupied);
+	}
 
 	//GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
@@ -524,6 +556,69 @@ void AEnemy::StartResetTransformTimer(float Delay)
 	}
 }
 
+void AEnemy::RecoverMentality()
+{
+	Mentality += 0.2f;
+	if (Mentality > MaximumMentality)
+	{
+		Mentality = MaximumMentality;
+		bRecoverMentality = false;
+	}
+}
+
+void AEnemy::StartRecoverMentalityDelayTimer(float Delay)
+{
+	GetWorldTimerManager().SetTimer(
+		MentalityRecoveryTimer,
+		FTimerDelegate::CreateLambda([=]
+			{
+				bRecoverMentality = true;
+			}), 
+		Delay,
+		false);
+}
+
+void AEnemy::RecoverStun()
+{
+	AnimInstance->StopAllMontages(0.15f);
+	bStun = false;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bStun"), bStun);
+
+	Mentality = MaximumMentality;
+
+	ChangeCombatState(ECombatState::ECS_Unoccupied);
+	UE_LOG(LogTemp, Warning, TEXT("RecoverStun::ECS_Unoccupied"));
+}
+
+void AEnemy::ClearStunTimer()
+{
+	GetWorldTimerManager().ClearTimer(StunTimer);
+}
+
+FVector AEnemy::GetStunAttackLocation()
+{
+	//GetMesh()->GetSocketTransform("StunAttackSocket").
+	return GetMesh()->GetSocketTransform("StunAttackSocket").GetLocation();
+}
+
+void AEnemy::StartStunRecoveryTimer(float Delay)
+{
+	GetWorldTimerManager().SetTimer(
+		StunTimer,
+		FTimerDelegate::CreateLambda([=]
+			{
+				bShouldStopStun = true;
+			}),
+		Delay,
+		false);
+}
+
+void AEnemy::DestroyExecutionArea()
+{
+	Target->SetEventAble(false, nullptr);
+	TakeExecutionArea->Destroy();
+}
+
 void AEnemy::CombatTurn(float DeltaTime)
 {
 	// 이 함수는 Target이 존재할 때만 호출하는 함수입니다.
@@ -611,6 +706,30 @@ void AEnemy::ActiveEnemy(APlayerCharacter* Player)
 	}
 }
 
+void AEnemy::CreateExecutionArea()
+{
+	const FTransform SocketTransform{ GetMesh()->GetSocketTransform("StunAttackSocket") };
+	const FVector Loc{ SocketTransform.GetLocation() };
+
+	if (TakeExecutionAreaTemplate)
+	{
+		TakeExecutionArea = GetWorld()->SpawnActor<AExecutionArea>(TakeExecutionAreaTemplate, Loc, GetActorRotation());
+		TakeExecutionArea->SetEnemy(this);
+	}
+}
+
+void AEnemy::ChangePawnCollision(bool bBlock)
+{
+	ECollisionResponse Response = bBlock ? ECollisionResponse::ECR_Block : ECollisionResponse::ECR_Ignore;
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(
+		ECollisionChannel::ECC_Pawn,
+		Response);
+	GetMesh()->SetCollisionResponseToChannel(
+		ECollisionChannel::ECC_Pawn,
+		Response);
+}
+
 // Called every frame
 void AEnemy::Tick(float DeltaTime)
 {
@@ -618,6 +737,10 @@ void AEnemy::Tick(float DeltaTime)
 
 	if (Target)
 	{
+		if (bRecoverMentality)
+		{
+			RecoverMentality();
+		}
 		if (Target->GetDying())
 		{
 			GetWorldTimerManager().SetTimer(
@@ -627,6 +750,9 @@ void AEnemy::Tick(float DeltaTime)
 				2.f);
 
 			Target = nullptr;
+
+			bRecoverMentality = false;
+			Mentality = MaximumMentality;
 		}
 		else
 		{
@@ -656,6 +782,8 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
+	TakeMentalDamage(DamageAmount);
+
 	DamageState = EDamageState::EDS_invincibility;
 	if (bDying) 
 	{
@@ -670,4 +798,38 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 	}
 
 	return true;
+}
+
+void AEnemy::TakeMentalDamage(float DamageAmount)
+{
+	if (bStun) 
+	{
+		return;
+	}
+
+	Mentality -= DamageAmount;
+	if (Mentality > 0.f)
+	{
+		bRecoverMentality = false;
+		StartRecoverMentalityDelayTimer(2.f);
+	}
+	// 만약 멘탈이 0 또는 이하가 됬을 때 스턴 상태가 된다.
+	else
+	{
+		if (StunMontage && AnimInstance)
+		{
+			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
+			AnimInstance->Montage_Play(StunMontage);
+
+			bStun = true;
+			bShouldStopStun = false;
+
+			// 회전또한 막는다.
+			bTurn = false;
+
+			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bStun"), bStun);
+			ChangeCombatState(ECombatState::ECS_Stun);
+			StartStunRecoveryTimer(5.f);
+		}
+	}
 }

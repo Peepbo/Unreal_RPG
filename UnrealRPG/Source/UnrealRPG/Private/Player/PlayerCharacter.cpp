@@ -22,6 +22,7 @@
 #include "Player/SavePoint.h"
 #include "GameFramework/PlayerStart.h"
 #include "MeleePlayerController.h"
+#include "ExecutionArea.h"
 
 
 APlayerCharacter::APlayerCharacter() :
@@ -1155,28 +1156,6 @@ void APlayerCharacter::SetCheckPoint(ASavePoint* Point)
 	}
 }
 
-void APlayerCharacter::InitRestPositionAndRotation(float Distance)
-{
-	const FVector2D CheckPointLocation2D{ LastCloseCheckPoint->GetActorLocation() };
-	const FVector2D Location2D{ GetActorLocation() };
-
-	const FVector2D RestToPlayer2D{ UKismetMathLibrary::Normal2D(Location2D - CheckPointLocation2D) };
-	const FVector RestToPlayerIgnoreZ{ RestToPlayer2D.X, RestToPlayer2D.Y, 0.f };
-
-	// 최종 회전 값을 구한다.
-	ToRestRotator.Yaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LastCloseCheckPoint->GetActorLocation()).Yaw;
-
-	// 최종 휴식 위치를 구한다.
-	RestEndPoint = LastCloseCheckPoint->GetActorLocation() + (RestToPlayerIgnoreZ * Distance);
-}
-
-void APlayerCharacter::UpdateRestPositionAndRotation(float DeltaTime)
-{
-	const float NowDelta{ DeltaTime * 2.f };
-	SetActorLocation(UKismetMathLibrary::VLerp(GetActorLocation(), RestEndPoint, NowDelta));
-	SetActorRotation(UKismetMathLibrary::RLerp(GetActorRotation(), ToRestRotator, NowDelta, true));
-}
-
 float APlayerCharacter::GetStPercentage()
 {
 	return Stamina / MaximumStamina;
@@ -1413,10 +1392,15 @@ float APlayerCharacter::GetMoveAngle()
 	return UKismetMathLibrary::DegAtan2(Axis.Y, Axis.X);
 }
 
-void APlayerCharacter::SetEventAble(bool bNext, FName NextEventText)
+void APlayerCharacter::SetEventAble(bool bNext, AEventArea* EArea)
 {
 	bEventAble = bNext;
-	EventText = NextEventText;
+	EventArea = EArea;
+	if (EventArea)
+	{
+		EventText = EventArea->GetEventText();
+	}
+	
 	SetButtonEventUIVisibility(bEventAble);
 }
 
@@ -1752,12 +1736,49 @@ void APlayerCharacter::PressedEventMotion()
 	}
 
 	// 조건 확인
-	if (bEventAble && CheckActionableState() && CheckLand() && LastCloseCheckPoint)
+	if (bEventAble && EventArea && CheckActionableState() && CheckLand())
 	{
-		bRest = true;
-		CombatState = ECombatState::ECS_RestInteraction;
-		SetButtonEventUIVisibility(false);
-		HP = MaximumHP;
+		ASavePoint* SaveP = Cast<ASavePoint>(EventArea);
+		AExecutionArea* ExeA = Cast<AExecutionArea>(EventArea);
+
+		if (SaveP)
+		{
+			ResetLockOn();
+
+			bRest = true;
+			CombatState = ECombatState::ECS_RestInteraction;
+			SetButtonEventUIVisibility(false);
+			HP = MaximumHP;
+
+			SaveP->ActiveAutoArrange(150.f);
+		}
+
+		if (ExeA)
+		{
+			const bool bEnemyHaveExecutionMontage{ ExeA->GetEnemy() && ExeA->GetEnemy()->ValidTakeExecutionMontage() };
+			const bool bExecutionable{ ExecutionMontage && bEnemyHaveExecutionMontage };
+
+			if (bExecutionable)
+			{
+				ResetLockOn();
+
+				CombatState = ECombatState::ECS_Attack;
+				SetButtonEventUIVisibility(false);
+
+				ExecutionArea = ExeA;
+				ExecutionArea->GetEnemy()->ClearStunTimer();
+				ExecutionArea->GetEnemy()->ChangePawnCollision(false);
+
+
+				float FDamage, SDamage;
+				EquippedWeapon->GetExecutionDamage(FDamage, SDamage);
+				ExeA->InitExecutionData(this, FDamage, SDamage);
+				ExeA->ActiveAutoArrange();
+
+				AnimInstance->Montage_Play(ExecutionMontage);
+				ExecutionArea->ActiveExecution();
+			}
+		}
 	}
 }
 

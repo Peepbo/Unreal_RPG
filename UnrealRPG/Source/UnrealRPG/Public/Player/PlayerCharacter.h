@@ -8,7 +8,9 @@
 
 #include "PlayerCharacter.generated.h"
 
+class AEventArea;
 class ASavePoint;
+class AExecutionArea;
 /**
  * 
  */
@@ -227,15 +229,7 @@ protected:
 	void SetCheckPoint(ASavePoint* Point);
 
 	UFUNCTION(BlueprintCallable)
-	ASavePoint* GetLastCloseCheckPoint() const { return LastCloseCheckPoint; }
-
-	/* 휴식 최종 위치 및 방향을 저장한다. */
-	UFUNCTION(BlueprintCallable)
-	void InitRestPositionAndRotation(float Distance);
-
-	/* 휴식 최종 위치 및 방향으로 이동한다. */
-	UFUNCTION(BlueprintCallable)
-	void UpdateRestPositionAndRotation(float DeltaTime);
+	AEventArea* GetEventArea() const { return EventArea; }
 
 	UFUNCTION(BlueprintCallable)
 	float GetStPercentage();
@@ -263,7 +257,7 @@ public:
 	float GetMoveAngle();
 
 	/* 이벤트 모션 버튼을 누를 수 있는지 정하는 함수 */
-	void SetEventAble(bool bNext, FName NextEventText);
+	void SetEventAble(bool bNext, AEventArea* EArea);
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 		void SetButtonEventUIVisibility(bool bOpen);
@@ -583,16 +577,20 @@ private:
 
 
 	/* Event Motion */
+	AEventArea* EventArea;
+
 	UPROPERTY(BlueprintReadOnly, Category = Event, meta = (AllowPrivateAccess = "true"))
 	FName EventText;
 	bool bEventAble;
 	bool bRest;
-	ASavePoint* LastCloseCheckPoint;
 	ASavePoint* CheckPoint;
 
 	FVector RestEndPoint;
 	FRotator ToRestRotator;
-
+	/* Execution */
+	AExecutionArea* ExecutionArea;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Event, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ExecutionMontage;
 
 	/* Sound Listner */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Sound, meta = (AllowPrivateAccess = "true"))
@@ -615,8 +613,6 @@ public:
 	FORCEINLINE float GetMaximumZValue() const { return MaximumZVelocity; }
 
 	FORCEINLINE bool GetResting() const { return bRest; }
-
-	FORCEINLINE void SetCloseSavePoint(ASavePoint* SavePoint) { LastCloseCheckPoint = SavePoint; }
 
 	FORCEINLINE FName GetEventText() const { return EventText; }
 
