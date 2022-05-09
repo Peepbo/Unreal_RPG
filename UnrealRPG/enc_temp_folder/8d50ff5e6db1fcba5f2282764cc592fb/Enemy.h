@@ -18,12 +18,8 @@ struct FEnemyAdvancedAttack
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class UAnimMontage* AttackMontage;
 
-	/* 공격 가능 최소 거리 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float MinimumAttackableDistance = 0.f;
-	/* 공격 가능 최대 거리 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float MaximumAttackAbleDistance;
+	float AttackAbleRange;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	EAttackType AttackType;

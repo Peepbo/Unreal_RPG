@@ -39,7 +39,6 @@ AEnemy::AEnemy() :
 	bMove(false),
 	InplaceRotateSpeed(5.f),
 	AttackRotateSpeed(5.f),
-	//AttackIndex(0),
 	OverrideHP(0.f),
 	bActiveBoneOffset(false),
 	MaximumCombatResetTime(20.f),
@@ -496,7 +495,10 @@ void AEnemy::EndAttack(bool bChooseNextAttack)
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	StartRestTimer();
 	
-	ChooseNextAttack();
+	if (bChooseNextAttack)
+	{
+		ChooseNextAttack();
+	}
 }
 
 void AEnemy::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)
@@ -713,6 +715,7 @@ void AEnemy::ChooseNextAttack()
 	const bool bValidMagic{ bUseMagicCharacter && !MagicAttackQueue.IsEmpty() && MagicAttackQueue.Peek()->AttackMontage };
 	// 마법이 일반 공격보다 우선 순위가 높거나 같은지 확인
 	const bool bMagicHighPriority{ !MagicAttackQueue.IsEmpty() && MagicAttackQueue.Peek()->Priority >= AdvancedAttackQueue.Peek()->Priority };
+	// 
 
 	FEnemyAdvancedAttack TempAttack;
 	if (bValidMagic && bMagicHighPriority)

@@ -97,8 +97,6 @@ void AEnemy::PlayTakeExecutionMontage()
 	}
 }
 
-//void AEnemy::
-
 // Called when the game starts or when spawned
 void AEnemy::BeginPlay()
 {
@@ -498,7 +496,10 @@ void AEnemy::EndAttack(bool bChooseNextAttack)
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	StartRestTimer();
 	
-	ChooseNextAttack();
+	if (bChooseNextAttack)
+	{
+		ChooseNextAttack();
+	}
 }
 
 void AEnemy::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)

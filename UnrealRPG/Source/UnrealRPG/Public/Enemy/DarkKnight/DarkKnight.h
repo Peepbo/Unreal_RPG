@@ -59,8 +59,6 @@ protected:
 
 	virtual void FindCharacter() override;
 
-	
-
 private:
 	virtual void ResetCombat() override;
 

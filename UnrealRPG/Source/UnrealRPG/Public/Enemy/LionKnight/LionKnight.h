@@ -27,6 +27,8 @@ protected:
 
 	virtual void ResetCombat() override;
 
+	virtual void EndAttack(bool bChooseNextAttack = true) override;
+
 	UFUNCTION(BlueprintCallable)
 	void UseMagic();
 
@@ -37,6 +39,12 @@ protected:
 	void GrapWeapon();
 
 	void ResetBoss();
+
+	UFUNCTION(BlueprintCallable)
+	void EndDodge();
+
+	/* Dodge가 가능한지 확인한다. TRUE? Play Dodge, FALSE? Not*/
+	bool CheckDodge();
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Magic", meta = (AllowPrivateAccess = "true"))
@@ -57,7 +65,7 @@ private:
 	TArray<FEnemyAdvancedAttack> DodgeMontage;
 
 	int32 DodgeWaitCount;
-	int32 MaximumDodgeWaitCount
+	int32 MaximumDodgeWaitCount;
 
 public:
 	FORCEINLINE bool ShouldPrepareBattle() const { return bPrepareBattle; }

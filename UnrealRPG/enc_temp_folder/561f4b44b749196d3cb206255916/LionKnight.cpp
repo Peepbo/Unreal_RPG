@@ -10,7 +10,9 @@
 
 ALionKnight::ALionKnight():
 	ProjectileDamage(50.f),
-	bPrepareBattle(false)
+	bPrepareBattle(false),
+	DodgeWaitCount(0),
+	MaximumDodgeWaitCount(3)
 {
 	GroundedWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundedWeapon"));
 	bUseMagicCharacter = true;
@@ -31,6 +33,8 @@ void ALionKnight::BeginPlay()
 
 	FTransform GroundedWeaponTransform{ GetMesh()->GetSocketTransform("GroundedWeaponSocket") };
 	GroundedWeapon->SetWorldTransform(GroundedWeaponTransform);
+
+	DodgeWaitCount = MaximumDodgeWaitCount;
 }
 
 void ALionKnight::Tick(float DeltaTime)
@@ -40,7 +44,7 @@ void ALionKnight::Tick(float DeltaTime)
 
 void ALionKnight::ResetCombat()
 {
-	// 만약 보스전을 치뤘는데 패배했을 때 호출
+	// 만약 보스전을 치뤘는데 플레이어가 패배했을 때 호출
 	CombatResetTime = 0.f;
 	Target = nullptr;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);
@@ -54,6 +58,54 @@ void ALionKnight::ResetCombat()
 
 	StartResetBattleModeTimer(4.f);
 	StartResetTransformTimer(4.f);
+}
+
+void ALionKnight::EndAttack(bool bChooseNextAttack)
+{
+	EnemyAIController->ClearFocus(EAIFocusPriority::Gameplay);
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+	// Dodge를 할 수 있을 때 할지 검사한다.
+	/* Dodge 조건
+	*
+	* 0. Dodge Montage가 있다.
+	* 1. 플레이어가 가까이 있다. (len < 500) (멀리있으면 dodge할 필요가 없다.)
+	* 2. 왼쪽, 오른쪽, 뒤 중 한 곳이라도 이동할 수 있다. (이건 나중에)
+	* 3. DodgeWaitCount가 0이다.
+	*/
+	const bool bHaveDodge{ DodgeMontage.Num() > 0 };
+	const bool bClosePlayer{ GetDistanceToTarget() < 500.f };
+	const bool bWaitCountZero{ DodgeWaitCount == 0 };
+	bool bPlayDodge{ false };
+
+	if (bHaveDodge && bClosePlayer)
+	{
+		if (bWaitCountZero)
+		{
+			bPlayDodge = true;
+			DodgeWaitCount = MaximumDodgeWaitCount;
+
+			const int32 Rand{ FMath::RandRange(0, DodgeMontage.Num() - 1) };
+			AnimInstance->Montage_Play(DodgeMontage[Rand].AttackMontage);
+			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), bPlayDodge);
+		}
+		else
+		{
+			DodgeWaitCount--;
+		}
+	}
+
+	// Dodge가 휴식 대신 실행하는 로직이므로 Dodge가 아닐 때만 휴식을 실행해준다.
+	if (!bPlayDodge)
+	{
+		StartRestTimer();
+	}
+
+	if (bChooseNextAttack)
+	{
+		ChooseNextAttack();
+	}
 }
 
 void ALionKnight::UseMagic()
@@ -89,4 +141,9 @@ void ALionKnight::ResetBoss()
 
 	bPrepareBattle = false;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bPrepareBattle"), bPrepareBattle);
+}
+
+void ALionKnight::EndDodge()
+{
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), false);
 }
