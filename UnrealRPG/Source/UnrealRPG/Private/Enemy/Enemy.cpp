@@ -520,7 +520,7 @@ const float AEnemy::GetAttackableDistance() const
 {
 	if (NextOrPlayingAttack.AttackMontage)
 	{
-		return NextOrPlayingAttack.AttackAbleRange;
+		return NextOrPlayingAttack.MaximumAttackAbleDistance;
 	}
 
 	return 0.f;
@@ -716,9 +716,11 @@ void AEnemy::ChooseNextAttack()
 	// 마법이 일반 공격보다 우선 순위가 높거나 같은지 확인
 	const bool bMagicHighPriority{ !MagicAttackQueue.IsEmpty() && MagicAttackQueue.Peek()->Priority >= AdvancedAttackQueue.Peek()->Priority };
 	// 
+	const float ToTargetDist{GetDistanceToTarget()};
+	const bool bCastableDistance{ !MagicAttackQueue.IsEmpty() && (MagicAttackQueue.Peek()->MinimumAttackableDistance <= ToTargetDist && ToTargetDist <= MagicAttackQueue.Peek()->MaximumAttackAbleDistance) };
 
 	FEnemyAdvancedAttack TempAttack;
-	if (bValidMagic && bMagicHighPriority)
+	if (bValidMagic && bMagicHighPriority && bCastableDistance)
 	{
 		MagicAttackQueue.Dequeue(TempAttack);
 		
