@@ -10,9 +10,7 @@
 
 ALionKnight::ALionKnight():
 	ProjectileDamage(50.f),
-	bPrepareBattle(false),
-	DodgeWaitCount(0),
-	MaximumDodgeWaitCount(3)
+	bPrepareBattle(false)
 {
 	GroundedWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundedWeapon"));
 	bUseMagicCharacter = true;
@@ -33,8 +31,6 @@ void ALionKnight::BeginPlay()
 
 	FTransform GroundedWeaponTransform{ GetMesh()->GetSocketTransform("GroundedWeaponSocket") };
 	GroundedWeapon->SetWorldTransform(GroundedWeaponTransform);
-
-	DodgeWaitCount = MaximumDodgeWaitCount;
 }
 
 void ALionKnight::Tick(float DeltaTime)
@@ -44,7 +40,7 @@ void ALionKnight::Tick(float DeltaTime)
 
 void ALionKnight::ResetCombat()
 {
-	// 만약 보스전을 치뤘는데 플레이어가 패배했을 때 호출
+	// 만약 보스전을 치뤘는데 패배했을 때 호출
 	CombatResetTime = 0.f;
 	Target = nullptr;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), nullptr);

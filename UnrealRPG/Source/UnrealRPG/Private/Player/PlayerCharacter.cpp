@@ -302,6 +302,7 @@ bool APlayerCharacter::MainAttack()
 		CombatState = ECombatState::ECS_Attack;
 
 		PlayerAttackType = EPlayerAttackType::EPAT_Weapon;
+		WeaponAttackType = EWeaponAttackType::EWAT_Normal;
 
 		ComboAttackMontageIndex++;
 		return true;
@@ -896,7 +897,7 @@ void APlayerCharacter::PressedLockOn()
 		// 락온 취소
 		ResetLockOn();
 	}
-	else 
+	else if(CheckActionableState())
 	{
 		// 락온 선택 시도
 		TArray<AActor*> OutActors;

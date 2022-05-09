@@ -35,11 +35,6 @@ void ADarkKnight::BeginPlay()
 		}
 	}
 
-	if (bRandomAttackMontage)
-	{
-		AttackIndex = FMath::RandRange(0, AdvancedAttackMontage.Num() - 1);
-	}
-
 	ChangeEnemySize(EEnemySize::EES_Medium);
 
 	EnemyAIController->GetBlackboardComponent()->SetValueAsFloat(TEXT("TurnTime"), TurnTime);
@@ -156,27 +151,18 @@ void ADarkKnight::EndDamageImpact()
 
 void ADarkKnight::PlayAttackMontage()
 {
-	if (AnimInstance)
+	if (NextOrPlayingAttack.AttackMontage)
 	{
 		if (GetSprinting() && SprintAttack.AttackMontage)
 		{
 			AnimInstance->Montage_Play(SprintAttack.AttackMontage);
 			SetSprinting(false);
-			UE_LOG(LogTemp, Warning, TEXT("Play Sprint Attack Montage"));
 		}
 		else
 		{
-			AttackIndex++;
-			if (AdvancedAttackMontage.Num() == AttackIndex)
+			if (NextOrPlayingAttack.AttackMontage)
 			{
-				AttackIndex = 0;
-			}
-
-			if (AdvancedAttackMontage.IsValidIndex(AttackIndex) && AdvancedAttackMontage[AttackIndex].AttackMontage)
-			{
-				AnimInstance->Montage_Play(AdvancedAttackMontage[AttackIndex].AttackMontage);
-
-				UE_LOG(LogTemp, Warning, TEXT("Play Attack Montage"));
+				AnimInstance->Montage_Play(NextOrPlayingAttack.AttackMontage);
 			}
 		}
 

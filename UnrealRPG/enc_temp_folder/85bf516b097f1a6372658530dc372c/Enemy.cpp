@@ -97,6 +97,8 @@ void AEnemy::PlayTakeExecutionMontage()
 	}
 }
 
+//void AEnemy::
+
 // Called when the game starts or when spawned
 void AEnemy::BeginPlay()
 {

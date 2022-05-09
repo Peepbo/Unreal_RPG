@@ -26,6 +26,20 @@ struct FEnemyAdvancedAttack
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	float AttackDamage;
+
+	/* 일반 공격, 특수(마법) 공격 중 어떤 공격을 우선으로할 지 판별할 때 사용, 높을 수록 우선 실행됨 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int32 Priority;
+
+	/* 다시 반복하기 까지 필요한 대기 횟수, 일반 공격의 경우 0으로 지정 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int32 MaximumWaitCount;
+
+	int32 WaitCount;
+
+	/* 최소 시작할 때 WaitCount를 MaximumWaitCount로 초기화 할 지 안할지 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bResetWaitCount = true;
 };
 
 UCLASS()
@@ -144,16 +158,16 @@ protected:
 
 
 	UFUNCTION(BlueprintCallable)
-		void StartAttack();
+	void StartAttack();
 
 	UFUNCTION(BlueprintCallable)
-		void EndAttack();
+	void EndAttack(bool bChooseNextAttack = true);
 
 	UFUNCTION(BlueprintCallable)
-		void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
+	void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
 
 	UFUNCTION(BlueprintCallable)
-			void PlayMontage(class UAnimMontage* Montage);
+	void PlayMontage(class UAnimMontage* Montage);
 
 	UFUNCTION(BlueprintCallable)
 	const float GetAttackableDistance() const;
@@ -170,7 +184,7 @@ protected:
 	void StartStunRecoveryTimer(float Delay);
 
 	UFUNCTION(BlueprintCallable)
-		void DestroyExecutionArea();
+	void DestroyExecutionArea();
 
 private:
 	void CombatTurn(float DeltaTime);
@@ -186,7 +200,8 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void CreateExecutionArea();
 
-
+	void ChooseNextAttack();
+	void InitAttackMontage();
 
 protected:
 	class UAnimInstance* AnimInstance;
@@ -196,6 +211,22 @@ protected:
 	FTimerHandle ResetBattleModeTimer;
 	FTimerHandle EndCombatTimer;
 
+	/* 공격 관련 변수 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
+	TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
+	TArray<FEnemyAdvancedAttack> MagicAttackMontage;
+
+	TQueue<FEnemyAdvancedAttack> AdvancedAttackQueue;
+	TQueue<FEnemyAdvancedAttack> MagicAttackQueue;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
+	FEnemyAdvancedAttack NextOrPlayingAttack;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Setting)
+	bool bUseMagicCharacter;
+	
 	/* 전투 이동속도 관련 변수 (RootMotion을 사용하지 않는 Enemy가 사용) */
 	float BattleWalkSpeed;
 	float BattleRunSpeed;
@@ -210,14 +241,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree")
 	APlayerCharacter* Target;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-		TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
 
 	APlayerCharacter* OverlapCharacter;
 
 	FTimerHandle SearchTimer;
 
-	int32 AttackIndex;
+	
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 		float InplaceRotateSpeed;
@@ -238,6 +267,9 @@ protected:
 	/* 공격 몽타주를 처음에 섞을지 안섞을지 */
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bRandomAttackMontage;
+
+	/* 비전투 시간이 길어지면 자동으로 전투를 종료시킬지 (예를들어 플레이어가 계속 도망다니면 몬스터가 원래 위치로 이동하는 것, 보스 룸이 존재하는 보스는 false로 해줘야 함) */
+	bool bAutoCombatReset;
 
 private:
 
@@ -339,6 +371,7 @@ private:
 	TSubclassOf<AExecutionArea> TakeExecutionAreaTemplate;
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AExecutionArea* TakeExecutionArea;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

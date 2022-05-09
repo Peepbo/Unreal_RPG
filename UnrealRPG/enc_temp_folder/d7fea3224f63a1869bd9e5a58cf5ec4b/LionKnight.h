@@ -52,12 +52,9 @@ private:
 
 	FTimerHandle ChangeWeaponSettingTimer;
 
-	/* 3방향 회피  0? 왼쪽, 1? 오른쪽, 2? 후면 */
+	/* 4방향의  0? 왼쪽, 1? 오른쪽, 2? 후면 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TArray<FEnemyAdvancedAttack> DodgeMontage;
-
-	int32 DodgeWaitCount;
-	int32 MaximumDodgeWaitCount
 
 public:
 	FORCEINLINE bool ShouldPrepareBattle() const { return bPrepareBattle; }

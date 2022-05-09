@@ -27,6 +27,7 @@ public:
 
 private:
 	float FXSpeed;
+	UPROPERTY(EditDefaultsOnly, Category = Setting, meta = (AllowPrivateAccess = "true"))
 	float MaximumFXSpeed;
 
 	/* Lerp속도인지 Interp속도인지 구분한다 */
