@@ -12,10 +12,13 @@ ALionKnight::ALionKnight():
 	ProjectileDamage(50.f),
 	bPrepareBattle(false),
 	DodgeWaitCount(0),
-	MaximumDodgeWaitCount(3)
+	MaximumDodgeWaitCount(3),
+	DodgeMaximumDistance(500.f),
+	NextPageStartHealthPercentage(0.5f),
+	bSecondPageUp(false)
 {
 	GroundedWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundedWeapon"));
-	bUseMagicCharacter = true;
+	bUseSpecialAttack = true;
 	bAutoCombatReset = false;
 }
 
@@ -24,7 +27,7 @@ void ALionKnight::BeginPlay()
 	Super::BeginPlay();
 
 	AD = 30.f;
-	MaximumHP = 2000.f;
+	//MaximumHP = 2000.f;
 	HP = MaximumHP;
 
 	ChangeEnemySize(EEnemySize::EES_Large);
@@ -35,6 +38,9 @@ void ALionKnight::BeginPlay()
 	GroundedWeapon->SetWorldTransform(GroundedWeaponTransform);
 
 	DodgeWaitCount = MaximumDodgeWaitCount;
+
+	// DataTable에서 SkillSet을 받아온다.
+	InitSkillSet();
 }
 
 void ALionKnight::Tick(float DeltaTime)
@@ -81,15 +87,29 @@ void ALionKnight::EndAttack(bool bChooseNextAttack)
 	}
 }
 
-void ALionKnight::UseMagic()
+bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
+{
+	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
+
+	if (!bStun && !bSecondPageUp && GetHpPercentage() <= NextPageStartHealthPercentage)
+	{
+		bSecondPageUp = true;
+		PlayNextPageMontage();
+	}
+	return true;
+}
+
+AProjectileMagic* ALionKnight::UseMagic()
 {
 	if (ProjectileMagic)
 	{
 		const FVector MagicStartLoc{ GetActorLocation() + (GetActorForwardVector() * 150.f) };
-
 		AProjectileMagic* SpawnMagic = GetWorld()->SpawnActor<AProjectileMagic>(ProjectileMagic, MagicStartLoc, GetActorRotation());
 		SpawnMagic->InitMagic(this, ProjectileDamage);
+
+		return SpawnMagic;
 	}
+	return nullptr;
 }
 
 void ALionKnight::ReadyToBattle()
@@ -114,11 +134,19 @@ void ALionKnight::ResetBoss()
 
 	bPrepareBattle = false;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bPrepareBattle"), bPrepareBattle);
+
+	InitPage();
 }
 
 void ALionKnight::EndDodge()
 {
+	bDodge = false;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), false);
+}
+
+void ALionKnight::EndEvent()
+{
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), false);
 }
 
 bool ALionKnight::CheckDodge()
@@ -131,7 +159,7 @@ bool ALionKnight::CheckDodge()
 	* 3. DodgeWaitCount가 0이다.
 	*/
 	const bool bHaveDodge{ DodgeMontage.Num() > 0 };
-	const bool bClosePlayer{ GetDistanceToTarget() < 500.f };
+	const bool bClosePlayer{ GetDistanceToTarget() < DodgeMaximumDistance };
 	const bool bWaitCountZero{ DodgeWaitCount == 0 };
 	bool bPlayDodge{ false };
 
@@ -143,6 +171,7 @@ bool ALionKnight::CheckDodge()
 			DodgeWaitCount = MaximumDodgeWaitCount;
 
 			const int32 Rand{ FMath::RandRange(0, DodgeMontage.Num() - 1) };
+			bDodge = true;
 			AnimInstance->Montage_Play(DodgeMontage[Rand].AttackMontage);
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), bPlayDodge);
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
@@ -155,4 +184,74 @@ bool ALionKnight::CheckDodge()
 	}
 
 	return bPlayDodge;
+}
+
+void ALionKnight::NextPage_Implementation()
+{
+	InitSkillSet();
+}
+
+void ALionKnight::InitPage_Implementation()
+{
+	bSecondPageUp = false;
+	InitSkillSet();
+}
+
+void ALionKnight::PlayNextPageMontage()
+{
+	if (NextPageMontage)
+	{
+		AnimInstance->Montage_Play(NextPageMontage);
+
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), true);
+	}
+}
+
+void ALionKnight::InitSkillSet()
+{
+	AdvancedAttackQueue.Empty();
+	SpecialAttackQueue.Empty();
+
+	const FString SkillSetTablePath{ "DataTable'/Game/_Game/DataTable/LionKnightSkillDataTable.LionKnightSkillDataTable'" };
+	UDataTable* SkillSetTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *SkillSetTablePath));
+	if (SkillSetTableObject == nullptr)
+	{
+		return;
+	}
+
+	FLionKnightSkillSet* SkillSetDataRow = nullptr;
+	FName RowName{ !bSecondPageUp ? FName("Page1") : FName("Page2") };
+
+	SkillSetDataRow = SkillSetTableObject->FindRow<FLionKnightSkillSet>(RowName, TEXT(""));
+
+	if (SkillSetDataRow)
+	{
+		TArray<FEnemyAdvancedAttack> AdvancedAttack = SkillSetDataRow->AdvancedAttackMontage;
+		for (FEnemyAdvancedAttack AttackMontage : AdvancedAttack)
+		{
+			if (AttackMontage.bResetWaitCount)
+			{
+				AttackMontage.WaitCount = AttackMontage.MaximumWaitCount;
+			}
+			
+			AdvancedAttackQueue.Enqueue(AttackMontage);
+		}
+
+		TArray<FEnemyAdvancedAttack> SpecialAttack = SkillSetDataRow->SpecialAttackMontage;
+		for (FEnemyAdvancedAttack AttackMontage : SpecialAttack)
+		{
+			if (AttackMontage.bResetWaitCount)
+			{
+				AttackMontage.WaitCount = AttackMontage.MaximumWaitCount;
+			}
+
+			SpecialAttackQueue.Enqueue(AttackMontage);
+		}
+
+		DodgeMontage = SkillSetDataRow->DodgeMontage;
+		ProjectileMagic = SkillSetDataRow->ProjectileMagic;
+		ProjectileDamage = SkillSetDataRow->ProjectileMagicDamage;
+
+		ChooseNextAttack();
+	}
 }

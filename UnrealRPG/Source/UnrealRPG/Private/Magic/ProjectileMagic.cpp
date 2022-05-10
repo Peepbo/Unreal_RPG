@@ -83,6 +83,7 @@ void AProjectileMagic::ActiveMagic(float DeltaTime)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("check MeleeCharacter, but state 'Roll'"));
 					bPlayFX = false;
+					return;
 				}
 			}
 

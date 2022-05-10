@@ -44,6 +44,10 @@ struct FEnemyAdvancedAttack
 	/* 최소 시작할 때 WaitCount를 MaximumWaitCount로 초기화 할 지 안할지 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool bResetWaitCount = true;
+
+	/* 뒤를 공격하는 공격인지 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bBackAttack = false;
 };
 
 UCLASS()
@@ -207,6 +211,9 @@ private:
 
 	void InitAttackMontage();
 
+	UFUNCTION(BlueprintCallable)
+	void EndBackAttack();
+
 protected:
 	class UAnimInstance* AnimInstance;
 
@@ -220,16 +227,16 @@ protected:
 	TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	TArray<FEnemyAdvancedAttack> MagicAttackMontage;
+	TArray<FEnemyAdvancedAttack> SpecialAttackMontage;
 
 	TQueue<FEnemyAdvancedAttack> AdvancedAttackQueue;
-	TQueue<FEnemyAdvancedAttack> MagicAttackQueue;
+	TQueue<FEnemyAdvancedAttack> SpecialAttackQueue;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
 	FEnemyAdvancedAttack NextOrPlayingAttack;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Setting)
-	bool bUseMagicCharacter;
+	bool bUseSpecialAttack;
 	
 	/* 전투 이동속도 관련 변수 (RootMotion을 사용하지 않는 Enemy가 사용) */
 	float BattleWalkSpeed;
@@ -274,6 +281,14 @@ protected:
 
 	/* 비전투 시간이 길어지면 자동으로 전투를 종료시킬지 (예를들어 플레이어가 계속 도망다니면 몬스터가 원래 위치로 이동하는 것, 보스 룸이 존재하는 보스는 false로 해줘야 함) */
 	bool bAutoCombatReset;
+
+	bool bDodge;
+
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	float RestDelay;
+
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool bStun;
 
 private:
 
@@ -357,8 +372,7 @@ private:
 	float MaximumMentality;
 	FTimerHandle MentalityRecoveryTimer;
 	bool bRecoverMentality;
-	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool bStun;
+
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bShouldStopStun;
 	bool bPlaySpecialTakeDamage;
@@ -375,6 +389,9 @@ private:
 	TSubclassOf<AExecutionArea> TakeExecutionAreaTemplate;
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AExecutionArea* TakeExecutionArea;
+
+	UPROPERTY(EditDefaultsOnly, Category = Setting, meta = (AllowPrivateAccess = "true"))
+	FName LockOnSocketName = "Hips";
 
 public:
 	// Called every frame

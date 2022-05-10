@@ -52,8 +52,10 @@ AEnemy::AEnemy() :
 	bRecoverMentality(false),
 	bStun(false),
 	bShouldStopStun(false),
-	bUseMagicCharacter(false),
-	bAutoCombatReset(true)
+	bUseSpecialAttack(false),
+	bAutoCombatReset(true),
+	bDodge(false),
+	RestDelay(1.f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -72,7 +74,7 @@ AEnemy::AEnemy() :
 
 	// Widget
 	LockOnWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidget"));
-	LockOnWidget->SetupAttachment(GetMesh(), TEXT("Hips"));
+	LockOnWidget->SetupAttachment(GetMesh(), LockOnSocketName);
 	LockOnWidget->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidget->SetDrawSize({ 18.f,18.f });
 	LockOnWidget->SetVisibility(false);
@@ -106,6 +108,7 @@ void AEnemy::BeginPlay()
 
 	CombatRangeSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatRangeOverlap);
 	CombatRangeSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatRangeEndOverlap);
+
 	// 플레이어를 찾게 되면 activate 해준다.
 	CombatRangeSphere->Deactivate();
 
@@ -124,6 +127,8 @@ void AEnemy::BeginPlay()
 	FirstTransform = GetActorTransform();
 
 	Mentality = MaximumMentality;
+
+	LockOnWidget->AttachTo(GetMesh(), LockOnSocketName,EAttachLocation::SnapToTarget);
 
 	InitAttackMontage();
 }
@@ -388,7 +393,7 @@ void AEnemy::StartRestTimer()
 			RestTimer,
 			this,
 			&AEnemy::EndRestTimer,
-			1.1f,
+			RestDelay,
 			false);
 	}
 }
@@ -712,30 +717,30 @@ void AEnemy::CreateExecutionArea()
 void AEnemy::ChooseNextAttack()
 {
 	// 마법을 사용하는 캐릭터인지 확인
-	const bool bValidMagic{ bUseMagicCharacter && !MagicAttackQueue.IsEmpty() && MagicAttackQueue.Peek()->AttackMontage };
+	const bool bValidMagic{ bUseSpecialAttack && !SpecialAttackQueue.IsEmpty() && SpecialAttackQueue.Peek()->AttackMontage };
 	// 마법이 일반 공격보다 우선 순위가 높거나 같은지 확인
-	const bool bMagicHighPriority{ !MagicAttackQueue.IsEmpty() && MagicAttackQueue.Peek()->Priority >= AdvancedAttackQueue.Peek()->Priority };
-	// 
+	const bool bMagicHighPriority{ !SpecialAttackQueue.IsEmpty() && SpecialAttackQueue.Peek()->Priority >= AdvancedAttackQueue.Peek()->Priority };
+	// 타겟이 사정거리 안에 들었는지 확인
 	const float ToTargetDist{GetDistanceToTarget()};
-	const bool bCastableDistance{ !MagicAttackQueue.IsEmpty() && (MagicAttackQueue.Peek()->MinimumAttackableDistance <= ToTargetDist && ToTargetDist <= MagicAttackQueue.Peek()->MaximumAttackAbleDistance) };
+	const bool bCastableDistance{ !SpecialAttackQueue.IsEmpty() && (SpecialAttackQueue.Peek()->MinimumAttackableDistance <= ToTargetDist && ToTargetDist <= SpecialAttackQueue.Peek()->MaximumAttackAbleDistance) };
 
 	FEnemyAdvancedAttack TempAttack;
 	if (bValidMagic && bMagicHighPriority && bCastableDistance)
 	{
-		MagicAttackQueue.Dequeue(TempAttack);
+		SpecialAttackQueue.Dequeue(TempAttack);
 		
 		// WaitCount를 확인해 공격을 실행할지 판단한다. (WaitCount == 0? 공격 실행)
 		if (TempAttack.WaitCount > 0)
 		{
 			TempAttack.WaitCount--;
-			MagicAttackQueue.Enqueue(TempAttack);
+			SpecialAttackQueue.Enqueue(TempAttack);
 		}
 		else
 		{
 			NextOrPlayingAttack = TempAttack;
 
 			TempAttack.WaitCount = TempAttack.MaximumWaitCount;
-			MagicAttackQueue.Enqueue(TempAttack);
+			SpecialAttackQueue.Enqueue(TempAttack);
 
 			// 공격을 선택했으니 종료
 			return;
@@ -745,6 +750,7 @@ void AEnemy::ChooseNextAttack()
 	AdvancedAttackQueue.Dequeue(TempAttack);
 
 	// WaitCount를 확인해 공격을 실행할지 판단한다. (WaitCount == 0? 공격 실행)
+	// const bool bAttackableDistance{ !AdvancedAttackQueue.IsEmpty() && (TempAttack.MinimumAttackableDistance <= ToTargetDist && ToTargetDist <= TempAttack.MaximumAttackAbleDistance) };
 	if (TempAttack.WaitCount > 0)
 	{
 		TempAttack.WaitCount--;
@@ -752,13 +758,39 @@ void AEnemy::ChooseNextAttack()
 	}
 	else
 	{
-		NextOrPlayingAttack = TempAttack;
+		// 등 뒤에 있을 때 작동하는 공격인지 확인한다.
+		if (TempAttack.bBackAttack)
+		{
+			// 절댓값 140도 보다 크거나 같을 때 작동한다. 
+			UE_LOG(LogTemp, Warning, TEXT("GetDegreeForwardToTarget : %f"), abs(GetDegreeForwardToTarget()));
+			if (abs(GetDegreeForwardToTarget()) >= 100.f)
+			{
+				NextOrPlayingAttack = TempAttack;
 
-		TempAttack.WaitCount = TempAttack.MaximumWaitCount;
-		AdvancedAttackQueue.Enqueue(TempAttack);
+				TempAttack.WaitCount = TempAttack.MaximumWaitCount;
+				AdvancedAttackQueue.Enqueue(TempAttack);
 
-		// 공격을 선택했으니 종료
-		return;
+				EnemyAIController->GetBlackboardComponent()->SetValueAsBool("bBackAttack", true);
+				// 공격을 선택했으니 종료
+				return;
+			}
+			// 이외의 경우 다시 큐의 맨 뒤로 보낸다.
+			else
+			{
+				AdvancedAttackQueue.Enqueue(TempAttack);
+			}
+		}
+		// BackAttack이 아닌경우 해당 공격을 선택한다.
+		else
+		{
+			NextOrPlayingAttack = TempAttack;
+
+			TempAttack.WaitCount = TempAttack.MaximumWaitCount;
+			AdvancedAttackQueue.Enqueue(TempAttack);
+
+			// 공격을 선택했으니 종료
+			return;
+		}
 	}
 
 	// 아직 공격을 정하지 못했다면 공격을 정할 때 까지 재귀적으로 호출한다.
@@ -783,17 +815,22 @@ void AEnemy::InitAttackMontage()
 		AdvancedAttackQueue.Enqueue(AdvancedAttackMontage[Index]);
 	}
 
-	for (int Index = 0; Index < MagicAttackMontage.Num(); Index++)
+	for (int Index = 0; Index < SpecialAttackMontage.Num(); Index++)
 	{
-		if (MagicAttackMontage[Index].bResetWaitCount)
+		if (SpecialAttackMontage[Index].bResetWaitCount)
 		{
-			MagicAttackMontage[Index].WaitCount = MagicAttackMontage[Index].MaximumWaitCount;
+			SpecialAttackMontage[Index].WaitCount = SpecialAttackMontage[Index].MaximumWaitCount;
 		}
 		
-		MagicAttackQueue.Enqueue(MagicAttackMontage[Index]);
+		SpecialAttackQueue.Enqueue(SpecialAttackMontage[Index]);
 	}
 
 	ChooseNextAttack();
+}
+
+void AEnemy::EndBackAttack()
+{
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool("bBackAttack", false);
 }
 
 void AEnemy::ChangePawnCollision(bool bBlock)
@@ -815,7 +852,6 @@ void AEnemy::Tick(float DeltaTime)
 
 	if (Target)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Mentality : %f"), Mentality);
 		if (bRecoverMentality)
 		{
 			RecoverMentality();
@@ -885,7 +921,7 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 
 void AEnemy::TakeMentalDamage(float DamageAmount)
 {
-	if (bStun) 
+	if (bStun || bDodge)
 	{
 		return;
 	}
