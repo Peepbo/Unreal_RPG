@@ -83,3 +83,6 @@ enum class EAttackType : uint8
 	EAT_Strong UMETA(DisplayName = "Strong Attack"),
 	EAT_MAX UMETA(DisplayName = "DefaultMax")
 };
+
+#define EnemyAdvancedAttackLinkedListNode TDoubleLinkedList<FEnemyAdvancedAttack>::TDoubleLinkedListNode
+#define EnemySpecialAttackLinkedListNode TDoubleLinkedList<FEnemySpecialAttack>::TDoubleLinkedListNode

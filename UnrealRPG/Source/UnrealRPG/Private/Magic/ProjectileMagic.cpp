@@ -70,7 +70,8 @@ void AProjectileMagic::ActiveMagic(float DeltaTime)
 
 			if (MeleeCharacter)
 			{
-				if (MeleeCharacter->GetCombatState() != ECombatState::ECS_Roll)
+				if (MeleeCharacter->GetCombatState() != ECombatState::ECS_Roll &&
+					MeleeCharacter->DamageableState())
 				{
 					MeleeCharacter->CustomApplyDamage(
 						MeleeCharacter,

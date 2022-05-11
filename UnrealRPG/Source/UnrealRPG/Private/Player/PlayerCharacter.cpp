@@ -666,7 +666,7 @@ void APlayerCharacter::UseStaminaAndStopRecovery(float UseStamina)
 	StopStaminaRecovery();
 }
 
-void APlayerCharacter::ResetDamageState()
+void APlayerCharacter::ResetEnemyDamageState()
 {
 	EnemyDamageTypeResetDelegate.Broadcast();
 }
@@ -1307,6 +1307,9 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 	if (bDamaged)
 	{
 		CombatState = ECombatState::ECS_Impact;
+		// 잠시 무적상태로 만들고 Hit이 종료되면 그 때 무적 상태를 푼다.
+		ChangeDamageState(EDamageState::EDS_invincibility);
+
 		if (AttackType == EAttackType::EAT_Strong)
 		{
 			FVector ToTarget{ DamageCauser->GetActorLocation() - GetActorLocation() };
@@ -1437,6 +1440,7 @@ void APlayerCharacter::EndShieldImpact()
 void APlayerCharacter::EndDamageImpact()
 {
 	CombatState = ECombatState::ECS_ToIdle;
+	ChangeDamageState(EDamageState::EDS_Unoccupied);
 }
 
 void APlayerCharacter::TurnOnControl()

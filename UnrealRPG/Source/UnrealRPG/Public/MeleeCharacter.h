@@ -59,6 +59,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 		float GetHpPercentage();
 
+	UFUNCTION(BlueprintCallable)
+		void ChangeDamageState(EDamageState State) { DamageState = State; }
+
 protected:
 	/* 캐릭터의 상태 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -123,6 +126,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float RewardGold;
 
+	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		EDamageState DamageState;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -141,6 +148,10 @@ private:
 	bool ChangeSpeed;
 
 public:
+	UFUNCTION()
+	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
+	FORCEINLINE bool DamageableState() const { return DamageState == EDamageState::EDS_Unoccupied; }
+
 	FORCEINLINE bool GetSprinting() const { return bSprinting; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	FORCEINLINE bool GetAttacking() const { return CombatState == ECombatState::ECS_Attack; }

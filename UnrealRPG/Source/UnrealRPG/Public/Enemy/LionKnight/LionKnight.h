@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/Boss.h"
-#include "Engine/DataTable.h"
 #include "LionKnight.generated.h"
 
 class UStaticMeshComponent;
@@ -12,18 +11,9 @@ class APlayerCharacter;
 class AProjectileMagic;
 
 USTRUCT(BlueprintType)
-struct FLionKnightSkillSet : public FTableRowBase
+struct FLionKnightSkillSet : public FBossSkillSet
 {
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FEnemyAdvancedAttack> SpecialAttackMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FEnemyAdvancedAttack> DodgeMontage;
+	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AProjectileMagic> ProjectileMagic;
@@ -53,6 +43,8 @@ protected:
 	virtual void EndAttack(bool bChooseNextAttack = true) override;
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
+
+	virtual void ChooseNextAttack() override;
 
 	UFUNCTION(BlueprintCallable)
 	AProjectileMagic* UseMagic();
@@ -86,14 +78,9 @@ protected:
 	void PlayNextPageMontage();
 
 	/* DataTable에 저장된 SkillSet을 가져오는 함수 */
-	void InitSkillSet();
+	virtual void InitAttackMontage() override;
 
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	UDataTable* SkillSetDataTable;
-
-
-
 	TSubclassOf<AProjectileMagic> ProjectileMagic;
 
 	float ProjectileDamage;

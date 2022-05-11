@@ -100,7 +100,7 @@ protected:
 
 	/* 데미지 타입 리셋 함수, EnemyDamageTypeResetDelegate에 들어가있는 함수를 모두 호출시킴 */
 	UFUNCTION(BlueprintCallable)
-		void ResetDamageState();
+		void ResetEnemyDamageState();
 
 	void EndSubAttack();
 

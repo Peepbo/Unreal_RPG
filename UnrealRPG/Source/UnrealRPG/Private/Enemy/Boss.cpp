@@ -3,3 +3,7 @@
 
 #include "Enemy/Boss.h"
 
+void ABoss::InitAttackMontage()
+{
+
+}

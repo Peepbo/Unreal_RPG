@@ -151,7 +151,7 @@ void ADarkKnight::EndDamageImpact()
 
 void ADarkKnight::PlayAttackMontage()
 {
-	if (NextOrPlayingAttack.AttackMontage)
+	if (NextOrPlayingAttack->AttackMontage != nullptr)
 	{
 		if (GetSprinting() && SprintAttack.AttackMontage)
 		{
@@ -160,9 +160,9 @@ void ADarkKnight::PlayAttackMontage()
 		}
 		else
 		{
-			if (NextOrPlayingAttack.AttackMontage)
+			if (NextOrPlayingAttack->AttackMontage)
 			{
-				AnimInstance->Montage_Play(NextOrPlayingAttack.AttackMontage);
+				AnimInstance->Montage_Play(NextOrPlayingAttack->AttackMontage);
 			}
 		}
 

@@ -18,22 +18,21 @@ struct FEnemyAdvancedAttack
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class UAnimMontage* AttackMontage;
 
-	/* 공격 가능 최소 거리 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float MinimumAttackableDistance = 0.f;
 	/* 공격 가능 최대 거리 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float MaximumAttackAbleDistance;
+	float AttackAbleDistance;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	EAttackType AttackType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	float AttackDamage;
+};
 
-	/* 일반 공격, 특수(마법) 공격 중 어떤 공격을 우선으로할 지 판별할 때 사용, 높을 수록 우선 실행됨 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	int32 Priority;
+USTRUCT(BlueprintType)
+struct FEnemySpecialAttack : public FEnemyAdvancedAttack
+{
+	GENERATED_USTRUCT_BODY()
 
 	/* 다시 반복하기 까지 필요한 대기 횟수, 일반 공격의 경우 0으로 지정 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
@@ -43,11 +42,11 @@ struct FEnemyAdvancedAttack
 
 	/* 최소 시작할 때 WaitCount를 MaximumWaitCount로 초기화 할 지 안할지 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	bool bResetWaitCount = true;
+		bool bResetWaitCount = true;
 
 	/* 뒤를 공격하는 공격인지 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	bool bBackAttack = false;
+		bool bBackAttack = false;
 };
 
 UCLASS()
@@ -194,7 +193,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void DestroyExecutionArea();
 
-	void ChooseNextAttack();
+	virtual void ChooseNextAttack();
+
+	virtual void InitAttackMontage();
+
 private:
 	void CombatTurn(float DeltaTime);
 	virtual void CheckCombatReset(float DeltaTime);
@@ -209,7 +211,6 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void CreateExecutionArea();
 
-	void InitAttackMontage();
 
 	UFUNCTION(BlueprintCallable)
 	void EndBackAttack();
@@ -222,18 +223,22 @@ protected:
 	FTimerHandle ResetBattleModeTimer;
 	FTimerHandle EndCombatTimer;
 
-	/* 공격 관련 변수 */
+	/* 일반 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
 	TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
-
+	
+	/* 특수 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	TArray<FEnemyAdvancedAttack> SpecialAttackMontage;
+	TArray<FEnemySpecialAttack> SpecialAttackMontage;
 
-	TQueue<FEnemyAdvancedAttack> AdvancedAttackQueue;
-	TQueue<FEnemyAdvancedAttack> SpecialAttackQueue;
+	//TQueue<FEnemyAdvancedAttack> AdvancedAttackQueue;
+	//TQueue<FEnemySpecialAttack> SpecialAttackQueue;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
-	FEnemyAdvancedAttack NextOrPlayingAttack;
+	TDoubleLinkedList<FEnemyAdvancedAttack> AdvancedAttackList;
+	TDoubleLinkedList<FEnemySpecialAttack> SpecialAttackList;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
+	FEnemyAdvancedAttack* NextOrPlayingAttack;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Setting)
 	bool bUseSpecialAttack;
@@ -291,10 +296,6 @@ protected:
 		bool bStun;
 
 private:
-
-	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	EDamageState DamageState;
 
 	/* AI관련 행동을 저장하는 트리 */
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
@@ -402,8 +403,6 @@ public:
 	void TakeMentalDamage(float DamageAmount);
 
 	UFUNCTION()
-	void ResetDamageState() { (bDying ? DamageState = EDamageState::EDS_invincibility : DamageState = EDamageState::EDS_Unoccupied); }
-	UFUNCTION()
 	void ResetLockOn() { bLockOnEnemy = false; }
 
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
@@ -413,7 +412,6 @@ public:
 	FORCEINLINE UWidgetComponent* GetLockOnWidget() const { return LockOnWidget; }
 	FORCEINLINE float GetMinimumLockOnPitchValue() const { return LockOnMinimumPitchValue; }
 	
-	FORCEINLINE bool DamageableState() const { return DamageState == EDamageState::EDS_Unoccupied; }
 	FORCEINLINE bool GetLockOn() const { return bLockOnEnemy; }
 	FORCEINLINE void SetLockOn(bool NextBool) { bLockOnEnemy = NextBool; }
 

@@ -7,6 +7,7 @@
 #include "Enemy/EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Player/PlayerCharacter.h"
+#include "AlgorithmStaticLibrary.h"
 
 ALionKnight::ALionKnight():
 	ProjectileDamage(50.f),
@@ -38,9 +39,6 @@ void ALionKnight::BeginPlay()
 	GroundedWeapon->SetWorldTransform(GroundedWeaponTransform);
 
 	DodgeWaitCount = MaximumDodgeWaitCount;
-
-	// DataTable에서 SkillSet을 받아온다.
-	InitSkillSet();
 }
 
 void ALionKnight::Tick(float DeltaTime)
@@ -97,6 +95,47 @@ bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 		PlayNextPageMontage();
 	}
 	return true;
+}
+
+void ALionKnight::ChooseNextAttack()
+{
+	//   LionKnight.cpp				Enemy.cpp				Enemy.cpp
+	// [ 후방 공격 확인 ] - - - [ 특수 공격 확인 ] - - - [ 일반 공격 실행 ]
+
+	/* 후방 공격 실행 조건
+	* 1. 공격이 존재하는 경우
+	* 2. 플레이어가 뒤에 있는 경우 ( abs(110~180) )
+	* 3. WaitCount가 0인 경우
+	*/
+	const bool bValidBackAttack{ BackAttackList.Num() > 0 };
+	const bool bBehindPlayer{ abs(GetDegreeForwardToTarget()) >= 110.f };
+	
+	if (bValidBackAttack && bBehindPlayer)
+	{
+		EnemySpecialAttackLinkedListNode* SelectMontageNodePtr{ BackAttackList.GetHead() };
+		FEnemySpecialAttack& SelectMontageRef{ SelectMontageNodePtr->GetValue() };
+	
+		const bool bZeroCount{ SelectMontageRef.WaitCount == 0 };
+		if (bZeroCount)
+		{
+			SelectMontageRef.WaitCount = SelectMontageRef.MaximumWaitCount;
+
+			NextOrPlayingAttack = &SelectMontageRef;
+	
+			BackAttackList.RemoveNode(SelectMontageNodePtr, false);
+			BackAttackList.AddTail(SelectMontageNodePtr);
+
+			// 공격을 선택했으니 종료
+			return;
+		}
+		else
+		{
+			SelectMontageRef.WaitCount--;
+		}
+	}
+
+	// Special, Advanced 중 하나 실행
+	Super::ChooseNextAttack();
 }
 
 AProjectileMagic* ALionKnight::UseMagic()
@@ -188,13 +227,13 @@ bool ALionKnight::CheckDodge()
 
 void ALionKnight::NextPage_Implementation()
 {
-	InitSkillSet();
+	InitAttackMontage();
 }
 
 void ALionKnight::InitPage_Implementation()
 {
 	bSecondPageUp = false;
-	InitSkillSet();
+	InitAttackMontage();
 }
 
 void ALionKnight::PlayNextPageMontage()
@@ -207,10 +246,10 @@ void ALionKnight::PlayNextPageMontage()
 	}
 }
 
-void ALionKnight::InitSkillSet()
+void ALionKnight::InitAttackMontage()
 {
-	AdvancedAttackQueue.Empty();
-	SpecialAttackQueue.Empty();
+	AdvancedAttackList.Empty();
+	SpecialAttackList.Empty();
 
 	const FString SkillSetTablePath{ "DataTable'/Game/_Game/DataTable/LionKnightSkillDataTable.LionKnightSkillDataTable'" };
 	UDataTable* SkillSetTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *SkillSetTablePath));
@@ -218,40 +257,57 @@ void ALionKnight::InitSkillSet()
 	{
 		return;
 	}
-
+	
 	FLionKnightSkillSet* SkillSetDataRow = nullptr;
 	FName RowName{ !bSecondPageUp ? FName("Page1") : FName("Page2") };
-
+	
 	SkillSetDataRow = SkillSetTableObject->FindRow<FLionKnightSkillSet>(RowName, TEXT(""));
-
+	
 	if (SkillSetDataRow)
 	{
-		TArray<FEnemyAdvancedAttack> AdvancedAttack = SkillSetDataRow->AdvancedAttackMontage;
-		for (FEnemyAdvancedAttack AttackMontage : AdvancedAttack)
+		TArray<FEnemyAdvancedAttack> AdvancedAttack{ SkillSetDataRow->AdvancedAttackMontage };
+		TArray<FEnemySpecialAttack> SpecialAttack{ SkillSetDataRow->SpecialAttackMontage };
+		TArray<FEnemySpecialAttack> BackAttack{ SkillSetDataRow->BackAttackMontage };
+
+		if (bRandomAttackMontage)
+		{
+			UAlgorithmStaticLibrary::ShuffleArray(AdvancedAttack);
+			UAlgorithmStaticLibrary::ShuffleArray(SpecialAttack);
+			UAlgorithmStaticLibrary::ShuffleArray(BackAttack);
+		}
+
+		// AdvancedAttackList에 정보를 저장한다.
+		for (const FEnemyAdvancedAttack& AttackMontage : AdvancedAttack)
+		{
+			AdvancedAttackList.AddTail(AttackMontage);
+		}
+	
+		// SpecialAttackList에 정보를 저장한다.
+		for (FEnemySpecialAttack AttackMontage : SpecialAttack)
 		{
 			if (AttackMontage.bResetWaitCount)
 			{
 				AttackMontage.WaitCount = AttackMontage.MaximumWaitCount;
 			}
-			
-			AdvancedAttackQueue.Enqueue(AttackMontage);
+	
+			SpecialAttackList.AddTail(AttackMontage);
 		}
 
-		TArray<FEnemyAdvancedAttack> SpecialAttack = SkillSetDataRow->SpecialAttackMontage;
-		for (FEnemyAdvancedAttack AttackMontage : SpecialAttack)
+		// BackAttackList에 정보를 저장한다.
+		for (FEnemySpecialAttack AttackMontage : BackAttack)
 		{
 			if (AttackMontage.bResetWaitCount)
 			{
 				AttackMontage.WaitCount = AttackMontage.MaximumWaitCount;
 			}
 
-			SpecialAttackQueue.Enqueue(AttackMontage);
+			BackAttackList.AddTail(AttackMontage);
 		}
-
+		
 		DodgeMontage = SkillSetDataRow->DodgeMontage;
 		ProjectileMagic = SkillSetDataRow->ProjectileMagic;
 		ProjectileDamage = SkillSetDataRow->ProjectileMagicDamage;
-
+	
 		ChooseNextAttack();
 	}
 }

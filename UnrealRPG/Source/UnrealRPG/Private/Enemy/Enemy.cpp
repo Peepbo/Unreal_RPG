@@ -23,6 +23,7 @@
 #include "ExecutionArea.h"
 #include "AlgorithmStaticLibrary.h"
 
+
 // Sets default values
 AEnemy::AEnemy() :
 	bInAttackRange(false),
@@ -199,9 +200,13 @@ void AEnemy::PlayAttackMontage()
 {
 	WalkDirection = 0.f;
 
-	if (NextOrPlayingAttack.AttackMontage)
+	if (!NextOrPlayingAttack)
 	{
-		AnimInstance->Montage_Play(NextOrPlayingAttack.AttackMontage);
+		return;
+	}
+	if (NextOrPlayingAttack->AttackMontage)
+	{
+		AnimInstance->Montage_Play(NextOrPlayingAttack->AttackMontage);
 	}
 }
 
@@ -272,6 +277,10 @@ void AEnemy::StopRotate()
 void AEnemy::TracingAttackSphere(float Damage)
 {
 	if (!bAttackable)return;
+	if (!NextOrPlayingAttack)
+	{
+		return;
+	}
 
 	/* 아이템의 TopSocket과 BottomSocket의 위치를 받아온다. */
 	const FVector TopSocketLoc{ WeaponMesh->GetSocketLocation("TopSocket") };
@@ -308,7 +317,7 @@ void AEnemy::TracingAttackSphere(float Damage)
 					Player,
 					Damage,
 					this,
-					NextOrPlayingAttack.AttackType);
+					NextOrPlayingAttack->AttackType);
 
 				if (bAttack)
 				{
@@ -334,13 +343,17 @@ void AEnemy::TracingAttackSphere(float Damage)
 
 void AEnemy::StartAttackCheckTime(float DamagePersantage)
 {
-	if (NextOrPlayingAttack.AttackMontage)
+	if (!NextOrPlayingAttack)
+	{
+		return;
+	}
+	if (NextOrPlayingAttack->AttackMontage != nullptr)
 	{
 		FTimerDelegate AttackDelegate;
 		AttackDelegate.BindUFunction(
 			this,
 			FName("TracingAttackSphere"),
-			NextOrPlayingAttack.AttackDamage * DamagePersantage);
+			NextOrPlayingAttack->AttackDamage * DamagePersantage);
 
 		GetWorldTimerManager().SetTimer(
 			AttackCheckTimer,
@@ -523,9 +536,13 @@ void AEnemy::PlayMontage(UAnimMontage* Montage)
 
 const float AEnemy::GetAttackableDistance() const
 {
-	if (NextOrPlayingAttack.AttackMontage)
+	if (!NextOrPlayingAttack)
 	{
-		return NextOrPlayingAttack.MaximumAttackAbleDistance;
+		return 0.f;
+	}
+	if (NextOrPlayingAttack->AttackMontage)
+	{
+		return NextOrPlayingAttack->AttackAbleDistance;
 	}
 
 	return 0.f;
@@ -716,85 +733,58 @@ void AEnemy::CreateExecutionArea()
 
 void AEnemy::ChooseNextAttack()
 {
-	// 마법을 사용하는 캐릭터인지 확인
-	const bool bValidMagic{ bUseSpecialAttack && !SpecialAttackQueue.IsEmpty() && SpecialAttackQueue.Peek()->AttackMontage };
-	// 마법이 일반 공격보다 우선 순위가 높거나 같은지 확인
-	const bool bMagicHighPriority{ !SpecialAttackQueue.IsEmpty() && SpecialAttackQueue.Peek()->Priority >= AdvancedAttackQueue.Peek()->Priority };
-	// 타겟이 사정거리 안에 들었는지 확인
-	const float ToTargetDist{GetDistanceToTarget()};
-	const bool bCastableDistance{ !SpecialAttackQueue.IsEmpty() && (SpecialAttackQueue.Peek()->MinimumAttackableDistance <= ToTargetDist && ToTargetDist <= SpecialAttackQueue.Peek()->MaximumAttackAbleDistance) };
-
-	FEnemyAdvancedAttack TempAttack;
-	if (bValidMagic && bMagicHighPriority && bCastableDistance)
+	if (!NextOrPlayingAttack)
 	{
-		SpecialAttackQueue.Dequeue(TempAttack);
+		return;
+	}
+	//		Enemy.h					Enemy.h
+	// [ 특수 공격 확인 ] - - - [ 일반 공격 실행 ]
+
+	if (bUseSpecialAttack && SpecialAttackList.Num() > 0)
+	{
+		// Linked List head에 있는 노드를 가져온다.
+		EnemySpecialAttackLinkedListNode* SpecialMontageNodePtr = SpecialAttackList.GetHead();
+		FEnemySpecialAttack& SelectMontageRef{ SpecialMontageNodePtr->GetValue() };
+
+		const bool bZeroCount{ SelectMontageRef.WaitCount == 0 };
 		
-		// WaitCount를 확인해 공격을 실행할지 판단한다. (WaitCount == 0? 공격 실행)
-		if (TempAttack.WaitCount > 0)
+		if (bZeroCount)
 		{
-			TempAttack.WaitCount--;
-			SpecialAttackQueue.Enqueue(TempAttack);
+			SelectMontageRef.WaitCount = SelectMontageRef.MaximumWaitCount;
+			
+			// 해당 노드에 저장된 데이터를 가리킨다.
+			NextOrPlayingAttack = &SelectMontageRef;
+
+			// 해당 노드를 Linked List에서 연결을 끊는다. (메모리 할당 해제x)
+			SpecialAttackList.RemoveNode(SpecialMontageNodePtr, false);
+
+			// Linked List tail에 '방금 연결을 해제한 노드'를 연결해준다.
+			SpecialAttackList.AddTail(SpecialMontageNodePtr);
+
+			// 공격을 정했으니 종료한다.
+			return;
 		}
 		else
 		{
-			NextOrPlayingAttack = TempAttack;
-
-			TempAttack.WaitCount = TempAttack.MaximumWaitCount;
-			SpecialAttackQueue.Enqueue(TempAttack);
-
-			// 공격을 선택했으니 종료
-			return;
+			SelectMontageRef.WaitCount--;
 		}
 	}
-	
-	AdvancedAttackQueue.Dequeue(TempAttack);
 
-	// WaitCount를 확인해 공격을 실행할지 판단한다. (WaitCount == 0? 공격 실행)
-	// const bool bAttackableDistance{ !AdvancedAttackQueue.IsEmpty() && (TempAttack.MinimumAttackableDistance <= ToTargetDist && ToTargetDist <= TempAttack.MaximumAttackAbleDistance) };
-	if (TempAttack.WaitCount > 0)
+	if (AdvancedAttackList.Num() > 0)
 	{
-		TempAttack.WaitCount--;
-		AdvancedAttackQueue.Enqueue(TempAttack);
+		// Linked List head에 있는 노드를 가져온다.
+		EnemyAdvancedAttackLinkedListNode* MontageNodePtr = AdvancedAttackList.GetHead();
+		FEnemyAdvancedAttack& MontageRef{ MontageNodePtr->GetValue() };
+
+		// 해당 노드에 저장된 데이터를 가리킨다.
+		NextOrPlayingAttack = &MontageRef;
+
+		// Linked List head에 있는 노드의 모든 연결을 끊는다. (메모리 할당 해제x)
+		AdvancedAttackList.RemoveNode(MontageNodePtr, false);
+
+		// Linked List tail에 '방금 연결을 해제한 노드'를 연결해준다.
+		AdvancedAttackList.AddTail(MontageNodePtr);
 	}
-	else
-	{
-		// 등 뒤에 있을 때 작동하는 공격인지 확인한다.
-		if (TempAttack.bBackAttack)
-		{
-			// 절댓값 140도 보다 크거나 같을 때 작동한다. 
-			UE_LOG(LogTemp, Warning, TEXT("GetDegreeForwardToTarget : %f"), abs(GetDegreeForwardToTarget()));
-			if (abs(GetDegreeForwardToTarget()) >= 100.f)
-			{
-				NextOrPlayingAttack = TempAttack;
-
-				TempAttack.WaitCount = TempAttack.MaximumWaitCount;
-				AdvancedAttackQueue.Enqueue(TempAttack);
-
-				EnemyAIController->GetBlackboardComponent()->SetValueAsBool("bBackAttack", true);
-				// 공격을 선택했으니 종료
-				return;
-			}
-			// 이외의 경우 다시 큐의 맨 뒤로 보낸다.
-			else
-			{
-				AdvancedAttackQueue.Enqueue(TempAttack);
-			}
-		}
-		// BackAttack이 아닌경우 해당 공격을 선택한다.
-		else
-		{
-			NextOrPlayingAttack = TempAttack;
-
-			TempAttack.WaitCount = TempAttack.MaximumWaitCount;
-			AdvancedAttackQueue.Enqueue(TempAttack);
-
-			// 공격을 선택했으니 종료
-			return;
-		}
-	}
-
-	// 아직 공격을 정하지 못했다면 공격을 정할 때 까지 재귀적으로 호출한다.
-	ChooseNextAttack();
 }
 
 void AEnemy::InitAttackMontage()
@@ -802,17 +792,13 @@ void AEnemy::InitAttackMontage()
 	if (bRandomAttackMontage)
 	{
 		UAlgorithmStaticLibrary::ShuffleArray(AdvancedAttackMontage);
+		UAlgorithmStaticLibrary::ShuffleArray(SpecialAttackMontage);
 	}
 
-	// queue(AdvancedAttackQueue, MagicAttackQueue)에 모든 공격 정보를 넣어둔다.
+	// Linked List(AdvancedAttack, MagicAttack)에 모든 공격 정보를 넣어둔다.
 	for (int Index = 0; Index < AdvancedAttackMontage.Num(); Index++)
 	{
-		if (AdvancedAttackMontage[Index].bResetWaitCount)
-		{
-			AdvancedAttackMontage[Index].WaitCount = AdvancedAttackMontage[Index].MaximumWaitCount;
-		}
-
-		AdvancedAttackQueue.Enqueue(AdvancedAttackMontage[Index]);
+		AdvancedAttackList.AddTail(AdvancedAttackMontage[Index]);
 	}
 
 	for (int Index = 0; Index < SpecialAttackMontage.Num(); Index++)
@@ -822,7 +808,7 @@ void AEnemy::InitAttackMontage()
 			SpecialAttackMontage[Index].WaitCount = SpecialAttackMontage[Index].MaximumWaitCount;
 		}
 		
-		SpecialAttackQueue.Enqueue(SpecialAttackMontage[Index]);
+		SpecialAttackList.AddTail(SpecialAttackMontage[Index]);
 	}
 
 	ChooseNextAttack();
