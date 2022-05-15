@@ -268,7 +268,11 @@ void ALionKnight::SplashDamage(bool bDefaultDamage, float SelectDamage)
 		Damage = !bSecondPageUp ? 10.f : 15.f;
 	}
 
-	if (GetDistanceToTarget() <= 500.f && !Target->GetImpacting())
+	const FVector SocketLocation{ GetMesh()->GetSocketLocation("WeaponFront") };
+	const FVector TargetLocation{ Target->GetActorLocation() };
+	const float Distance{ (TargetLocation - SocketLocation).Size() };
+
+	if (Distance <= 200.f && !Target->GetImpacting() && !Target->GetCharacterMovement()->IsFalling())
 	{
 		Target->CustomApplyDamage(Target, Damage, this, EAttackType::EAT_Light);
 	}

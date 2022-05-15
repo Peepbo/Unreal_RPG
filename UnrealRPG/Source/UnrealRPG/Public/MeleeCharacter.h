@@ -8,6 +8,7 @@
 #include "MeleeCharacter.generated.h"
 
 class UAnimMontage;
+class UCharacterMovementComponent;
 
 UCLASS()
 class UNREALRPG_API AMeleeCharacter : public ACharacter
