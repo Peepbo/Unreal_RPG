@@ -5,49 +5,13 @@
 #include "CoreMinimal.h"
 #include "MeleeCharacter.h"
 #include "RPGTypes.h"
+#include "EnemyAdvancedAttackManager.h"
 #include "Enemy.generated.h"
 
 class APlayerCharacter;
 class AExecutionArea;
-
-USTRUCT(BlueprintType)
-struct FEnemyAdvancedAttack
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	class UAnimMontage* AttackMontage;
-
-	/* 공격 가능 최대 거리 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float AttackAbleDistance;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	EAttackType AttackType;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float AttackDamage;
-};
-
-USTRUCT(BlueprintType)
-struct FEnemySpecialAttack : public FEnemyAdvancedAttack
-{
-	GENERATED_USTRUCT_BODY()
-
-	/* 다시 반복하기 까지 필요한 대기 횟수, 일반 공격의 경우 0으로 지정 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	int32 MaximumWaitCount;
-
-	int32 WaitCount;
-
-	/* 최소 시작할 때 WaitCount를 MaximumWaitCount로 초기화 할 지 안할지 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-		bool bResetWaitCount = true;
-
-	/* 뒤를 공격하는 공격인지 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-		bool bBackAttack = false;
-};
+class AMagic;
+class UAnimMontage;
 
 UCLASS()
 class UNREALRPG_API AEnemy : public AMeleeCharacter
@@ -174,7 +138,7 @@ protected:
 	void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
 
 	UFUNCTION(BlueprintCallable)
-	void PlayMontage(class UAnimMontage* Montage);
+	void PlayMontage(UAnimMontage* Montage);
 
 	UFUNCTION(BlueprintCallable)
 	const float GetAttackableDistance() const;
@@ -187,7 +151,7 @@ protected:
 	void StartRecoverMentalityDelayTimer(float Delay);
 
 	UFUNCTION(BlueprintCallable)
-	void RecoverStun();
+	virtual void RecoverStun();
 	void StartStunRecoveryTimer(float Delay);
 
 	UFUNCTION(BlueprintCallable)
@@ -225,20 +189,15 @@ protected:
 
 	/* 일반 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
+	TArray<FEnemyNormalAttack> NormalAttackMontage;
 	
 	/* 특수 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
 	TArray<FEnemySpecialAttack> SpecialAttackMontage;
 
-	//TQueue<FEnemyAdvancedAttack> AdvancedAttackQueue;
-	//TQueue<FEnemySpecialAttack> SpecialAttackQueue;
+	UPROPERTY()
+	UEnemyAdvancedAttackManager* AttackManager;
 
-	TDoubleLinkedList<FEnemyAdvancedAttack> AdvancedAttackList;
-	TDoubleLinkedList<FEnemySpecialAttack> SpecialAttackList;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
-	FEnemyAdvancedAttack* NextOrPlayingAttack;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Setting)
 	bool bUseSpecialAttack;

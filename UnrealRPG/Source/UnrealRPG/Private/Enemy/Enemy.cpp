@@ -23,6 +23,8 @@
 #include "ExecutionArea.h"
 #include "AlgorithmStaticLibrary.h"
 
+#include "EnemyAdvancedAttackManager.h"
+
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -131,6 +133,8 @@ void AEnemy::BeginPlay()
 
 	LockOnWidget->AttachTo(GetMesh(), LockOnSocketName,EAttachLocation::SnapToTarget);
 
+	AttackManager = NewObject<UEnemyAdvancedAttackManager>();
+
 	InitAttackMontage();
 }
 
@@ -138,12 +142,12 @@ void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 {
 	if (bIsBattleMode)return;
 	if (OtherActor == nullptr)return;
+	if (Target != nullptr)return;
 
 	auto Character = Cast<APlayerCharacter>(OtherActor);
 	if (Character) {
 		if (EnemyAIController) {
-			Target = Character;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Character);
+			ActiveEnemy(Character);
 		}
 	}
 }
@@ -200,13 +204,14 @@ void AEnemy::PlayAttackMontage()
 {
 	WalkDirection = 0.f;
 
-	if (!NextOrPlayingAttack)
+	if (!AttackManager->IsValidAttack())
 	{
 		return;
 	}
-	if (NextOrPlayingAttack->AttackMontage)
+
+	if (AttackManager->GetMontage())
 	{
-		AnimInstance->Montage_Play(NextOrPlayingAttack->AttackMontage);
+		AnimInstance->Montage_Play(AttackManager->GetMontage());
 	}
 }
 
@@ -277,15 +282,15 @@ void AEnemy::StopRotate()
 void AEnemy::TracingAttackSphere(float Damage)
 {
 	if (!bAttackable)return;
-	if (!NextOrPlayingAttack)
+	if (!AttackManager->IsValidAttack())
 	{
 		return;
 	}
-
+	
 	/* 아이템의 TopSocket과 BottomSocket의 위치를 받아온다. */
 	const FVector TopSocketLoc{ WeaponMesh->GetSocketLocation("TopSocket") };
 	const FVector BottomSocketLoc{ WeaponMesh->GetSocketLocation("BottomSocket") };
-
+	
 	FHitResult HitResult;
 	// SphereTraceSingle로 원을 그리고 원에 겹치는 오브젝트를 HitResult에 담는다.
 	const bool bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
@@ -301,24 +306,24 @@ void AEnemy::TracingAttackSphere(float Damage)
 		HitResult,
 		true
 	);
-
+	
 	if (bHit) {
 		if (HitResult.Actor != nullptr) {
 			APlayerCharacter* Player = Cast<APlayerCharacter>(HitResult.Actor);
-
+	
 			if (Player) {
 				ECombatState PlayerCombatState{ Player->GetCombatState() };
-
+	
 				// attack point를 플레이어한테 전달
 				Player->SetHitPoint(HitResult.ImpactPoint);
-
+	
 				// 공격을 상대가 맞았거나, 막았을 때 bAttack이 true가 됨
 				bool bAttack = Player->CustomApplyDamage(
 					Player,
 					Damage,
 					this,
-					NextOrPlayingAttack->AttackType);
-
+					AttackManager->GetAttackType());
+	
 				if (bAttack)
 				{
 					// 피해를 입었거나 가드가 부셔졌을 때 파티클, 사운드를 생성한다.
@@ -333,7 +338,7 @@ void AEnemy::TracingAttackSphere(float Damage)
 								UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal));
 						}
 					}
-
+	
 					bAttackable = false;
 				}
 			}
@@ -343,18 +348,14 @@ void AEnemy::TracingAttackSphere(float Damage)
 
 void AEnemy::StartAttackCheckTime(float DamagePersantage)
 {
-	if (!NextOrPlayingAttack)
-	{
-		return;
-	}
-	if (NextOrPlayingAttack->AttackMontage != nullptr)
+	if (AttackManager->GetMontage() != nullptr)
 	{
 		FTimerDelegate AttackDelegate;
 		AttackDelegate.BindUFunction(
 			this,
 			FName("TracingAttackSphere"),
-			NextOrPlayingAttack->AttackDamage * DamagePersantage);
-
+			AttackManager->GetAttackDamage() * DamagePersantage);
+	
 		GetWorldTimerManager().SetTimer(
 			AttackCheckTimer,
 			AttackDelegate,
@@ -422,6 +423,8 @@ void AEnemy::EndRestTimer()
 	{
 		ChangeCombatState(ECombatState::ECS_Unoccupied);
 	}
+
+	ChooseNextAttack();
 }
 
 void AEnemy::ChangeSprinting(bool IsSprinting)
@@ -454,13 +457,13 @@ void AEnemy::FindCharacter()
 
 	if (bFind) {
 		if (EnemyAIController) {
+			// 데미지를 입거나 일정거리 안에 들어왔을 때 호출되는 함수
+			ActiveEnemy(OverlapCharacter);
+
 			GetWorldTimerManager().ClearTimer(SearchTimer);
 			ChangeColliderSetting(true);
 
 			StopRotate();
-
-			Target = OverlapCharacter;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), OverlapCharacter);
 		}
 	}
 }
@@ -536,16 +539,7 @@ void AEnemy::PlayMontage(UAnimMontage* Montage)
 
 const float AEnemy::GetAttackableDistance() const
 {
-	if (!NextOrPlayingAttack)
-	{
-		return 0.f;
-	}
-	if (NextOrPlayingAttack->AttackMontage)
-	{
-		return NextOrPlayingAttack->AttackAbleDistance;
-	}
-
-	return 0.f;
+	return AttackManager->GetAttackableDistance();
 }
 
 void AEnemy::SetVisibleHealthBar(bool bVisible)
@@ -651,7 +645,7 @@ void AEnemy::CombatTurn(float DeltaTime)
 		const float SelectInterpSpeed{ GetAttacking() ? AttackRotateSpeed : InplaceRotateSpeed };
 		const float PlusYaw{ (bTurnLeft ? -SelectInterpSpeed : SelectInterpSpeed) * DeltaTime };
 
-		if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetActorRotation().Yaw + PlusYaw, LookRot.Yaw) == false)
+		if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetActorRotation().Yaw + PlusYaw, LookRot.Yaw, 0.05f) == false)
 		{
 			SetActorRotation(UKismetMathLibrary::ComposeRotators(GetActorRotation(), FRotator(0.f, PlusYaw, 0.f)));
 		}
@@ -711,6 +705,8 @@ void AEnemy::ActiveEnemy(APlayerCharacter* Player)
 			Target = Player;
 			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
 
+			ChooseNextAttack();
+
 			if (!bIsBattleMode)
 			{
 				ChangeBattleMode();
@@ -733,85 +729,15 @@ void AEnemy::CreateExecutionArea()
 
 void AEnemy::ChooseNextAttack()
 {
-	if (!NextOrPlayingAttack)
-	{
-		return;
-	}
-	//		Enemy.h					Enemy.h
-	// [ 특수 공격 확인 ] - - - [ 일반 공격 실행 ]
-
-	if (bUseSpecialAttack && SpecialAttackList.Num() > 0)
-	{
-		// Linked List head에 있는 노드를 가져온다.
-		EnemySpecialAttackLinkedListNode* SpecialMontageNodePtr = SpecialAttackList.GetHead();
-		FEnemySpecialAttack& SelectMontageRef{ SpecialMontageNodePtr->GetValue() };
-
-		const bool bZeroCount{ SelectMontageRef.WaitCount == 0 };
-		
-		if (bZeroCount)
-		{
-			SelectMontageRef.WaitCount = SelectMontageRef.MaximumWaitCount;
-			
-			// 해당 노드에 저장된 데이터를 가리킨다.
-			NextOrPlayingAttack = &SelectMontageRef;
-
-			// 해당 노드를 Linked List에서 연결을 끊는다. (메모리 할당 해제x)
-			SpecialAttackList.RemoveNode(SpecialMontageNodePtr, false);
-
-			// Linked List tail에 '방금 연결을 해제한 노드'를 연결해준다.
-			SpecialAttackList.AddTail(SpecialMontageNodePtr);
-
-			// 공격을 정했으니 종료한다.
-			return;
-		}
-		else
-		{
-			SelectMontageRef.WaitCount--;
-		}
-	}
-
-	if (AdvancedAttackList.Num() > 0)
-	{
-		// Linked List head에 있는 노드를 가져온다.
-		EnemyAdvancedAttackLinkedListNode* MontageNodePtr = AdvancedAttackList.GetHead();
-		FEnemyAdvancedAttack& MontageRef{ MontageNodePtr->GetValue() };
-
-		// 해당 노드에 저장된 데이터를 가리킨다.
-		NextOrPlayingAttack = &MontageRef;
-
-		// Linked List head에 있는 노드의 모든 연결을 끊는다. (메모리 할당 해제x)
-		AdvancedAttackList.RemoveNode(MontageNodePtr, false);
-
-		// Linked List tail에 '방금 연결을 해제한 노드'를 연결해준다.
-		AdvancedAttackList.AddTail(MontageNodePtr);
-	}
+	AttackManager->ChooseAttack(GetDegreeForwardToTarget(), GetDistanceToTarget());
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bBackAttack"), AttackManager->GetMontageType() == EEnemyMontageType::EEMT_Back);
 }
 
 void AEnemy::InitAttackMontage()
 {
-	if (bRandomAttackMontage)
-	{
-		UAlgorithmStaticLibrary::ShuffleArray(AdvancedAttackMontage);
-		UAlgorithmStaticLibrary::ShuffleArray(SpecialAttackMontage);
-	}
-
-	// Linked List(AdvancedAttack, MagicAttack)에 모든 공격 정보를 넣어둔다.
-	for (int Index = 0; Index < AdvancedAttackMontage.Num(); Index++)
-	{
-		AdvancedAttackList.AddTail(AdvancedAttackMontage[Index]);
-	}
-
-	for (int Index = 0; Index < SpecialAttackMontage.Num(); Index++)
-	{
-		if (SpecialAttackMontage[Index].bResetWaitCount)
-		{
-			SpecialAttackMontage[Index].WaitCount = SpecialAttackMontage[Index].MaximumWaitCount;
-		}
-		
-		SpecialAttackList.AddTail(SpecialAttackMontage[Index]);
-	}
-
-	ChooseNextAttack();
+	AttackManager->SetShuffle(bRandomAttackMontage);
+	AttackManager->InitMontageData(NormalAttackMontage, SpecialAttackMontage, {}, {});
+	AttackManager->SetAttackSequence({ EEnemyMontageType::EEMT_Special });
 }
 
 void AEnemy::EndBackAttack()
@@ -836,6 +762,10 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bDying)
+	{
+		return;
+	}
 	if (Target)
 	{
 		if (bRecoverMentality)

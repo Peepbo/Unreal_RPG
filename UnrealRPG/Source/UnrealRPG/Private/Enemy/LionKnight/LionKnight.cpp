@@ -3,18 +3,14 @@
 
 #include "Enemy/LionKnight/LionKnight.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Magic/ProjectileMagic.h"
+#include "Magic/Magic.h"
 #include "Enemy/EnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Player/PlayerCharacter.h"
 #include "AlgorithmStaticLibrary.h"
 
 ALionKnight::ALionKnight():
-	ProjectileDamage(50.f),
 	bPrepareBattle(false),
-	DodgeWaitCount(0),
-	MaximumDodgeWaitCount(3),
-	DodgeMaximumDistance(500.f),
 	NextPageStartHealthPercentage(0.5f),
 	bSecondPageUp(false)
 {
@@ -32,13 +28,27 @@ void ALionKnight::BeginPlay()
 	HP = MaximumHP;
 
 	ChangeEnemySize(EEnemySize::EES_Large);
-
 	GetCharacterMovement()->MaxWalkSpeed = MaximumSprintSpeed;
+	bAvoidImpactState = true;
 
 	FTransform GroundedWeaponTransform{ GetMesh()->GetSocketTransform("GroundedWeaponSocket") };
 	GroundedWeapon->SetWorldTransform(GroundedWeaponTransform);
 
-	DodgeWaitCount = MaximumDodgeWaitCount;
+
+	if (bRandomAttackMontage)
+	{
+		UAlgorithmStaticLibrary::ShuffleArray(DodgeMontage);
+		for (FEnemySpecialAttack& Attack : DodgeMontage)
+		{
+			if (Attack.bResetWaitCount)
+			{
+				Attack.WaitCount = Attack.MaximumWaitCount;
+			}
+			DodgeMontageList.AddTail(Attack);
+		}
+	}
+
+	AttackManager->SetAttackSequence({ EEnemyMontageType::EEMT_Back, EEnemyMontageType::EEMT_Magic, EEnemyMontageType::EEMT_Special });
 }
 
 void ALionKnight::Tick(float DeltaTime)
@@ -79,10 +89,10 @@ void ALionKnight::EndAttack(bool bChooseNextAttack)
 		StartRestTimer();
 	}
 
-	if (bChooseNextAttack)
-	{
-		ChooseNextAttack();
-	}
+	//if (bChooseNextAttack)
+	//{
+	//	ChooseNextAttack();
+	//}
 }
 
 bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
@@ -94,57 +104,26 @@ bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 		bSecondPageUp = true;
 		PlayNextPageMontage();
 	}
+
+	if (bDying)
+	{
+		CallDieDispatcher();
+	}
 	return true;
 }
 
-void ALionKnight::ChooseNextAttack()
+AMagic* ALionKnight::UseMagic()
 {
-	//   LionKnight.cpp				Enemy.cpp				Enemy.cpp
-	// [ 후방 공격 확인 ] - - - [ 특수 공격 확인 ] - - - [ 일반 공격 실행 ]
-
-	/* 후방 공격 실행 조건
-	* 1. 공격이 존재하는 경우
-	* 2. 플레이어가 뒤에 있는 경우 ( abs(110~180) )
-	* 3. WaitCount가 0인 경우
-	*/
-	const bool bValidBackAttack{ BackAttackList.Num() > 0 };
-	const bool bBehindPlayer{ abs(GetDegreeForwardToTarget()) >= 110.f };
-	
-	if (bValidBackAttack && bBehindPlayer)
+	if (AttackManager->GetMontageType() != EEnemyMontageType::EEMT_Magic)
 	{
-		EnemySpecialAttackLinkedListNode* SelectMontageNodePtr{ BackAttackList.GetHead() };
-		FEnemySpecialAttack& SelectMontageRef{ SelectMontageNodePtr->GetValue() };
-	
-		const bool bZeroCount{ SelectMontageRef.WaitCount == 0 };
-		if (bZeroCount)
-		{
-			SelectMontageRef.WaitCount = SelectMontageRef.MaximumWaitCount;
-
-			NextOrPlayingAttack = &SelectMontageRef;
-	
-			BackAttackList.RemoveNode(SelectMontageNodePtr, false);
-			BackAttackList.AddTail(SelectMontageNodePtr);
-
-			// 공격을 선택했으니 종료
-			return;
-		}
-		else
-		{
-			SelectMontageRef.WaitCount--;
-		}
+		return nullptr;
 	}
 
-	// Special, Advanced 중 하나 실행
-	Super::ChooseNextAttack();
-}
-
-AProjectileMagic* ALionKnight::UseMagic()
-{
-	if (ProjectileMagic)
+	if (AttackManager->GetLastMagic() != nullptr)
 	{
 		const FVector MagicStartLoc{ GetActorLocation() + (GetActorForwardVector() * 150.f) };
-		AProjectileMagic* SpawnMagic = GetWorld()->SpawnActor<AProjectileMagic>(ProjectileMagic, MagicStartLoc, GetActorRotation());
-		SpawnMagic->InitMagic(this, ProjectileDamage);
+		AMagic* SpawnMagic = GetWorld()->SpawnActor<AMagic>(AttackManager->GetLastMagic(), MagicStartLoc, GetActorRotation());
+		SpawnMagic->InitMagic(this, AttackManager->GetLastMagicDamage());
 
 		return SpawnMagic;
 	}
@@ -179,46 +158,64 @@ void ALionKnight::ResetBoss()
 
 void ALionKnight::EndDodge()
 {
+	EnemyAIController->ClearFocus(EAIFocusPriority::Gameplay);
+
 	bDodge = false;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), false);
+
+	ChooseNextAttack();
 }
 
 void ALionKnight::EndEvent()
 {
+	ChooseNextAttack();
+
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), false);
 }
 
 bool ALionKnight::CheckDodge()
 {
+	if (DodgeMontageList.GetHead() == nullptr)
+	{
+		return false;
+	}
+	if (AttackManager->GetMontageType() == EEnemyMontageType::EEMT_Back)
+	{
+		return false;
+	}
 	/* Dodge 조건
 	*
-	* 0. Dodge Montage가 있다.
 	* 1. 플레이어가 가까이 있다. (len < 500) (멀리있으면 dodge할 필요가 없다.)
 	* 2. 왼쪽, 오른쪽, 뒤 중 한 곳이라도 이동할 수 있다. (이건 나중에)
 	* 3. DodgeWaitCount가 0이다.
 	*/
-	const bool bHaveDodge{ DodgeMontage.Num() > 0 };
-	const bool bClosePlayer{ GetDistanceToTarget() < DodgeMaximumDistance };
-	const bool bWaitCountZero{ DodgeWaitCount == 0 };
+	EnemySpecialAttackLinkedListNode* DodgeListNodePtr{ DodgeMontageList.GetHead() };
+	FEnemySpecialAttack& DodgeDataRef{ DodgeMontageList.GetHead()->GetValue() };
+
+	const bool bClosePlayer{ GetDistanceToTarget() < DodgeDataRef.AttackAbleDistance };
+	const bool bWaitCountZero{ DodgeDataRef.WaitCount == 0 };
 	bool bPlayDodge{ false };
 
-	if (bHaveDodge && bClosePlayer)
+	if (bClosePlayer)
 	{
 		if (bWaitCountZero)
 		{
 			bPlayDodge = true;
-			DodgeWaitCount = MaximumDodgeWaitCount;
-
-			const int32 Rand{ FMath::RandRange(0, DodgeMontage.Num() - 1) };
 			bDodge = true;
-			AnimInstance->Montage_Play(DodgeMontage[Rand].AttackMontage);
+
+			DodgeDataRef.WaitCount = DodgeDataRef.MaximumWaitCount;
+			DodgeMontageList.RemoveNode(DodgeListNodePtr, false);
+			DodgeMontageList.AddTail(DodgeListNodePtr);
+
+			AnimInstance->Montage_Play(DodgeDataRef.AttackMontage);
+
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), bPlayDodge);
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttack"), false);
 			ChangeCombatState(ECombatState::ECS_Unoccupied);
 		}
 		else
 		{
-			DodgeWaitCount--;
+			DodgeDataRef.WaitCount--;
 		}
 	}
 
@@ -240,16 +237,46 @@ void ALionKnight::PlayNextPageMontage()
 {
 	if (NextPageMontage)
 	{
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), false);
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bStun"), false);
+
 		AnimInstance->Montage_Play(NextPageMontage);
 
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), true);
 	}
 }
 
+void ALionKnight::BreakGround()
+{
+	// 플레이어가 전방 60도(-60~+60), 300 안에 들었을 때 데미지를 입힌다.
+	const bool bCheckDegree{ abs(GetDegreeForwardToTarget()) <= 60.f };
+	const bool bCheckDistance{ GetDistanceToTarget() <= 750.f };
+
+	const bool bApplyDamage{ bCheckDegree && bCheckDistance };
+	if (bApplyDamage && !Target->GetImpacting())
+	{
+		Target->CustomApplyDamage(Target, AttackManager->GetAttackDamage(), this, AttackManager->GetAttackType());
+	}
+}
+
+void ALionKnight::SplashDamage(bool bDefaultDamage, float SelectDamage)
+{
+	float Damage = SelectDamage;
+
+	if (bDefaultDamage)
+	{
+		Damage = !bSecondPageUp ? 10.f : 15.f;
+	}
+
+	if (GetDistanceToTarget() <= 500.f && !Target->GetImpacting())
+	{
+		Target->CustomApplyDamage(Target, Damage, this, EAttackType::EAT_Light);
+	}
+}
+
 void ALionKnight::InitAttackMontage()
 {
-	AdvancedAttackList.Empty();
-	SpecialAttackList.Empty();
+	DodgeMontageList.Empty();
 
 	const FString SkillSetTablePath{ "DataTable'/Game/_Game/DataTable/LionKnightSkillDataTable.LionKnightSkillDataTable'" };
 	UDataTable* SkillSetTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *SkillSetTablePath));
@@ -258,56 +285,34 @@ void ALionKnight::InitAttackMontage()
 		return;
 	}
 	
-	FLionKnightSkillSet* SkillSetDataRow = nullptr;
+	FBossSkillSet* SkillSetDataRow = nullptr;
 	FName RowName{ !bSecondPageUp ? FName("Page1") : FName("Page2") };
 	
-	SkillSetDataRow = SkillSetTableObject->FindRow<FLionKnightSkillSet>(RowName, TEXT(""));
+	SkillSetDataRow = SkillSetTableObject->FindRow<FBossSkillSet>(RowName, TEXT(""));
 	
-	if (SkillSetDataRow)
+	if (SkillSetDataRow != nullptr)
 	{
-		TArray<FEnemyAdvancedAttack> AdvancedAttack{ SkillSetDataRow->AdvancedAttackMontage };
+		TArray<FEnemyNormalAttack> NormalAttack{ SkillSetDataRow->NormalAttackMontage };
 		TArray<FEnemySpecialAttack> SpecialAttack{ SkillSetDataRow->SpecialAttackMontage };
 		TArray<FEnemySpecialAttack> BackAttack{ SkillSetDataRow->BackAttackMontage };
+		TArray<FEnemyMagicAttack> MagicAttack{ SkillSetDataRow->MagicAttackMontage };
 
-		if (bRandomAttackMontage)
-		{
-			UAlgorithmStaticLibrary::ShuffleArray(AdvancedAttack);
-			UAlgorithmStaticLibrary::ShuffleArray(SpecialAttack);
-			UAlgorithmStaticLibrary::ShuffleArray(BackAttack);
-		}
-
-		// AdvancedAttackList에 정보를 저장한다.
-		for (const FEnemyAdvancedAttack& AttackMontage : AdvancedAttack)
-		{
-			AdvancedAttackList.AddTail(AttackMontage);
-		}
-	
-		// SpecialAttackList에 정보를 저장한다.
-		for (FEnemySpecialAttack AttackMontage : SpecialAttack)
-		{
-			if (AttackMontage.bResetWaitCount)
-			{
-				AttackMontage.WaitCount = AttackMontage.MaximumWaitCount;
-			}
-	
-			SpecialAttackList.AddTail(AttackMontage);
-		}
-
-		// BackAttackList에 정보를 저장한다.
-		for (FEnemySpecialAttack AttackMontage : BackAttack)
-		{
-			if (AttackMontage.bResetWaitCount)
-			{
-				AttackMontage.WaitCount = AttackMontage.MaximumWaitCount;
-			}
-
-			BackAttackList.AddTail(AttackMontage);
-		}
+		AttackManager->SetShuffle(bRandomAttackMontage);
+		AttackManager->InitMontageData(NormalAttack, SpecialAttack, BackAttack, MagicAttack);
 		
 		DodgeMontage = SkillSetDataRow->DodgeMontage;
-		ProjectileMagic = SkillSetDataRow->ProjectileMagic;
-		ProjectileDamage = SkillSetDataRow->ProjectileMagicDamage;
 	
-		ChooseNextAttack();
+		//ChooseNextAttack();
+	}
+}
+
+void ALionKnight::RecoverStun()
+{
+	Super::RecoverStun();
+
+	if (!bSecondPageUp && GetHpPercentage() <= NextPageStartHealthPercentage)
+	{
+		bSecondPageUp = true;
+		PlayNextPageMontage();
 	}
 }

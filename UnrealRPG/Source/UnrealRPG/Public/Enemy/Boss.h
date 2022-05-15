@@ -10,28 +10,25 @@
 USTRUCT(BlueprintType)
 struct FBossSkillSet : public FTableRowBase
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemyAdvancedAttack> AdvancedAttackMontage;
+		TArray<FEnemyNormalAttack> NormalAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FEnemySpecialAttack> SpecialAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemyAdvancedAttack> DodgeMontage;
+		TArray<FEnemySpecialAttack> DodgeMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FEnemySpecialAttack> BackAttackMontage;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//	TSubclassOf<AProjectileMagic> ProjectileMagic;
-	//
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//	float ProjectileMagicDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FEnemyMagicAttack> MagicAttackMontage;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBossPageUpDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBossDelegate);
 /**
  * 
  */
@@ -46,6 +43,10 @@ protected:
 	{
 		BossPage2Dispatcher.Broadcast();
 	}
+	void CallDieDispatcher()
+	{
+		BossDieDispatcher.Broadcast();
+	}
 
 private:
 	/* DataTable에 저장된 SkillSet을 가져오는 함수 */
@@ -53,10 +54,9 @@ private:
 	
 protected:
 	UPROPERTY(BlueprintAssignable)
-	FBossPageUpDelegate BossPage2Dispatcher;
-
-	/* 상대가 뒤에 있을 때 실행하는 공격 */
-	TDoubleLinkedList<FEnemySpecialAttack> BackAttackList;
+	FBossDelegate BossPage2Dispatcher;
+	UPROPERTY(BlueprintAssignable)
+	FBossDelegate BossDieDispatcher;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
 	UDataTable* SkillSetDataTable;

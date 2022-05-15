@@ -12,7 +12,9 @@
 AMagic::AMagic():
 	MagicDamage(0.f),
 	FXSize(1.f),
-	FXSpawnRate(1.f)
+	FXSpawnRate(1.f),
+	bUseStaticMesh(true),
+	bStop(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -104,4 +106,9 @@ void AMagic::DeactiveMagic(float DeltaTime)
 	{
 		FXSound->VolumeMultiplier = UKismetMathLibrary::Lerp(FXSound->VolumeMultiplier, 0.f, DeltaTime);
 	}
+}
+
+void AMagic::SetMeshVisiblilty(bool NextVisible)
+{
+	Mesh->SetVisibility(NextVisible);
 }

@@ -97,7 +97,7 @@ private:
 	float TurnTime;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	FEnemyAdvancedAttack SprintAttack;
+	FEnemyNormalAttack SprintAttack;
 
 	FTimerHandle DropWeaponTimer;
 

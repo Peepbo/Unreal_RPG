@@ -11,7 +11,6 @@
 
 AProjectileMagic::AProjectileMagic():
 	bUseLerp(false),
-	bStop(false),
 	bAutoFadeOut(false),
 	FXSpeed(1.f),
 	MaximumFXSpeed(15.f),

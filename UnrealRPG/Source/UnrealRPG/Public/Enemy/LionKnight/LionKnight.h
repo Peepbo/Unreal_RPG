@@ -9,18 +9,8 @@
 class UStaticMeshComponent;
 class APlayerCharacter;
 class AProjectileMagic;
+class AMagic;
 
-USTRUCT(BlueprintType)
-struct FLionKnightSkillSet : public FBossSkillSet
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AProjectileMagic> ProjectileMagic;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float ProjectileMagicDamage;
-};
 /**
  * 
  */
@@ -44,10 +34,8 @@ protected:
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
-	virtual void ChooseNextAttack() override;
-
 	UFUNCTION(BlueprintCallable)
-	AProjectileMagic* UseMagic();
+	AMagic* UseMagic();
 
 	UFUNCTION(BlueprintCallable)
 	void ReadyToBattle();
@@ -77,14 +65,18 @@ protected:
 
 	void PlayNextPageMontage();
 
+	UFUNCTION(BlueprintCallable)
+	void BreakGround();
+
+	UFUNCTION(BlueprintCallable)
+	void SplashDamage(bool bDefaultDamage, float SelectDamage);
+
 	/* DataTable에 저장된 SkillSet을 가져오는 함수 */
 	virtual void InitAttackMontage() override;
 
+	virtual void RecoverStun() override;
+
 private:
-	TSubclassOf<AProjectileMagic> ProjectileMagic;
-
-	float ProjectileDamage;
-
 	bool bPrepareBattle;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting", meta = (AllowPrivateAccess = "true"))
@@ -93,13 +85,8 @@ private:
 	FTimerHandle ChangeWeaponSettingTimer;
 
 	/* 3방향 회피  0? 왼쪽, 1? 오른쪽, 2? 후면 */
-	TArray<FEnemyAdvancedAttack> DodgeMontage;
-
-	int32 DodgeWaitCount;
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	int32 MaximumDodgeWaitCount;
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float DodgeMaximumDistance;
+	TArray<FEnemySpecialAttack> DodgeMontage;
+	TDoubleLinkedList<FEnemySpecialAttack> DodgeMontageList;
 
 	/* 2페이지로 진입하는 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss Page", meta = (AllowPrivateAccess = "true"))

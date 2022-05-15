@@ -120,7 +120,6 @@ void ADarkKnight::StartSheath()
 	if (SheathMontage) {
 		if (AnimInstance) {
 			AnimInstance->Montage_Play(SheathMontage);
-			UE_LOG(LogTemp, Warning, TEXT("Sheath Montage Play"));
 		}
 	}
 }
@@ -151,23 +150,20 @@ void ADarkKnight::EndDamageImpact()
 
 void ADarkKnight::PlayAttackMontage()
 {
-	if (NextOrPlayingAttack->AttackMontage != nullptr)
+	if (GetSprinting() && SprintAttack.AttackMontage)
 	{
-		if (GetSprinting() && SprintAttack.AttackMontage)
-		{
-			AnimInstance->Montage_Play(SprintAttack.AttackMontage);
-			SetSprinting(false);
-		}
-		else
-		{
-			if (NextOrPlayingAttack->AttackMontage)
-			{
-				AnimInstance->Montage_Play(NextOrPlayingAttack->AttackMontage);
-			}
-		}
-
-		CombatResetTime = 0.f;
+		AnimInstance->Montage_Play(SprintAttack.AttackMontage);
+		SetSprinting(false);
 	}
+	else
+	{
+		if (AttackManager->GetMontage())
+		{
+			AnimInstance->Montage_Play(AttackManager->GetMontage());
+		}
+	}
+
+	CombatResetTime = 0.f;
 }
 
 void ADarkKnight::FindCharacter()
@@ -176,6 +172,7 @@ void ADarkKnight::FindCharacter()
 
 	if (Target && bShouldDrawWeapon)
 	{
+		AttackManager->ChooseAttack(GetDegreeForwardToTarget(), GetDistanceToTarget());
 		bShouldDrawWeapon = false;
 
 		StartDraw();
@@ -230,8 +227,6 @@ bool ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 {
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
-	UE_LOG(LogTemp, Warning, TEXT("DarkKnight Damaged!"));
-
 	if (!bDying) 
 	{
 		GetWorldTimerManager().ClearTimer(SearchTimer);
@@ -241,6 +236,7 @@ bool ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 			if (Player)
 			{
 				Target = Player;
+				AttackManager->ChooseAttack(GetDegreeForwardToTarget(), GetDistanceToTarget());
 			}
 			else
 			{

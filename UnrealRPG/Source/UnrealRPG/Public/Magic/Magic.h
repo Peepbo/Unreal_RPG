@@ -38,6 +38,8 @@ public:
 	virtual void ActiveMagic(float DeltaTime);
 	virtual void DeactiveMagic(float DeltaTime);
 
+	void SetMeshVisiblilty(bool NextVisible);
+
 protected:
 	const FName FireParam = FName("Fire");
 	const FName SizeParam = FName("Size");
@@ -45,7 +47,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
 	float MagicDamage;
 	/* 마법을 시젼하는 주인 */
-	//AActor* MagicOwner;
 	APawn* MagicOwner;
 
 	bool bEndFXParticle;
@@ -65,9 +66,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
 		class USoundAttenuation* SoundAttenuation;
 
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-	//class USoundClass* SoundClass;
-
 
 	UPROPERTY(EditDefaultsOnly, Category = "FX Param")
 		float FXSize;
@@ -80,6 +78,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
 	class UStaticMeshComponent* Mesh;
+
+	bool bUseStaticMesh;
+
+	bool bStop;
 
 private:
 

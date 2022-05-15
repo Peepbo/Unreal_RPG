@@ -84,5 +84,19 @@ enum class EAttackType : uint8
 	EAT_MAX UMETA(DisplayName = "DefaultMax")
 };
 
-#define EnemyAdvancedAttackLinkedListNode TDoubleLinkedList<FEnemyAdvancedAttack>::TDoubleLinkedListNode
+#define EnemyAttackLinkedListNode TDoubleLinkedList<FEnemyAttackData>::TDoubleLinkedListNode
+
+#define EnemyNormalAttackLinkedListNode TDoubleLinkedList<FEnemyNormalAttack>::TDoubleLinkedListNode
 #define EnemySpecialAttackLinkedListNode TDoubleLinkedList<FEnemySpecialAttack>::TDoubleLinkedListNode
+#define EnemyMagicAttackLinkedListNode TDoubleLinkedList<FEnemyMagicAttack>::TDoubleLinkedListNode
+
+
+UENUM(BlueprintType)
+enum class EEnemyMontageType : uint8
+{
+	EEMT_Normal UMETA(DisplayName = "Normal"),
+	EEMT_Special UMETA(DisplayName = "Special"),
+	EEMT_Back UMETA(DisplayName = "Back"),
+	EEMT_Magic UMETA(DisplayName = "Magic"),
+	EEMT_MAX UMETA(DisplayName = "DefualtMax")
+};
