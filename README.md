@@ -7,7 +7,9 @@
 일정 관리 : Trello  
 팀원 : 개인  
 조작 : 키보드, 마우스
-
+    
+참고한 게임 : Elden Ring, DarkSoul3    
+참고한 웹사이트 : ArtStation, Sketchfab    
 
 Trello : https://trello.com/b/tThGDM2D/unreal-rpg  
 WepPage :  https://blog.naver.com/tngus1140  
