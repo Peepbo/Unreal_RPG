@@ -311,9 +311,7 @@ void AEnemy::TracingAttackSphere(float Damage)
 		if (HitResult.Actor != nullptr) {
 			APlayerCharacter* Player = Cast<APlayerCharacter>(HitResult.Actor);
 	
-			if (Player) {
-				ECombatState PlayerCombatState{ Player->GetCombatState() };
-	
+			if (Player != nullptr && !Player->GetImpacting()) {
 				// attack point를 플레이어한테 전달
 				Player->SetHitPoint(HitResult.ImpactPoint);
 	
