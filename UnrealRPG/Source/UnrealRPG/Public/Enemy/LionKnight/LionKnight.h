@@ -100,6 +100,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Boss Page", meta = (AllowPrivateAccess = "true"))
 	bool bSecondPageUp;
 
+	bool bEvent;
+
 public:
 	FORCEINLINE bool ShouldPrepareBattle() const { return bPrepareBattle; }
 };

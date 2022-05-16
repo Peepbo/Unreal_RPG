@@ -55,28 +55,26 @@ void ALaserBeam::Tick(float DeltaTime)
 
 	if (Hit.bBlockingHit)
 	{
-		EndPointFX->SetWorldLocation(Hit.Location);
+		//EndPointFX->SetWorldLocation(Hit.Location);
 
+		AMeleeCharacter* MeleeCharacter = nullptr;
 		if (Hit.GetActor())
 		{
-			AMeleeCharacter* MeleeCharacter = Cast<AMeleeCharacter>(Hit.GetActor());
-			const bool bCastableMeleeCharacter{ Hit.GetActor() != nullptr && MeleeCharacter != nullptr };
-			const bool bApplyDamageable{ bCastableMeleeCharacter && MeleeCharacter->GetCombatState() != ECombatState::ECS_Roll && MeleeCharacter->DamageableState() };
+			MeleeCharacter = Cast<AMeleeCharacter>(Hit.GetActor());
+		}
+		const bool bCastableMeleeCharacter{ MeleeCharacter != nullptr };
+		const bool bApplyDamageable{ bCastableMeleeCharacter && MeleeCharacter->GetCombatState() != ECombatState::ECS_Roll && MeleeCharacter->DamageableState() };
 
-			if (Hit.GetActor() != nullptr && (bApplyDamageable || !bCastableMeleeCharacter))
-			{
-				EndPointFX->SetWorldLocation(Hit.Location);
-			}
+		if (Hit.GetActor() == nullptr || bApplyDamageable)
+		{
+			EndPointFX->SetWorldLocation(Hit.Location);
+		}
 
-			if (!bStop && TraceLifeTime > 0.f)
-			{
-				if (bCastableMeleeCharacter && MeleeCharacter->GetCombatState() != ECombatState::ECS_Roll && MeleeCharacter->DamageableState())
-				{
-					AMeleeCharacter* Character = Cast<AMeleeCharacter>(Hit.GetActor());
-					Character->CustomApplyDamage(Character, MagicDamage, MagicOwner, EAttackType::EAT_Strong);
-					bStop = true;
-				}
-			}
+		if (bCastableMeleeCharacter && !bStop && TraceLifeTime > 0.f)
+		{
+			AMeleeCharacter* Character = Cast<AMeleeCharacter>(Hit.GetActor());
+			Character->CustomApplyDamage(Character, MagicDamage, MagicOwner, EAttackType::EAT_Strong);
+			bStop = true;
 		}
 	}
 }

@@ -12,7 +12,8 @@
 ALionKnight::ALionKnight():
 	bPrepareBattle(false),
 	NextPageStartHealthPercentage(0.5f),
-	bSecondPageUp(false)
+	bSecondPageUp(false),
+	bEvent(false)
 {
 	GroundedWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundedWeapon"));
 	bUseSpecialAttack = true;
@@ -88,11 +89,6 @@ void ALionKnight::EndAttack(bool bChooseNextAttack)
 	{
 		StartRestTimer();
 	}
-
-	//if (bChooseNextAttack)
-	//{
-	//	ChooseNextAttack();
-	//}
 }
 
 bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
@@ -170,7 +166,8 @@ void ALionKnight::EndEvent()
 {
 	ChooseNextAttack();
 
-	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), false);
+	bEvent = false;
+	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), bEvent);
 }
 
 bool ALionKnight::CheckDodge()
@@ -183,6 +180,11 @@ bool ALionKnight::CheckDodge()
 	{
 		return false;
 	}
+	if (bEvent)
+	{
+		return false;
+	}
+	//EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), true);
 	/* Dodge 조건
 	*
 	* 1. 플레이어가 가까이 있다. (len < 500) (멀리있으면 dodge할 필요가 없다.)
@@ -242,7 +244,8 @@ void ALionKnight::PlayNextPageMontage()
 
 		AnimInstance->Montage_Play(NextPageMontage);
 
-		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), true);
+		bEvent = true;
+		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), bEvent);
 	}
 }
 
@@ -261,13 +264,18 @@ void ALionKnight::BreakGround()
 
 void ALionKnight::SplashDamage(bool bDefaultDamage, float SelectDamage)
 {
+	if (Target == nullptr)
+	{
+		return;
+	}
+
 	float Damage = SelectDamage;
 
 	if (bDefaultDamage)
 	{
 		Damage = !bSecondPageUp ? 10.f : 15.f;
 	}
-
+	
 	const FVector SocketLocation{ GetMesh()->GetSocketLocation("WeaponFront") };
 	const FVector TargetLocation{ Target->GetActorLocation() };
 	const float Distance{ (TargetLocation - SocketLocation).Size() };
@@ -305,8 +313,6 @@ void ALionKnight::InitAttackMontage()
 		AttackManager->InitMontageData(NormalAttack, SpecialAttack, BackAttack, MagicAttack);
 		
 		DodgeMontage = SkillSetDataRow->DodgeMontage;
-	
-		//ChooseNextAttack();
 	}
 }
 
