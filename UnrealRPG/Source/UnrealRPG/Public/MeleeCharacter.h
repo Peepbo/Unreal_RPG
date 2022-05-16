@@ -74,7 +74,7 @@ protected:
 	/* Health Point */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Stat, meta = (AllowPrivateAccess = "true"))
 		float HP;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
 		float MaximumHP;
 	/* Attack Damage */
 	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
@@ -124,7 +124,7 @@ protected:
 
 	EAttackType LastDamagedAttackType;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
 	float RewardGold;
 
 	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */

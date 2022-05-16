@@ -172,10 +172,23 @@ void ADarkKnight::FindCharacter()
 
 	if (Target && bShouldDrawWeapon)
 	{
-		AttackManager->ChooseAttack(GetDegreeForwardToTarget(), GetDistanceToTarget());
 		bShouldDrawWeapon = false;
 
 		StartDraw();
+	}
+}
+
+void ADarkKnight::ActiveEnemy(APlayerCharacter* Player)
+{
+	if (Player)
+	{
+		if (EnemyAIController)
+		{
+			Target = Player;
+			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
+
+			ChooseNextAttack();
+		}
 	}
 }
 

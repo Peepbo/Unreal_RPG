@@ -108,6 +108,29 @@ bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 	return true;
 }
 
+void ALionKnight::InitStat()
+{
+	const FString BossStatTablePath{ "DataTable'/Game/_Game/DataTable/BossStatDataTable.BossStatDataTable'" };
+	UDataTable* BossStatTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *BossStatTablePath));
+
+	if (BossStatTableObject != nullptr)
+	{
+		FBossStatDataTable* StatDataRow = nullptr;
+		StatDataRow = BossStatTableObject->FindRow<FBossStatDataTable>(EnemyDataTableRowName, TEXT(""));
+
+		if (StatDataRow != nullptr)
+		{
+			CharacterName = StatDataRow->CharacterName;
+			EnemySize = StatDataRow->EnemySize;
+			LockOnSocketName = StatDataRow->LockOnSocketName;
+			MaximumHP = StatDataRow->MaximumHP;
+			RewardGold = StatDataRow->RewardGold;
+
+			MaximumMentality = StatDataRow->MaximumMentality;
+		}
+	}
+}
+
 AMagic* ALionKnight::UseMagic()
 {
 	if (AttackManager->GetMontageType() != EEnemyMontageType::EEMT_Magic)
@@ -276,11 +299,15 @@ void ALionKnight::SplashDamage(bool bDefaultDamage, float SelectDamage)
 		Damage = !bSecondPageUp ? 10.f : 15.f;
 	}
 	
-	const FVector SocketLocation{ GetMesh()->GetSocketLocation("WeaponFront") };
-	const FVector TargetLocation{ Target->GetActorLocation() };
+	FVector SocketLocation{ GetMesh()->GetSocketLocation("WeaponFront") };
+	SocketLocation.Z = 0.f;
+
+	FVector TargetLocation{ Target->GetActorLocation() };
+	TargetLocation.Z = 0.f;
+
 	const float Distance{ (TargetLocation - SocketLocation).Size() };
 
-	if (Distance <= 200.f && !Target->GetImpacting() && !Target->GetCharacterMovement()->IsFalling())
+	if (Distance <= 230.f && !Target->GetImpacting() && !Target->GetCharacterMovement()->IsFalling())
 	{
 		Target->CustomApplyDamage(Target, Damage, this, EAttackType::EAT_Light);
 	}
@@ -290,7 +317,7 @@ void ALionKnight::InitAttackMontage()
 {
 	DodgeMontageList.Empty();
 
-	const FString SkillSetTablePath{ "DataTable'/Game/_Game/DataTable/LionKnightSkillDataTable.LionKnightSkillDataTable'" };
+	const FString SkillSetTablePath{ "DataTable'/Game/_Game/DataTable/BossSkillSetDataTable.BossSkillSetDataTable'" };
 	UDataTable* SkillSetTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *SkillSetTablePath));
 	if (SkillSetTableObject == nullptr)
 	{
@@ -298,9 +325,12 @@ void ALionKnight::InitAttackMontage()
 	}
 	
 	FBossSkillSet* SkillSetDataRow = nullptr;
-	FName RowName{ !bSecondPageUp ? FName("Page1") : FName("Page2") };
+
+	FString RowString{ EnemyDataTableRowName.ToString() };
+	const int32 PageIndex{ !bSecondPageUp ? 1 : 2 };
+	RowString.Append(FString::FromInt(PageIndex));
 	
-	SkillSetDataRow = SkillSetTableObject->FindRow<FBossSkillSet>(RowName, TEXT(""));
+	SkillSetDataRow = SkillSetTableObject->FindRow<FBossSkillSet>(FName(*RowString), TEXT(""));
 	
 	if (SkillSetDataRow != nullptr)
 	{

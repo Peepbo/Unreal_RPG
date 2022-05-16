@@ -34,6 +34,8 @@ protected:
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 
+	virtual void InitStat() override;
+
 	UFUNCTION(BlueprintCallable)
 	AMagic* UseMagic();
 

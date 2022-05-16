@@ -42,8 +42,6 @@ AEnemy::AEnemy() :
 	bMove(false),
 	InplaceRotateSpeed(5.f),
 	AttackRotateSpeed(5.f),
-	OverrideHP(0.f),
-	bActiveBoneOffset(false),
 	MaximumCombatResetTime(20.f),
 	MaximumCombatDistance(2500.f),
 	CombatResetTime(0.f),
@@ -134,6 +132,8 @@ void AEnemy::BeginPlay()
 	LockOnWidget->AttachTo(GetMesh(), LockOnSocketName,EAttachLocation::SnapToTarget);
 
 	AttackManager = NewObject<UEnemyAdvancedAttackManager>();
+
+	InitStat();
 
 	InitAttackMontage();
 }
@@ -733,9 +733,46 @@ void AEnemy::ChooseNextAttack()
 
 void AEnemy::InitAttackMontage()
 {
-	AttackManager->SetShuffle(bRandomAttackMontage);
-	AttackManager->InitMontageData(NormalAttackMontage, SpecialAttackMontage, {}, {});
-	AttackManager->SetAttackSequence({ EEnemyMontageType::EEMT_Special });
+	//EnemySkillDataTable
+	const FString SkillSetTablePath{ "DataTable'/Game/_Game/DataTable/EnemySkillSetDataTable.EnemySkillSetDataTable'" };
+	UDataTable* SkillSetTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *SkillSetTablePath));
+
+	if (SkillSetTableObject != nullptr)
+	{
+		FEnemySkillSet* SkillDataRow = nullptr;
+		SkillDataRow = SkillSetTableObject->FindRow<FEnemySkillSet>(EnemyDataTableRowName, TEXT(""));
+
+		if (SkillDataRow != nullptr)
+		{
+			TArray<FEnemyNormalAttack> NormalAttack{ SkillDataRow->NormalAttackMontage };
+			TArray<FEnemySpecialAttack> SpecialAttack{ SkillDataRow->SpecialAttackMontage };
+
+			AttackManager->SetShuffle(bRandomAttackMontage);
+			AttackManager->InitMontageData(NormalAttack, SpecialAttack, {}, {});
+			AttackManager->SetAttackSequence({ EEnemyMontageType::EEMT_Special });
+		}
+	}
+}
+
+void AEnemy::InitStat()
+{
+	const FString EnemyStatTablePath{ "DataTable'/Game/_Game/DataTable/EnemyStatDataTable.EnemyStatDataTable'" };
+	UDataTable* EnemyStatTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *EnemyStatTablePath));
+
+	if (EnemyStatTableObject != nullptr)
+	{
+		FEnemyStatDataTable* StatDataRow = nullptr;
+		StatDataRow = EnemyStatTableObject->FindRow<FEnemyStatDataTable>(EnemyDataTableRowName, TEXT(""));
+		
+		if (StatDataRow != nullptr)
+		{
+			CharacterName = StatDataRow->CharacterName;
+			EnemySize = StatDataRow->EnemySize;
+			LockOnSocketName = StatDataRow->LockOnSocketName;
+			MaximumHP = StatDataRow->MaximumHP;
+			RewardGold = StatDataRow->RewardGold;
+		}
+	}
 }
 
 void AEnemy::EndBackAttack()

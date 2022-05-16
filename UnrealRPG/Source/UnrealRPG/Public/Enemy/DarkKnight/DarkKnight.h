@@ -59,6 +59,8 @@ protected:
 
 	virtual void FindCharacter() override;
 
+	virtual void ActiveEnemy(APlayerCharacter* Player) override;
+
 private:
 	virtual void ResetCombat() override;
 

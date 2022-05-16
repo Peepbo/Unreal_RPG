@@ -8,15 +8,18 @@
 #include "Boss.generated.h"
 
 USTRUCT(BlueprintType)
-struct FBossSkillSet : public FTableRowBase
+struct FBossStatDataTable : public FEnemyStatDataTable
 {
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemyNormalAttack> NormalAttackMontage;
+	float MaximumMentality;
+};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemySpecialAttack> SpecialAttackMontage;
+USTRUCT(BlueprintType)
+struct FBossSkillSet : public FEnemySkillSet
+{
+	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FEnemySpecialAttack> DodgeMontage;
@@ -57,9 +60,6 @@ protected:
 	FBossDelegate BossPage2Dispatcher;
 	UPROPERTY(BlueprintAssignable)
 	FBossDelegate BossDieDispatcher;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-	UDataTable* SkillSetDataTable;
 
 private:
 

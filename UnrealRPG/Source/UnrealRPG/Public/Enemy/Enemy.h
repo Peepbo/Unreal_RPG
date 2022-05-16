@@ -6,12 +6,46 @@
 #include "MeleeCharacter.h"
 #include "RPGTypes.h"
 #include "EnemyAdvancedAttackManager.h"
+#include "Engine/DataTable.h"
 #include "Enemy.generated.h"
 
 class APlayerCharacter;
 class AExecutionArea;
 class AMagic;
 class UAnimMontage;
+
+USTRUCT(BlueprintType)
+struct FEnemyStatDataTable : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName CharacterName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaximumHP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float RewardGold;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName LockOnSocketName = "Hips";
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EEnemySize EnemySize;
+};
+
+USTRUCT(BlueprintType)
+struct FEnemySkillSet : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FEnemyNormalAttack> NormalAttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FEnemySpecialAttack> SpecialAttackMontage;
+};
 
 UCLASS()
 class UNREALRPG_API AEnemy : public AMeleeCharacter
@@ -161,6 +195,8 @@ protected:
 
 	virtual void InitAttackMontage();
 
+	virtual void InitStat();
+
 private:
 	void CombatTurn(float DeltaTime);
 	virtual void CheckCombatReset(float DeltaTime);
@@ -187,13 +223,13 @@ protected:
 	FTimerHandle ResetBattleModeTimer;
 	FTimerHandle EndCombatTimer;
 
-	/* 일반 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	TArray<FEnemyNormalAttack> NormalAttackMontage;
-	
-	/* 특수 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	TArray<FEnemySpecialAttack> SpecialAttackMontage;
+	///* 일반 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
+	//TArray<FEnemyNormalAttack> NormalAttackMontage;
+	//
+	///* 특수 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
+	//TArray<FEnemySpecialAttack> SpecialAttackMontage;
 
 	UPROPERTY()
 	UEnemyAdvancedAttackManager* AttackManager;
@@ -228,9 +264,6 @@ protected:
 
 	bool bTurn;
 
-	UPROPERTY(EditDefaultsOnly, Category = Combat)
-	float OverrideHP;
-
 	/* 전투 지속 시간 (데미지를 입지 않거나, 데미지를 입히지 않으면 계속 올라감)*/
 	float CombatResetTime;
 	float MaximumCombatResetTime;
@@ -253,6 +286,37 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool bStun;
+
+
+	UPROPERTY(EditDefaultsOnly, Category = Setting, meta = (AllowPrivateAccess = "true"))
+		FName EnemyDataTableRowName;
+
+	/* Stat DataTable Variable */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
+		UDataTable* EnemyStatDataTable;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
+		FName CharacterName;
+
+	UPROPERTY(VisibleAnywhere, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
+		FName LockOnSocketName = "Hips";
+
+	/* 몬스터 크기를 대략적으로 나타내는 enum 변수 */
+	UPROPERTY(VisibleAnywhere, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
+		EEnemySize EnemySize;
+
+	/* 정신력, 데미지를 입으면 정신력이 깎이게 되며 2.5초동안 데미지를 입지 않으면 다시 정신력이 회복된다. */
+	/* 정신력이 0 혹은 그 이하에 도달하면 기절 애니메이션이 실행되며 애니메이션(보스의 1->2페이지 전환 제외)에 상관없이 모든 애니메이션을 스킵하고 실행한다. */
+	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float Mentality;
+	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float MaximumMentality;
+	FTimerHandle MentalityRecoveryTimer;
+	bool bRecoverMentality;
+
+	/* Skill DataTable Variable */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill DataTable", meta = (AllowPrivateAccess = "true"))
+		UDataTable* EnemySkillDataTable;
 
 private:
 
@@ -277,8 +341,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Combat, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* LockOnWidget;
 
-	/* 몬스터 크기를 대략적으로 나타내는 enum 변수 */
-	EEnemySize EnemySize;
 
 	/* 락온 시 최소 Pitch값을 나타내는 변수, 크기에 따라 달라짐 */
 	float LockOnMinimumPitchValue;
@@ -313,25 +375,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		class UWidgetComponent* HealthBar;
 
-	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool bActiveBoneOffset;
-	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	FName LastHitBoneName;
-	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float LastHitBoneOffset;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
-	FName CharacterName;
 
 
-	/* 정신력, 데미지를 입으면 정신력이 깎이게 되며 2.5초동안 데미지를 입지 않으면 다시 정신력이 회복된다. */
-	/* 정신력이 0 혹은 그 이하에 도달하면 기절 애니메이션이 실행되며 애니메이션(보스의 1->2페이지 전환 제외)에 상관없이 모든 애니메이션을 스킵하고 실행한다. */
-	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float Mentality;
-	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	float MaximumMentality;
-	FTimerHandle MentalityRecoveryTimer;
-	bool bRecoverMentality;
+
+
+
 
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bShouldStopStun;
@@ -350,8 +398,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AExecutionArea* TakeExecutionArea;
 
-	UPROPERTY(EditDefaultsOnly, Category = Setting, meta = (AllowPrivateAccess = "true"))
-	FName LockOnSocketName = "Hips";
+
+
 
 public:
 	// Called every frame
