@@ -24,5 +24,8 @@
 			"Name": "HairStrands",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"WindowsNoEditor"
 	]
 }

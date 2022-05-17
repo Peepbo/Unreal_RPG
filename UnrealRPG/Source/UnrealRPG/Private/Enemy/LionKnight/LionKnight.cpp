@@ -75,7 +75,7 @@ void ALionKnight::ResetCombat()
 	StartResetTransformTimer(4.f);
 }
 
-void ALionKnight::EndAttack(bool bChooseNextAttack)
+void ALionKnight::EndAttack()
 {
 	EnemyAIController->ClearFocus(EAIFocusPriority::Gameplay);
 

@@ -166,7 +166,7 @@ protected:
 	void StartAttack();
 
 	UFUNCTION(BlueprintCallable)
-	virtual void EndAttack(bool bChooseNextAttack = true);
+	virtual void EndAttack();
 
 	UFUNCTION(BlueprintCallable)
 	void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);

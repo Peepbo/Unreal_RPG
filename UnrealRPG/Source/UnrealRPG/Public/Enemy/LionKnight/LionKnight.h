@@ -30,7 +30,7 @@ protected:
 
 	virtual void ResetCombat() override;
 
-	virtual void EndAttack(bool bChooseNextAttack = true) override;
+	virtual void EndAttack() override;
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType) override;
 

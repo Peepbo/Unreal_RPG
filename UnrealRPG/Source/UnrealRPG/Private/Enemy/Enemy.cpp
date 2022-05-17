@@ -507,17 +507,12 @@ void AEnemy::StartAttack()
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 }
 
-void AEnemy::EndAttack(bool bChooseNextAttack)
+void AEnemy::EndAttack()
 {
 	EnemyAIController->ClearFocus(EAIFocusPriority::Gameplay);
 
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	StartRestTimer();
-	
-	if (bChooseNextAttack)
-	{
-		ChooseNextAttack();
-	}
 }
 
 void AEnemy::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)

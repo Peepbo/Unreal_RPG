@@ -1261,11 +1261,12 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 		if (DegreeDifference <= EquippedShield->GetDefenceDegree()) {
 			const float HalfDamage{ DamageAmount / 2 };
 			if (Stamina >= HalfDamage) {
-				// 스태미나를 일정 수치 깎는다.
-				Stamina -= HalfDamage;
 
 				SetShiledImpact(true);
 				AnimInstance->SetShouldPlayShieldImpact(true);
+
+				// 스태미나를 일정 수치 깎는다.
+				UseStaminaAndStopRecovery(HalfDamage);
 
 				// 데미지를 가드가 모두 받아냈으니 함수를 종료한다.
 				return true;
@@ -1294,7 +1295,7 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 
 	// 공격중이 아니면 -> 피해 애니메이션 실행
 	// 공격중인데 약 공격이 아니면 -> 피해 애니메이션 실행
-	if (CombatState != ECombatState::ECS_Attack || AttackType != EAttackType::EAT_Light)
+	if (!bGuardBreak && CombatState != ECombatState::ECS_Attack || AttackType != EAttackType::EAT_Light)
 	{
 		// 피해 애니메이션을 실행하기 위해 모든 몽타주 종료
 		AnimInstance->StopAllMontages(0.15f);
