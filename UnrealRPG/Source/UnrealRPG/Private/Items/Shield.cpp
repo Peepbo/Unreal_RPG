@@ -19,7 +19,8 @@ void AShield::OnConstruction(const FTransform& Transform)
 	const FString ShieldTablePath{ "DataTable'/Game/_Game/DataTable/ShieldDataTable.ShieldDataTable'" };
 	UDataTable* ShieldTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *ShieldTablePath));
 
-	if (ShieldTableObject) {
+	if (ShieldTableObject)
+	{
 		FShieldDataTable* ShieldDataRow = nullptr;
 		switch (ShieldItemNumber)
 		{
@@ -31,7 +32,8 @@ void AShield::OnConstruction(const FTransform& Transform)
 			break;
 		}
 
-		if (ShieldDataRow) {
+		if (ShieldDataRow) 
+		{
 			ItemName = ShieldDataRow->ShieldName;
 			ItemIcon = ShieldDataRow->ShieldIcon;
 			ItemMesh->SetSkeletalMesh(ShieldDataRow->ShieldMesh);
@@ -82,19 +84,24 @@ void AShield::PushShield(bool bDebugVisible)
 	const bool bHit{ ShieldTraceSingle(bDebugVisible, HitResult) };
 	
 	// Hit이 되었을 때
-	if (bHit) {
+	if (bHit) 
+	{
 		// Actor가 nullptr이 아니면
-		if (HitResult.Actor != nullptr) {
+		if (HitResult.Actor != nullptr) 
+		{
 			// 한 번 AEnemy로 Cast를 시도해본다.
 			auto Enemy = Cast<AEnemy>(HitResult.Actor);
 
 			// Enemy로 Cast가 성공적으로 됬을 때
-			if (Enemy) {
+			if (Enemy) 
+			{
 				// Enemy가 데미지를 입을 수 있는 상태라면
-				if (Enemy->DamageableState()) {
+				if (Enemy->DamageableState())
+				{
 					// 상태 초기화 함수를 리셋 델리게이트에 넣고, 몬스터에 피해를 가한다.
 					
-					if (Character) {
+					if (Character) 
+					{
 						Character->AddFunctionToDamageTypeResetDelegate(Enemy, FName("ResetDamageState"));
 					}
 
@@ -106,7 +113,8 @@ void AShield::PushShield(bool bDebugVisible)
 					);
 
 					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
-					if (Enemy->GetBloodParticle()) {
+					if (Enemy->GetBloodParticle())
+					{
 						UGameplayStatics::SpawnEmitterAtLocation(
 							GetWorld(),
 							Enemy->GetBloodParticle(),

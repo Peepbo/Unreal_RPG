@@ -9,6 +9,8 @@
 
 class UAnimMontage;
 class UCharacterMovementComponent;
+class USoundCue;
+class USoundAttenuation;
 
 UCLASS()
 class UNREALRPG_API AMeleeCharacter : public ACharacter
@@ -23,76 +25,78 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void RespondTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
+	/* 캐릭터가 데미지를 입었을 때 호출되는 함수 */
 
-	UFUNCTION(BlueprintCallable)
-		void ChangeCombatState(ECombatState NextCombatState);
 
 	/* Shield Function */
-	/* bIsShieldImpact을 false로 바꾸는 함수 */
 	UFUNCTION(BlueprintCallable)
-		virtual void EndShieldImpact();
+	virtual void EndShieldImpact();
 
 
 	/* Damage Function */
-	/* impact state를 끝내는 함수 */
-	UFUNCTION(BlueprintCallable)
-		virtual void EndDamageImpact();
-
-	void ChangeMoveState(bool bNextMoveSprinting);
-
-	virtual void HardResetSprint();
-
-	void ChangeMaximumSpeedForSmoothSpeed(float DeltaTime);
+	UFUNCTION(BlueprintImplementableEvent)
+	void RespondTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
 
 	UFUNCTION(BlueprintCallable)
-	virtual	FVector GetFootLocation(bool bLeft);
-
-	UFUNCTION(BlueprintCallable)
-		void SaveRelativeVelocityAngle();
+	virtual void EndDamageImpact();
 
 	virtual bool CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
-	
+
 	UFUNCTION(BlueprintCallable)
 	virtual bool FallingDamage(float LastMaxmimumZVelocity);
 
 	UFUNCTION(BlueprintCallable)
-		float GetHpPercentage();
+	void ChangeDamageState(EDamageState State) { DamageState = State; }
+
+
 
 	UFUNCTION(BlueprintCallable)
-		void ChangeDamageState(EDamageState State) { DamageState = State; }
+	void ChangeCombatState(ECombatState NextCombatState);
+
+	void ChangeMoveState(bool bNextMoveSprinting);
+
+	/* 자연스럽게 속도를 조절하기위해 사용하는 함수 (목표 속도로 점차 바뀜) */
+	void ChangeMaximumSpeedForSmoothSpeed(float DeltaTime);
+
+	/* 강제로 Sprint를 종료하는 함수, Sprint 키는 누른 상태지만 캐릭터 이동키를 안눌렀을 때 호출 */
+	virtual void HardResetSprint();
+
+	UFUNCTION(BlueprintCallable)
+	virtual	FVector GetFootLocation(bool bLeft);
+
+	/* 캐릭터 회전값에 상대적인 가속 방향을 AnimInstance로 전송하는 함수 */
+	UFUNCTION(BlueprintCallable)
+	void SendRelativeVelocityAngle();
+
+	UFUNCTION(BlueprintCallable)
+	float GetHpPercentage();
 
 protected:
 	/* 캐릭터의 상태 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		ECombatState CombatState;
+	ECombatState CombatState;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* DieMontage;
+	UAnimMontage* DieMontage;
 
 	/* Health Point */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Stat, meta = (AllowPrivateAccess = "true"))
-		float HP;
+	float HP;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stat, meta = (AllowPrivateAccess = "true"))
-		float MaximumHP;
+	float MaximumHP;
 	/* Attack Damage */
 	UPROPERTY(VisibleAnywhere, Category = Stat, meta = (AllowPrivateAccess = "true"))
-		float AD;
-
-	/* 최대 기본 속도 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float MaximumWalkSpeed;
+	float AD;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float MaximumSprintSpeed;
-	
+	float MaximumWalkSpeed;
 
-	/* 전투 모드인지 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float MaximumSprintSpeed;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		bool bIsBattleMode;
+	bool bIsBattleMode;
 
-	/* 죽었는지 */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bDying;
 
@@ -103,22 +107,16 @@ protected:
 	UParticleSystem* BloodParticle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class USoundCue* BloodSound;
+	USoundCue* BloodSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	USoundCue* LastBloodSound;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-		class USoundAttenuation* SoundAttenuation;
 
 	/* 공격 시 TraceSphere를 시각화할지 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bVisibleTraceSphere;
 
-
-	/* Shield Variable */
 	bool bIsShieldImpact;
-
 	
 	FVector LastHitDirection;
 
@@ -129,7 +127,7 @@ protected:
 
 	/* 데미지를 받을 수 있는 상태인지를 검사하기 위해 사용하는 변수 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		EDamageState DamageState;
+	EDamageState DamageState;
 
 public:
 	// Called every frame
@@ -139,10 +137,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType);
 
-	/* 공격한 대상이 사망했을 때 호출되는 함수 (dispatcher) */
+	/* 공격한 대상이 사망했을 때 호출되는 함수 */
 	virtual void TargetDeath(float TargetRewardGold);
-
-private:
 
 private:
 

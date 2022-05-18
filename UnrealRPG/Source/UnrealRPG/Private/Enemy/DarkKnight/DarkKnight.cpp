@@ -27,10 +27,12 @@ void ADarkKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (AnimInstance) {
+	if (AnimInstance != nullptr) 
+	{
 		UKnightAnimInstance* KnightAnimInst = Cast<UKnightAnimInstance>(AnimInstance);
 
-		if (KnightAnimInst) {
+		if (KnightAnimInst) 
+		{
 			KnightAnimInstance = KnightAnimInst;
 		}
 	}
@@ -69,13 +71,15 @@ void ADarkKnight::SetEquipWeaponVisibility(const bool bNextVisibility)
 
 void ADarkKnight::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//if (!bShouldDrawWeapon)return;
-	if (Target != nullptr)return;
-	//if (bIsBattleMode)return;
-	if (OtherActor == nullptr)return;
+	const bool bReturnCondition{Target != nullptr || OtherActor == nullptr};
+	if (bReturnCondition)
+	{
+		return;
+	}
 
-	auto Character = Cast<APlayerCharacter>(OtherActor);
-	if (Character) {
+	APlayerCharacter* Character = Cast<APlayerCharacter>(OtherActor);
+	if (Character != nullptr) 
+	{
 		OverlapCharacter = Character;
 
 		// 타이머를 돌리는 이유? beginOverlap은 한번만 작동하므로 적이 overlap상태일 때 조건에 맞지 않으면 영영 캐릭터를 찾지 못하게 된다.
@@ -98,10 +102,11 @@ void ADarkKnight::StartDraw()
 {
 	GetCharacterMovement()->StopActiveMovement();
 
-	if (DrawMontage) {
-		if (AnimInstance) {
+	if (DrawMontage != nullptr) 
+	{
+		if (AnimInstance != nullptr)
+		{
 			AnimInstance->Montage_Play(DrawMontage);
-			UE_LOG(LogTemp, Warning, TEXT("Montage Play"));
 		}
 	}
 }
@@ -117,10 +122,9 @@ void ADarkKnight::StartSheath()
 {
 	GetCharacterMovement()->StopActiveMovement();
 	SetMove(false);
-	if (SheathMontage) {
-		if (AnimInstance) {
-			AnimInstance->Montage_Play(SheathMontage);
-		}
+	if (AnimInstance != nullptr && SheathMontage != nullptr)
+	{
+		AnimInstance->Montage_Play(SheathMontage);
 	}
 }
 
@@ -135,8 +139,10 @@ void ADarkKnight::EndDamageImpact()
 {
 	Super::EndDamageImpact();
 
-	if (bShouldDrawWeapon) {
-		if (Target && EnemyAIController) {
+	if (bShouldDrawWeapon)
+	{
+		if (Target != nullptr && EnemyAIController != nullptr)
+		{
 			GetWorldTimerManager().ClearTimer(SearchTimer);
 			ChangeColliderSetting(true);
 		
@@ -150,14 +156,14 @@ void ADarkKnight::EndDamageImpact()
 
 void ADarkKnight::PlayAttackMontage()
 {
-	if (GetSprinting() && SprintAttack.AttackMontage)
+	if (GetSprinting() && SprintAttack.AttackMontage != nullptr)
 	{
 		AnimInstance->Montage_Play(SprintAttack.AttackMontage);
 		SetSprinting(false);
 	}
 	else
 	{
-		if (AttackManager->GetMontage())
+		if (AttackManager->GetMontage() != nullptr)
 		{
 			AnimInstance->Montage_Play(AttackManager->GetMontage());
 		}
@@ -180,15 +186,12 @@ void ADarkKnight::FindCharacter()
 
 void ADarkKnight::ActiveEnemy(APlayerCharacter* Player)
 {
-	if (Player)
+	if (Player != nullptr && EnemyAIController != nullptr)
 	{
-		if (EnemyAIController)
-		{
-			Target = Player;
-			EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
+		Target = Player;
+		EnemyAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), Player);
 
-			ChooseNextAttack();
-		}
+		ChooseNextAttack();
 	}
 }
 
@@ -243,10 +246,11 @@ bool ADarkKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 	if (!bDying) 
 	{
 		GetWorldTimerManager().ClearTimer(SearchTimer);
+		// Target이 nullptr이면 데미지를 준 캐릭터를 캐스터하여 Player인지 확인한다.
 		if (Target == nullptr)
 		{
 			APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser);
-			if (Player)
+			if (Player != nullptr)
 			{
 				Target = Player;
 				AttackManager->ChooseAttack(GetDegreeForwardToTarget(), GetDistanceToTarget());

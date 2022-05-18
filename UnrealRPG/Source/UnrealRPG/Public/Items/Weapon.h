@@ -8,10 +8,6 @@
 #include "RPGTypes.h"
 #include "Weapon.generated.h"
 
-/**
- * 
- */
-
 USTRUCT(BlueprintType)
 struct FWeaponDataTable : public FTableRowBase
 {

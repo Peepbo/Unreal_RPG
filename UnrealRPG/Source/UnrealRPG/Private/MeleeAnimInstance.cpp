@@ -8,18 +8,21 @@
 
 void UMeleeAnimInstance::InitializeAnimationProperties()
 {
-	if (Character == nullptr) {
+	if (Character == nullptr)
+	{
 		Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
 	}
 }
 
 void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 {
-	if (Character == nullptr) {
+	if (Character == nullptr)
+	{
 		Character = Cast<AMeleeCharacter>(TryGetPawnOwner());
 	}
 
-	if (Character) {
+	if (Character != nullptr) 
+	{
 		// 캐릭터의 속도를 구함
 		FVector CharVelocity{ Character->GetVelocity() };
 		ZVelocity = CharVelocity.Z;
@@ -50,10 +53,12 @@ void UMeleeAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsInAir = Character->GetCharacterMovement()->IsFalling();
 
 		// 캐릭터가 움직이고 있는지 확인
-		if (Character->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0) {
+		if (Character->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0) 
+		{
 			bIsAccelerating = true;
 		}
-		else {
+		else 
+		{
 			bIsAccelerating = false;
 		}
 

@@ -24,7 +24,8 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 	const FString WeaponTablePath{ "DataTable'/Game/_Game/DataTable/WeaponDataTable.WeaponDataTable'" };
 	UDataTable* WeaponTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponTablePath));
 
-	if (WeaponTableObject) {
+	if (WeaponTableObject)
+	{
 		FWeaponDataTable* WeaponDataRow = nullptr;
 		switch (WeaponType)
 		{
@@ -34,10 +35,10 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 		case EWeaponType::EWT_TwoHandWeapon:
 			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("TwoHandSword"), TEXT(""));
 			break;
-			//case EWeaponType::EWT
 		}
 
-		if (WeaponDataRow) {
+		if (WeaponDataRow) 
+		{
 			ItemName = WeaponDataRow->WeaponName;
 			ItemIcon = WeaponDataRow->WeaponIcon;
 			ItemMesh->SetSkeletalMesh(WeaponDataRow->WeaponMesh);
@@ -67,7 +68,6 @@ float AWeapon::GetDamage(EWeaponAttackType Type)
 		return DashDamage;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("AttackType Not Found"));
 	return 0.0f;
 }
 
@@ -126,19 +126,24 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 	const float Damage{ GetDamage(AttackType) };
 
 	// Hit이 되었을 때
-	if (bHit) {
+	if (bHit) 
+	{
 		// Actor가 nullptr이 아니면
-		if (HitResult.Actor != nullptr) {
+		if (HitResult.Actor != nullptr)
+		{
 			// 한 번 AEnemy로 Cast를 시도해본다.
 			auto Enemy = Cast<AEnemy>(HitResult.Actor);
 
 			// Enemy로 Cast가 성공적으로 됬을 때
-			if (Enemy) {
+			if (Enemy) 
+			{
 				// Enemy가 데미지를 입을 수 있는 상태라면
-				if (Enemy->DamageableState()) {
+				if (Enemy->DamageableState())
+				{
 					// 상태 초기화 함수를 리셋 델리게이트에 넣고, 몬스터에 피해를 가한다.
 					
-					if (Character) {
+					if (Character) 
+					{
 						Character->AddFunctionToDamageTypeResetDelegate(Enemy, FName("ResetDamageState"));
 					}
 
@@ -150,7 +155,8 @@ void AWeapon::SwingWeapon(bool bDebugVisible)
 					);
 
 					// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
-					if (Enemy->GetBloodParticle()) {
+					if (Enemy->GetBloodParticle()) 
+					{
 						UGameplayStatics::SpawnEmitterAtLocation(
 							GetWorld(),
 							Enemy->GetBloodParticle(),

@@ -74,8 +74,8 @@ void APatrolDarkKnight::InitPatrolPath(int32 Size)
 
 void APatrolDarkKnight::DrawPatrolPath(float DrawTime)
 {
-	if (PatrolPath.Num() == 0) {
-		UE_LOG(LogTemp, Warning, TEXT("Path Data is Empty. You mush Call 'RetargetPatrolPath' Function"));
+	if (PatrolPath.Num() == 0) 
+	{
 		return;
 	}
 
@@ -105,11 +105,8 @@ void APatrolDarkKnight::DrawPatrolPath(float DrawTime)
 
 void APatrolDarkKnight::RetargetPatrolPath()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Retarget Function Call"));
-
 	if (PatrolPoints.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PatrolPoint array is empty"));
 		return;
 	}
 

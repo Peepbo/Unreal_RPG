@@ -95,13 +95,10 @@ void AMagic::InitMagic(APawn* CastOwner, float Damage)
 
 void AMagic::ActiveMagic(float DeltaTime)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Magic:ActiveMagic"));
 }
 
 void AMagic::DeactiveMagic(float DeltaTime)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Magic:DeactiveMagic"));
-
 	if (FXSound)
 	{
 		FXSound->VolumeMultiplier = UKismetMathLibrary::Lerp(FXSound->VolumeMultiplier, 0.f, DeltaTime);

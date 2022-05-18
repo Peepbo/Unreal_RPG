@@ -59,7 +59,8 @@ void AMeleeCharacter::Tick(float DeltaTime)
 
 bool AMeleeCharacter::CustomApplyDamage(AActor* DamagedActor, float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
-	if (DamagedActor == nullptr || DamageCauser == nullptr || bDying)
+	const bool bPassApplyDamage{ DamagedActor == nullptr || DamageCauser == nullptr || bDying };
+	if (bPassApplyDamage)
 	{
 		return false;
 	}
@@ -83,30 +84,25 @@ bool AMeleeCharacter::FallingDamage(float LastMaxmimumZVelocity)
 	{
 		return false;
 	}
+
+	const float DamageAmount{ MaximumHP * DamagePercentage };
+
+	if (HP - DamageAmount > 0.f)
+	{
+		HP -= DamageAmount;
+	}
 	else
 	{
-		const  float DamageAmount{ MaximumHP * DamagePercentage };
+		HP = 0.f;
+		bDying = true;
 
-		if (HP - DamageAmount > 0.f) {
-			HP -= DamageAmount;
-
-			//if (BloodSound)
-			//{
-			//	UGameplayStatics::PlaySoundAtLocation(this, BloodSound, GetActorLocation());
-			//}
+		if (LastBloodSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, LastBloodSound, GetActorLocation());
 		}
-		else {
-			HP = 0.f;
-			bDying = true;
-
-			if (LastBloodSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, LastBloodSound, GetActorLocation());
-			}
-		}
-
-		return true;
 	}
+
+	return true;
 }
 
 float AMeleeCharacter::GetHpPercentage()
@@ -120,6 +116,7 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 	{
 		return false;
 	}
+
 	RespondTakeDamage(DamageAmount, DamageCauser, AttackType);
 
 	const FVector HitDir{ UKismetMathLibrary::Normal(DamageCauser->GetActorLocation() - GetActorLocation()) };
@@ -133,12 +130,14 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 	{
 		RelativeDegree = -RelativeDegree;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Hit Degree : %f"), RelativeDegree);
+
 	LastHitDirection = { UKismetMathLibrary::DegCos(RelativeDegree),UKismetMathLibrary::DegSin(RelativeDegree), 0.f };
 
 	LastDamagedAttackType = AttackType;
 
-	if (HP - DamageAmount > 0.f) {
+	const bool bSurvival{ HP - DamageAmount > 0.f };
+	if (bSurvival)
+	{
 		HP -= DamageAmount;
 
 		if (BloodSound)
@@ -149,6 +148,7 @@ bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser,
 	else {
 		HP = 0.f;
 		bDying = true;
+
 		AMeleeCharacter* DamageCharacter = Cast<AMeleeCharacter>(DamageCauser);
 		if (DamageCharacter)
 		{
@@ -212,7 +212,7 @@ FVector AMeleeCharacter::GetFootLocation(bool bLeft)
 	return FVector();
 }
 
-void AMeleeCharacter::SaveRelativeVelocityAngle()
+void AMeleeCharacter::SendRelativeVelocityAngle()
 {
 	float Angle{ 0.f };
 
@@ -233,7 +233,7 @@ void AMeleeCharacter::SaveRelativeVelocityAngle()
 
 	Angle = dot;
 	if (Cross < 0.f) 
-{
+	{
 		Angle = -Angle;
 	}
 	

@@ -24,8 +24,6 @@ void ALionKnight::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AD = 30.f;
-	//MaximumHP = 2000.f;
 	HP = MaximumHP;
 
 	ChangeEnemySize(EEnemySize::EES_Large);
@@ -95,7 +93,8 @@ bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 {
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
-	if (!bStun && !bSecondPageUp && GetHpPercentage() <= NextPageStartHealthPercentage)
+	const bool bNextPageCondition{ !bStun && !bSecondPageUp && GetHpPercentage() <= NextPageStartHealthPercentage };
+	if (bNextPageCondition)
 	{
 		bSecondPageUp = true;
 		PlayNextPageMontage();
@@ -195,15 +194,8 @@ void ALionKnight::EndEvent()
 
 bool ALionKnight::CheckDodge()
 {
-	if (DodgeMontageList.GetHead() == nullptr)
-	{
-		return false;
-	}
-	if (AttackManager->GetMontageType() == EEnemyMontageType::EEMT_Back)
-	{
-		return false;
-	}
-	if (bEvent)
+	const bool bReturnCondition{ DodgeMontageList.GetHead() == nullptr || AttackManager->GetMontageType() == EEnemyMontageType::EEMT_Back || bEvent };
+	if (bReturnCondition)
 	{
 		return false;
 	}
@@ -260,7 +252,7 @@ void ALionKnight::InitPage_Implementation()
 
 void ALionKnight::PlayNextPageMontage()
 {
-	if (NextPageMontage)
+	if (NextPageMontage != nullptr)
 	{
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), false);
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bStun"), false);

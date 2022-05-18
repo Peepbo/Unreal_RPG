@@ -14,9 +14,9 @@ class UNREALRPG_API UAlgorithmStaticLibrary : public UObject
 {
 	GENERATED_BODY()
 
-	/* Fisher-Yates shuffle Algorithm */
-	//template<typename InElementType, typename InAllocator>
 public:
+
+	/* Fisher-Yates shuffle Algorithm */
 	template<class T>
 	static FORCEINLINE void ShuffleArray(TArray<T>& Array)
 	{

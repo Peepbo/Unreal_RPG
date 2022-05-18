@@ -6,6 +6,7 @@
 #include "Enemy/EnemyAnimInstance.h"
 #include "KnightAnimInstance.generated.h"
 
+class ADarkKnight;
 /**
  * 
  */
@@ -20,7 +21,7 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Class", meta = (AllowPrivateAccess = "true"))
-	class ADarkKnight* DarkKnight;
+	ADarkKnight* DarkKnight;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bShouldDrawWeapon;

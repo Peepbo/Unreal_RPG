@@ -15,7 +15,8 @@ void APotion::OnConstruction(const FTransform& Transform)
 	const FString PotionTablePath{ "DataTable'/Game/_Game/DataTable/PotionDataTable.PotionDataTable'" };
 	UDataTable* PotionTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *PotionTablePath));
 
-	if (PotionTableObject) {
+	if (PotionTableObject)
+	{
 		FPotionDataTable* PotionDataRow = nullptr;
 		switch (PotionTier)
 		{
@@ -26,7 +27,8 @@ void APotion::OnConstruction(const FTransform& Transform)
 			break;
 		}
 
-		if (PotionDataRow) {
+		if (PotionDataRow) 
+		{
 			ItemName = PotionDataRow->PotionName;
 			ItemIcon = PotionDataRow->PotionIcon;
 			ItemMesh->SetSkeletalMesh(PotionDataRow->PotionMesh);

@@ -55,8 +55,6 @@ void ALaserBeam::Tick(float DeltaTime)
 
 	if (Hit.bBlockingHit)
 	{
-		//EndPointFX->SetWorldLocation(Hit.Location);
-
 		AMeleeCharacter* MeleeCharacter = nullptr;
 		if (Hit.GetActor())
 		{
@@ -70,7 +68,8 @@ void ALaserBeam::Tick(float DeltaTime)
 			EndPointFX->SetWorldLocation(Hit.Location);
 		}
 
-		if (bCastableMeleeCharacter && !bStop && TraceLifeTime > 0.f)
+		const bool bStopMagic{ bCastableMeleeCharacter && !bStop && TraceLifeTime > 0.f };
+		if (bStopMagic)
 		{
 			AMeleeCharacter* Character = Cast<AMeleeCharacter>(Hit.GetActor());
 			Character->CustomApplyDamage(Character, MagicDamage, MagicOwner, EAttackType::EAT_Strong);

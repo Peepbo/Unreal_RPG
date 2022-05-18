@@ -8,9 +8,9 @@
 #include "RPGTypes.h"
 #include "Potion.generated.h"
 
-/**
- * 
- */
+class UTexture2D;
+class USkeletalMesh;
+
 USTRUCT(BlueprintType)
 struct FPotionDataTable : public FTableRowBase
 {
@@ -20,10 +20,10 @@ struct FPotionDataTable : public FTableRowBase
 	FString PotionName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		class UTexture2D* PotionIcon;
+	UTexture2D* PotionIcon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		class USkeletalMesh* PotionMesh;
+	USkeletalMesh* PotionMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float RecoveryAmount;
@@ -39,16 +39,12 @@ public:
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-public:
-private:
-
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-		UDataTable* DataTable;
+	UDataTable* DataTable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = DataTable, meta = (AllowPrivateAccess = "true"))
-		int32 PotionTier;
-
+	int32 PotionTier;
 
 	float RecoveryAmount;
 public:

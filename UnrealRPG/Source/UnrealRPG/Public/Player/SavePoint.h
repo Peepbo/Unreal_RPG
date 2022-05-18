@@ -13,14 +13,15 @@ struct FCheckPointTable : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName LevelName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector DefaultLocation;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FVector> Location;
 };
+
+class UStaticMeshComponent;
+class UNiagaraComponent;
+class USpotLightComponent;
+class UPointLightComponent;
+class UAudioComponent;
+class USceneComponent;
 
 UCLASS()
 class UNREALRPG_API ASavePoint : public AEventArea
@@ -33,8 +34,6 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 	virtual	void PlayerRangeOverlap(
 			UPrimitiveComponent* OverlappedComponent,
 			AActor* OtherActor,
@@ -45,25 +44,25 @@ protected:
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	class UStaticMeshComponent* DecolationPlane;
+	UStaticMeshComponent* DecolationPlane;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* DecolationMesh2;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	class UNiagaraComponent* FX;
+	UNiagaraComponent* FX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	class USpotLightComponent* SpotLight;
+	USpotLightComponent* SpotLight;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	class UPointLightComponent* PointLight;
+	UPointLightComponent* PointLight;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	class UAudioComponent* Audio;
+	UAudioComponent* Audio;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
-	class USceneComponent* ResponPoint;
+	USceneComponent* ResponPoint;
 
 	UPROPERTY(EditAnywhere, Category = SavePoint, meta = (AllowPrivateAccess = "true"))
 	FName SavePointName;

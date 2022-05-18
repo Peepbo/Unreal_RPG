@@ -52,7 +52,8 @@ void AExecutionArea::ApplyDamageToEnemy(int32 Index)
 	Enemy->CustomApplyDamage(Enemy, SelectDamage, PlayerCharacter, EAttackType::EAT_Strong);
 
 	// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
-	if (Enemy->GetBloodParticle()) {
+	if (Enemy->GetBloodParticle()) 
+	{
 		UGameplayStatics::SpawnEmitterAtLocation(
 			GetWorld(),
 			Enemy->GetBloodParticle(),

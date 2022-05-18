@@ -6,6 +6,8 @@
 #include "AIController.h"
 #include "EnemyAIController.generated.h"
 
+class UBlackboardComponent;
+class UBehaviorTreeComponent;
 /**
  * 
  */
@@ -19,10 +21,10 @@ public:
 
 private:
 	UPROPERTY(BlueprintReadWrite, Category = "AI Behavior", meta = (AllowPrivateAccess = "true"))
-	class UBlackboardComponent* BlackboardComponent;
+	UBlackboardComponent* BlackboardComponent;
 
 	UPROPERTY(BlueprintReadWrite, Category = "AI Behavior", meta = (AllowPrivateAccess = "true"))
-	class UBehaviorTreeComponent* BehaviorTreeComponent;
+	UBehaviorTreeComponent* BehaviorTreeComponent;
 
 public:
 	FORCEINLINE UBlackboardComponent* GetBlackboardComponent() const { return BlackboardComponent; }

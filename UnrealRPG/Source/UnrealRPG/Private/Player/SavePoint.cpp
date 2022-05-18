@@ -47,12 +47,6 @@ ASavePoint::ASavePoint()
 	PointLight->AttenuationRadius = 400.f;
 }
 
-// Called when the game starts or when spawned
-void ASavePoint::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void ASavePoint::PlayerRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (bClosePlayer)

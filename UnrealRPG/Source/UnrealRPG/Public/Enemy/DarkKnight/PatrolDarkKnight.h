@@ -35,7 +35,9 @@ private:
 	TArray<FVector> PatrolPoints;
 
 	/* Patrol Point를 World좌표로 바꾼 결과 */
+	UPROPERTY()
 	TArray<FVector> WorldPatrolPoints;
+
 	/* 
 	* ex) 0? 0->1로 이동하는 경로, last? last->0으로 이동하는 경로 
 	* blueprint Construction에서 경로를 시각화하면서 정보를 여기로 보냄
@@ -48,7 +50,6 @@ private:
 	bool bPatrol;
 
 public:
-
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
 	virtual int32 GetPatrolIndex() override;
 

@@ -17,12 +17,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
-
 #include "TimerManager.h"
-
 #include "ExecutionArea.h"
 #include "AlgorithmStaticLibrary.h"
-
 #include "EnemyAdvancedAttackManager.h"
 
 
@@ -140,13 +137,17 @@ void AEnemy::BeginPlay()
 
 void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (bIsBattleMode)return;
-	if (OtherActor == nullptr)return;
-	if (Target != nullptr)return;
+	const bool bReturnCondition{ bIsBattleMode || OtherActor == nullptr || Target != nullptr };
+	if (bReturnCondition)
+	{
+		return;
+	}
 
 	auto Character = Cast<APlayerCharacter>(OtherActor);
-	if (Character) {
-		if (EnemyAIController) {
+	if (Character) 
+	{
+		if (EnemyAIController) 
+		{
 			ActiveEnemy(Character);
 		}
 	}
@@ -160,12 +161,14 @@ void AEnemy::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 {
 	if (OtherActor == nullptr)return;
 
-	auto Character = Cast<APlayerCharacter>(OtherActor);
+	APlayerCharacter* Character = Cast<APlayerCharacter>(OtherActor);
 
-	if (Character) {
+	if (Character)
+	{
 		bInAttackRange = true;
 
-		if (EnemyAIController) {
+		if (EnemyAIController)
+		{
 			EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("InAttackRange"), true);
 		}
 	}
@@ -175,7 +178,7 @@ void AEnemy::CombatRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 {
 	if (OtherActor == nullptr)return;
 
-	auto Character = Cast<APlayerCharacter>(OtherActor);
+	APlayerCharacter* Character = Cast<APlayerCharacter>(OtherActor);
 
 	if (Character) 
 	{
@@ -235,11 +238,13 @@ void AEnemy::ChangeEnemySize(EEnemySize Size)
 
 void AEnemy::ChangeColliderSetting(bool bBattle)
 {
-	if (bBattle) {
+	if (bBattle) 
+	{
 		AgroSphere->Deactivate();
 		CombatRangeSphere->Activate();
 	}
-	else {
+	else 
+	{
 		AgroSphere->Activate();
 		CombatRangeSphere->Deactivate();
 	}
@@ -281,8 +286,8 @@ void AEnemy::StopRotate()
 
 void AEnemy::TracingAttackSphere(float Damage)
 {
-	if (!bAttackable)return;
-	if (!AttackManager->IsValidAttack())
+	const bool bReturnCondition{ !bAttackable || !AttackManager->IsValidAttack() };
+	if (bReturnCondition)
 	{
 		return;
 	}
@@ -307,11 +312,14 @@ void AEnemy::TracingAttackSphere(float Damage)
 		true
 	);
 	
-	if (bHit) {
-		if (HitResult.Actor != nullptr) {
+	if (bHit) 
+	{
+		if (HitResult.Actor != nullptr) 
+		{
 			APlayerCharacter* Player = Cast<APlayerCharacter>(HitResult.Actor);
 	
-			if (Player != nullptr && !Player->GetImpacting()) {
+			if (Player != nullptr && !Player->GetImpacting())
+			{
 				// attack point를 플레이어한테 전달
 				Player->SetHitPoint(HitResult.ImpactPoint);
 	
@@ -328,7 +336,8 @@ void AEnemy::TracingAttackSphere(float Damage)
 					if (Player->GetImpacting() || Player->GuardBreaking())
 					{
 						// 피해 파티클이 존재할 때 타격 위치에 파티클을 생성한다.
-						if (Player->GetBloodParticle()) {
+						if (Player->GetBloodParticle())
+						{
 							UGameplayStatics::SpawnEmitterAtLocation(
 								GetWorld(),
 								Player->GetBloodParticle(),
@@ -453,8 +462,10 @@ void AEnemy::FindCharacter()
 	// 전방 160도면 -80~+80 사이 (dot product는 어차피 -가 나오질 않으므로 80이하인지 검사)
 	const bool bFind{ DotDegree <= 80.f };
 
-	if (bFind) {
-		if (EnemyAIController) {
+	if (bFind)
+	{
+		if (EnemyAIController) 
+		{
 			// 데미지를 입거나 일정거리 안에 들어왔을 때 호출되는 함수
 			ActiveEnemy(OverlapCharacter);
 
@@ -481,7 +492,8 @@ float AEnemy::GetDegreeForwardToTarget()
 	float ResultDegree{ UKismetMathLibrary::DegAcos(DotProductRadian) };
 
 	const float CrossProduct{ UKismetMathLibrary::CrossProduct2D(ActorForward2D,ActorToTarget2D) };
-	if (CrossProduct < 0.f) {
+	if (CrossProduct < 0.f)
+	{
 		ResultDegree = -(ResultDegree);
 	}
 
@@ -517,7 +529,8 @@ void AEnemy::EndAttack()
 
 void AEnemy::GetWeaponMesh(USkeletalMeshComponent* ItemMesh)
 {
-	if (ItemMesh) {
+	if (ItemMesh) 
+	{
 		WeaponMesh = ItemMesh;
 	}
 }
@@ -796,6 +809,7 @@ void AEnemy::Tick(float DeltaTime)
 	{
 		return;
 	}
+
 	if (Target)
 	{
 		if (bRecoverMentality)
@@ -867,7 +881,8 @@ bool AEnemy::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackT
 
 void AEnemy::TakeMentalDamage(float DamageAmount)
 {
-	if (bStun || bDodge)
+	const bool bReturnCondition{ bStun || bDodge };
+	if (bReturnCondition)
 	{
 		return;
 	}

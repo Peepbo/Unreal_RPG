@@ -76,7 +76,7 @@ public:
 	UEnemyAdvancedAttackManager();
 
 	void InitMontageData(TArray<FEnemyNormalAttack> NormalAttack, TArray<FEnemySpecialAttack> SpecialAttack, TArray<FEnemySpecialAttack> BackAttack, TArray<FEnemyMagicAttack> MagicAttack);
-	/* NormalAttack을 제외하고 실행 우선 순위를 정한다. (Normal은 로직 마지막에 자동 추가됨, 같은 타입 혹은 Normal, Max type을 추가 시 NormalType만 순위에 지정)*/
+	/* NormalAttack을 제외하고 실행 우선 순위를 정한다. (Normal은 로직 마지막에 자동 추가되며 만약 같은 타입 혹은 Normal type, Max type을 추가 하면 NormalType만 순위에 지정함)*/
 	void SetAttackSequence(const TArray<EEnemyMontageType>& Sequence);
 
 	void ChooseAttack(float ToTargetDegree, float ToTargetDistance);
@@ -90,13 +90,16 @@ private:
 
 	bool bSequenceShuffle = false;
 
+	UPROPERTY()
 	TArray<EEnemyMontageType> TypeSequence;
 
-
 	FEnemyNormalAttack* AttackCommonDataPtr = nullptr;
-	/* 추가 정보들 */
+
 	EEnemyMontageType MontageType = EEnemyMontageType::EEMT_Normal;
+
+	UPROPERTY()
 	TSubclassOf<AMagic> LastMagic;
+
 	float LastMagicDamage;
 	
 public:

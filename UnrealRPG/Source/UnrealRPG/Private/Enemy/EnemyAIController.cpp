@@ -20,11 +20,14 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	if (InPawn) {
+	if (InPawn) 
+	{
 		AEnemy* Enemy = Cast<AEnemy>(InPawn);
 
-		if (Enemy) {
-			if (Enemy->GetBehaviorTree()) {
+		if (Enemy)
+		{
+			if (Enemy->GetBehaviorTree())
+			{
 				BlackboardComponent->InitializeBlackboard(*(Enemy->GetBehaviorTree()->BlackboardAsset));
 
 				BlackboardComponent->SetValueAsObject(TEXT("SelfActor"), Enemy);

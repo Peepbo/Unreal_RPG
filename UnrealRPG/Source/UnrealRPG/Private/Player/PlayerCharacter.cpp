@@ -147,22 +147,27 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	EquipWeapon(SpawnDefaultWeapon());
-	if (EquippedWeapon) {
+	if (EquippedWeapon != nullptr) 
+	{
 		EquippedWeapon->SetCharacter(this);
 	}
 	EquipShield(SpawnDefaultShield());
-	if (EquippedShield) {
+	if (EquippedShield != nullptr)
+	{
 		EquippedShield->SetCharacter(this);
 	}
 	EquipPotion(SpawnDefaultPotion());
-	if (EquippedPotion) {
+	if (EquippedPotion != nullptr)
+	{
 		EquippedPotion->SetCharacter(this);
 	}
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst) {
+	if (AnimInst != nullptr) 
+	{
 		UPlayerAnimInstance* PlayerAnimInst = Cast<UPlayerAnimInstance>(AnimInst);
-		if (PlayerAnimInst) {
+		if (PlayerAnimInst != nullptr) 
+		{
 			AnimInstance = PlayerAnimInst;
 		}
 	}
@@ -179,12 +184,14 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	if (!bControl)return;
-	if (CombatState == ECombatState::ECS_Attack)return;
-	if (CombatState == ECombatState::ECS_Roll)return;
-	if (CombatState == ECombatState::ECS_Impact)return;
-	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
-	if (CombatState == ECombatState::ECS_RestInteraction)return;
+	if (!bControl)
+	{
+		return;
+	}
+	if (!CheckActionableState())
+	{
+		return;
+	}
 	
 	if (Controller && Value != 0.f) {
 		if (CheckActionableState() && !GetSprinting() && bLockOn) 
@@ -192,7 +199,6 @@ void APlayerCharacter::MoveForward(float Value)
 			ApplyLockOnAttackSetting(false);
 		}
 
-		//EndToIdleState(true);
 		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 		{
 			AnimInstance->StopAllMontages(0.2f);
@@ -212,12 +218,14 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
-	if (!bControl)return;
-	if (CombatState == ECombatState::ECS_Attack)return;
-	if (CombatState == ECombatState::ECS_Roll)return;
-	if (CombatState == ECombatState::ECS_Impact)return;
-	if (CombatState == ECombatState::ECS_NonMovingInteraction)return;
-	if (CombatState == ECombatState::ECS_RestInteraction)return;
+	if (!bControl)
+	{
+		return;
+	}
+	if (!CheckActionableState())
+	{
+		return;
+	}
 
 	if (Controller && Value != 0.f) {
 		if (CheckActionableState() && !GetSprinting() && bLockOn)
@@ -225,7 +233,6 @@ void APlayerCharacter::MoveRight(float Value)
 			ApplyLockOnAttackSetting(false);
 		}
 
-		//EndToIdleState(true);
 		if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 		{
 			AnimInstance->StopAllMontages(0.2f);
@@ -245,7 +252,10 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::TurnAtRate(float Rate)
 {
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 	if (bLockOn || GetAttacking())
 	{
 		return;
@@ -258,7 +268,10 @@ void APlayerCharacter::TurnAtRate(float Rate)
 
 void APlayerCharacter::LookUpAtRate(float Rate)
 {
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 	if (bLockOn || GetAttacking())
 	{
 		return;
@@ -271,7 +284,10 @@ void APlayerCharacter::LookUpAtRate(float Rate)
 
 void APlayerCharacter::TurnAtRateInMouse(float Rate)
 {
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 	if (bLockOn)
 	{
 		return;
@@ -282,7 +298,10 @@ void APlayerCharacter::TurnAtRateInMouse(float Rate)
 
 void APlayerCharacter::LookUpAtRateInMouse(float Rate)
 {
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 	if (bLockOn)
 	{
 		return;
@@ -321,7 +340,10 @@ void APlayerCharacter::PressedAttack()
 {
 	bPressedAttackButton = true;
 
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 
 	if (!CheckActionableState() || EquippedWeapon == nullptr || AnimInstance == nullptr)
 	{
@@ -371,12 +393,15 @@ bool APlayerCharacter::CheckComboAttack()
 	{
 		bShouldContinueAttack = false;
 
-		MontageValid = MainComboMontages.IsValidIndex(ComboAttackMontageIndex) && MainComboMontages[ComboAttackMontageIndex];
+		MontageValid = MainComboMontages.IsValidIndex(ComboAttackMontageIndex) && MainComboMontages[ComboAttackMontageIndex] != nullptr;
 		if (MontageValid)
 		{
 			bPlayAttack = MainAttack();
 
-			if (bPlayAttack) return true;
+			if (bPlayAttack)
+			{
+				return true;
+			}
 		}
 	}
 	// 강 공격
@@ -384,12 +409,15 @@ bool APlayerCharacter::CheckComboAttack()
 	{
 		bShouldChargedAttack = false;
 
-		MontageValid = ChargedComboMontages.IsValidIndex(ChargedComboAttackMontageIndex) && ChargedComboMontages[ChargedComboAttackMontageIndex];
+		MontageValid = ChargedComboMontages.IsValidIndex(ChargedComboAttackMontageIndex) && ChargedComboMontages[ChargedComboAttackMontageIndex] != nullptr;
 		if (MontageValid)
 		{
 			bPlayAttack = ChargedAttack();
 
-			if (bPlayAttack) return true;
+			if (bPlayAttack)
+			{
+				return true;
+			}
 		}
 	}
 
@@ -400,7 +428,6 @@ bool APlayerCharacter::CheckComboAttack()
 
 void APlayerCharacter::EndAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("End Attack Call"));
 	ResetAttack();
 }
 
@@ -435,7 +462,7 @@ void APlayerCharacter::StartComboTimer()
 AWeapon* APlayerCharacter::SpawnDefaultWeapon()
 {
 	// 기본 무기를 생성한 뒤 반환한다.
-	if (DefaultWeaponClass)
+	if (DefaultWeaponClass != nullptr)
 	{
 		return GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
 	}
@@ -445,7 +472,7 @@ AWeapon* APlayerCharacter::SpawnDefaultWeapon()
 AShield* APlayerCharacter::SpawnDefaultShield()
 {
 	// 기본 방패를 생성한 뒤 반환한다.
-	if (DefaultShieldClass) 
+	if (DefaultShieldClass != nullptr)
 	{
 		return GetWorld()->SpawnActor<AShield>(DefaultShieldClass);
 	}
@@ -454,7 +481,7 @@ AShield* APlayerCharacter::SpawnDefaultShield()
 
 APotion* APlayerCharacter::SpawnDefaultPotion()
 {
-	if (DefaultPotionClass)
+	if (DefaultPotionClass != nullptr)
 	{
 		return GetWorld()->SpawnActor<APotion>(DefaultPotionClass);
 	}
@@ -464,10 +491,10 @@ APotion* APlayerCharacter::SpawnDefaultPotion()
 void APlayerCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 {
 	// 무기를 RightHandSocket 위치에 부착한다.
-	if (Weapon)
+	if (Weapon != nullptr)
 	{
 		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(RightHandSocketName);
-		if (HandSocket)
+		if (HandSocket != nullptr)
 		{
 			HandSocket->AttachActor(Weapon, GetMesh());
 		}
@@ -481,9 +508,9 @@ void APlayerCharacter::EquipWeapon(AWeapon* Weapon, bool bSwapping)
 void APlayerCharacter::EquipShield(AShield* Shield, bool bSwapping)
 {
 	// 방패를 LeftHandSocket 위치에 부착한다.
-	if (Shield) {
+	if (Shield != nullptr) {
 		const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(LeftHandSocketName);
-		if (HandSocket) 
+		if (HandSocket != nullptr)
 		{
 			HandSocket->AttachActor(Shield, GetMesh());
 		}
@@ -496,10 +523,10 @@ void APlayerCharacter::EquipShield(AShield* Shield, bool bSwapping)
 
 void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
 {
-	if (Potion) 
+	if (Potion != nullptr)
 	{
 		const USkeletalMeshSocket* PotionSocket = GetMesh()->GetSocketByName(PotionSocketName);
-		if (PotionSocket) 
+		if (PotionSocket != nullptr)
 		{
 			PotionSocket->AttachActor(Potion, GetMesh());
 		}
@@ -512,9 +539,13 @@ void APlayerCharacter::EquipPotion(APotion* Potion, bool bSwapping)
 
 void APlayerCharacter::Roll()
 {
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 
-	if (AnimInstance) {
+	if (AnimInstance != nullptr)
+	{
 		UseStaminaAndStopRecovery(RollRequiredStamina);
 
 		const FVector2D MoveAxis{ GetMovementLocalAxis() };
@@ -557,20 +588,16 @@ void APlayerCharacter::PressedRollAndSprint()
 {
 	bPressedRollAndSprintButton = true;
 
-	if (!bControl)return;
-
 	// 구르기와 뛰기는 둘 다 특정 모션을 취하고 있으면 안되고, 공중에 있으면 안된다. 
-	if (!CheckActionableState())return;
-	if (GetCharacterMovement()->IsFalling())return;
-	//if (!bCanRoll)return;
-	// 여기에 스테미나 검사도 포함
+	const bool bReturnCondition{ !bControl || !CheckActionableState() || GetCharacterMovement()->IsFalling() };
+	if (bReturnCondition)
+	{
+		return;
+	}
 
 	bCanRoll = false;
 
-	//EndToIdleState(true);
 	ForceStopAllMontage();
-
-	UE_LOG(LogTemp, Warning, TEXT("롤 앤 스프린트 타이머 시작"));
 
 	// 0.5초 내에 키를 제거했을 때 = 구르기, 0.5초가 지나 Sprint함수를 출력했을 때 = 뛰기
 	GetWorldTimerManager().SetTimer(
@@ -586,9 +613,11 @@ void APlayerCharacter::ReleasedRollAndSprint()
 {
 	bPressedRollAndSprintButton = false;
 
-	if (!bControl)return;
-	if (!CheckActionableState())return;
-	if (GetCharacterMovement()->IsFalling())return;
+	const bool bReturnCondition{ !bControl || !CheckActionableState() || GetCharacterMovement()->IsFalling() };
+	if (bReturnCondition)
+	{
+		return;
+	}
 
 	// 1. 뛰고 있을 때(sprint)
 	if (GetSprinting())
@@ -608,9 +637,7 @@ void APlayerCharacter::ReleasedRollAndSprint()
 			*	Pressed 호출시 땅에 있었고 특정 모션을 취하지 않았지만
 			*	Released 호출시에 공중에 있거나 특정 모션을 취하면 구르기를 하면 안되기 때문
 			*/
-			if (!GetCharacterMovement()->IsFalling() &&
-				CheckActionableState() &&
-				Stamina >= RollRequiredStamina)
+			if (!GetCharacterMovement()->IsFalling() && CheckActionableState() && Stamina >= RollRequiredStamina)
 			{
 				if (AnimInstance)
 				{
@@ -675,9 +702,11 @@ void APlayerCharacter::PressedSubAttack()
 {
 	bPressedSubAttackButton = true;
 
-	if (!bControl)return;
-
-	if (EquippedShield == nullptr)return;
+	const bool bReturnCondition{ !bControl || EquippedShield == nullptr };
+	if (bReturnCondition)
+	{
+		return;
+	}
 
 	if (CheckActionableState())
 	{
@@ -720,7 +749,6 @@ void APlayerCharacter::SaveDegree()
 	// 만약 방향키를 이동하지 않았을 땐 Rotation을 저장할 필요가 없다. 어차피 각도가 같아 회전할 필요가 없기 때문
 	if (MovementAxis.IsNearlyZero()) 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Player:SaveDegree]Axis is nearly zero : {%f,%f}"), MovementAxis.X, MovementAxis.Y);
 		return;
 	}
 
@@ -749,25 +777,28 @@ void APlayerCharacter::SaveDegree()
 	*				-1 (Backward)
 	*/
 	// 0보다 클 때? 각도가 0~90 내로 차이가 날 때
-	if (DotProductValue >= 0.f) {
+	if (DotProductValue >= 0.f) 
+	{
 		// 정면 회전과 스틱 회전을 결합하여 최종 회전을 구한다.
 		SaveRotator = UKismetMathLibrary::ComposeRotators(ControllerRotation, MovementRotation);
 	}
 
 	// 0보다 작을 때, 각도가 90~180 내로 차이가 날 때 (최대 허용 각도를 90도로 제한함)
-	else {
+	else 
+	{
 		// 이제는 Cross Product를 사용하여 최단 회전 방향이 왼쪽인지 오른쪽인지 구한다.
 		const FVector CrossProductValue{ UKismetMathLibrary::Cross_VectorVector(GetActorForwardVector(), ComposeDirection3D) };
 
 		// Z에 저장된 값이 음수면 왼쪽이 최단 회전 방향, 양수면 오른쪽이 최단 회전 방향이 된다.
-		if (CrossProductValue.Z < 0.f) {
+		if (CrossProductValue.Z < 0.f) 
+		{
 			SaveRotator = UKismetMathLibrary::ComposeRotators(GetActorRotation(), { 0,-90.f,0 });
 		}
-		else {
+		else 
+		{
 			SaveRotator = UKismetMathLibrary::ComposeRotators(GetActorRotation(), { 0,+90.f,0 });
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Start Rot"));
 }
 
 void APlayerCharacter::BeginAttackRotate(float DeltaTime)
@@ -780,10 +811,11 @@ void APlayerCharacter::PressedChargedAttack()
 {
 	bPressedChargedAttackButton = true;
 
-	if (!bControl)return;
-	if (!CheckActionableState())return;
-	if (EquippedWeapon == nullptr)return;
-	if (!CheckLand())return;
+	const bool bReturnCondition{ !bControl || !CheckActionableState() || EquippedWeapon == nullptr || !CheckLand() };
+	if (bReturnCondition)
+	{
+		return;
+	}
 
 	PrepareChargedAttack();
 }
@@ -801,6 +833,11 @@ void APlayerCharacter::EndSprint()
 
 void APlayerCharacter::PrepareChargedAttack()
 {
+	if (ChargedComboMontages[0] != nullptr)
+	{
+		return;
+	}
+
 	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Charged))
 	{
 		// 0번은 차지 공격 준비 자세
@@ -890,7 +927,10 @@ void APlayerCharacter::EndAttackCheckTime()
 
 void APlayerCharacter::PressedLockOn()
 {
-	if (!bControl)return;
+	if (!bControl)
+	{
+		return;
+	}
 
 	if (bLockOn) 
 	{
@@ -1004,14 +1044,15 @@ void APlayerCharacter::PressedUseItem()
 {
 	bPressedUseItemButton = true;
 
-	if (!bControl)return;
+	const bool bReturnCondition{ !bControl || !CheckActionableState() || !CheckLand() };
+	if (bReturnCondition)
+	{
+		return;
+	}
 
-	if (EquippedPotion) 
+	if (EquippedPotion != nullptr) 
 	{
 		// 특정 액션(공격, 구르기, 점프 상태)을 취하고 있지 않을 때만 사용 가능
-		if (!CheckActionableState())return;
-		if (!CheckLand())return;
-
 		ForceStopAllMontage();
 
 		// 풀피가 아닐 때 사용 (포션)
@@ -1060,9 +1101,12 @@ bool APlayerCharacter::CheckLand()
 
 void APlayerCharacter::JumpLandAttack()
 {
-	if (CombatState == ECombatState::ECS_Attack)return;
+	if (CombatState == ECombatState::ECS_Attack)
+	{
+		return;
+	}
 
-	if (JumpAttackMontage)
+	if (JumpAttackMontage != nullptr)
 	{
 		UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash));
 
@@ -1082,7 +1126,7 @@ void APlayerCharacter::DashAttack()
 {
 	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash))
 	{
-		if (DashAttackMontage)
+		if (DashAttackMontage != nullptr)
 		{
 			EndToIdleState(false);
 			UseStaminaAndStopRecovery(EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash));
@@ -1149,7 +1193,7 @@ void APlayerCharacter::EndRestMode()
 
 void APlayerCharacter::SetCheckPoint(ASavePoint* Point)
 {
-	if (Point)
+	if (Point != nullptr)
 	{
 		CheckPoint = Point;
 		PlayerData.SavePointTransform = CheckPoint->GetResponPointTransform();
@@ -1171,9 +1215,13 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bDying)return;
+	if (bDying)
+	{
+		return;
+	}
 
-	if (GetSprinting() && GetCharacterMovement()->GetCurrentAcceleration().IsNearlyZero())
+	const bool HardResetCondition{ GetSprinting() && GetCharacterMovement()->GetCurrentAcceleration().IsNearlyZero() };
+	if (HardResetCondition)
 	{
 		HardResetSprint();
 	}
@@ -1238,7 +1286,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	// EventMotionButton
 	PlayerInputComponent->BindAction("EventMotionButton", IE_Pressed, this, &APlayerCharacter::PressedEventMotion);
-	//PlayerInputComponent->BindAction("EventMotionButton", IE_Released, this, &APlayerCharacter::ReleasedJump);
 }
 
 bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
@@ -1252,15 +1299,16 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 	const FVector PlayerToHitPoint{ UKismetMathLibrary::Normal(DamageCauser->GetActorLocation() - GetActorLocation()) };
 	const float DotProductResult{ UKismetMathLibrary::DotProduct2D(FVector2D(PlayerForward),FVector2D(PlayerToHitPoint)) };
 	const float DegreeDifference{ UKismetMathLibrary::DegAcos(DotProductResult) };
-	//UE_LOG(LogTemp, Warning, TEXT("hit angle : %f"), DegreeDifference);
 
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Guard:
 		// 각도가 -DeffenceAngle,+DeffenceAngle 사이인지 구한다.
-		if (DegreeDifference <= EquippedShield->GetDefenceDegree()) {
+		if (DegreeDifference <= EquippedShield->GetDefenceDegree())
+		{
 			const float HalfDamage{ DamageAmount / 2 };
-			if (Stamina >= HalfDamage) {
+			if (Stamina >= HalfDamage)
+			{
 
 				SetShiledImpact(true);
 				AnimInstance->SetShouldPlayShieldImpact(true);
@@ -1271,7 +1319,8 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 				// 데미지를 가드가 모두 받아냈으니 함수를 종료한다.
 				return true;
 			}
-			else {
+			else 
+			{
 				Stamina = 0.f;
 				// 가드로 막을 수 없는 공격이면 가드를 취소하고 특정 애니메이션을 실행한다.
 				bGuardBreak = true;
@@ -1295,11 +1344,11 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 
 	// 공격중이 아니면 -> 피해 애니메이션 실행
 	// 공격중인데 약 공격이 아니면 -> 피해 애니메이션 실행
-	if (!bGuardBreak && CombatState != ECombatState::ECS_Attack || AttackType != EAttackType::EAT_Light)
+	const bool bStopAllMontage{ !bGuardBreak && CombatState != ECombatState::ECS_Attack || AttackType != EAttackType::EAT_Light };
+	if (bStopAllMontage)
 	{
 		// 피해 애니메이션을 실행하기 위해 모든 몽타주 종료
 		AnimInstance->StopAllMontages(0.15f);
-		//CombatState = ECombatState::ECS_Impact;
 	}
 
 	// 데미지 적용
@@ -1321,20 +1370,12 @@ bool APlayerCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser
 
 			// 화면이 잠깐 튀는 이슈가 있음
 			SetActorRotation(FQuat(FVector::UpVector, FMath::DegreesToRadians(LookAtDegree)));
-
-
-			//FVector LaunchVelocity{ DamageCauser->GetActorForwardVector() };
-			//LaunchVelocity.Z = 0.f;
-			//LaunchVelocity = -LaunchVelocity;
-			//LaunchVelocity *= 1000.f;
-			//LaunchVelocity.Z = 200.f;
-			//LaunchCharacter(LaunchVelocity, false, false);
 		}
 
  		if (bDying)
 		{
 			// Die Montage 호출
-			if (DieMontage)
+			if (DieMontage != nullptr)
 			{
 				AnimInstance->Montage_Play(DieMontage);
 			}
@@ -1378,7 +1419,7 @@ void APlayerCharacter::ResetLockOn()
 {
 	// 락온 취소
 	bLockOn = false;
-	if (LockOnWidgetData)
+	if (LockOnWidgetData != nullptr)
 	{
 		LockOnWidgetData->SetVisibility(false);
 		LockOnWidgetData = nullptr;
@@ -1401,7 +1442,7 @@ void APlayerCharacter::SetEventAble(bool bNext, AEventArea* EArea)
 {
 	bEventAble = bNext;
 	EventArea = EArea;
-	if (EventArea)
+	if (EventArea != nullptr)
 	{
 		EventText = EventArea->GetEventText();
 	}
@@ -1474,15 +1515,16 @@ void APlayerCharacter::Sprint()
 {
 	bCanRoll = true;
 
+	const bool bReturnCondition{!CheckActionableState() || GetCharacterMovement()->IsFalling() };
+	if (bReturnCondition)
+	{
+		return;
+	}
+
 	if (CheckActionableState())
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
 	}
-	else
-	{
-		return;
-	}
-	if (GetCharacterMovement()->IsFalling())return;
 
 	if (GetMovementComponent()->Velocity.Size() > 0.f) 
 	{
@@ -1501,7 +1543,7 @@ void APlayerCharacter::StopDelayForRoll()
 
 bool APlayerCharacter::CheckMontageState()
 {
-	if (AnimInstance)
+	if (AnimInstance != nullptr)
 	{
 		return AnimInstance->IsAnyMontagePlaying();
 	}
@@ -1510,7 +1552,7 @@ bool APlayerCharacter::CheckMontageState()
 
 void APlayerCharacter::StopAllMontage()
 {
-	if (AnimInstance) 
+	if (AnimInstance != nullptr)
 	{
 		AnimInstance->StopAllMontages(0.2f);
 	}
@@ -1518,7 +1560,7 @@ void APlayerCharacter::StopAllMontage()
 
 void APlayerCharacter::ForceStopAllMontage()
 {
-	if (AnimInstance && AnimInstance->IsAnyMontagePlaying()) 
+	if (AnimInstance != nullptr && AnimInstance->IsAnyMontagePlaying())
 	{
 		AnimInstance->StopAllMontages(0.2f);
 	}
@@ -1529,10 +1571,13 @@ void APlayerCharacter::PressedJump()
 	bPressedJumpButton = true;
 
 	// 조건 검사
-	if (!bControl)return;
-	if (Stamina < JumpRequiredStamina)return;
-	if (!CheckActionableState())return;
-	if (!CheckLand())return;
+	const bool bEnoughStamina{ Stamina < JumpRequiredStamina };
+	const bool bReturnCondition{ !bControl || bEnoughStamina || !CheckActionableState() || !CheckLand() };
+	if (bReturnCondition)
+	{
+		return;
+	}
+
 	EndToIdleState(true);
 	MaximumZVelocity = 0.f;
 
@@ -1551,9 +1596,10 @@ void APlayerCharacter::ReleasedJump()
 void APlayerCharacter::PrepareJumpAttack()
 {
 	// 점프 하강 공격은 대쉬 공격과 같은 스태미나를 사용한다.
-	if (Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash))
+	const bool bEnoughStamina{ Stamina >= EquippedWeapon->GetRequiredStamina(EWeaponAttackType::EWAT_Dash) };
+	if (bEnoughStamina)
 	{
-		if (PrepareJumpAttackMontage) {
+		if (PrepareJumpAttackMontage != nullptr) {
 			EndToIdleState(false);
 
 			CombatState = ECombatState::ECS_NonMovingInteraction;
@@ -1565,8 +1611,7 @@ void APlayerCharacter::PrepareJumpAttack()
 void APlayerCharacter::UpdateIKFootData(float DeltaTime)
 {
 	// IK_Foot을 잠시 끄는 조건
-	if (/*bLockOn ||*/
-		CombatState == ECombatState::ECS_Attack ||
+	if (CombatState == ECombatState::ECS_Attack ||
 		CombatState == ECombatState::ECS_Impact ||
 		CombatState == ECombatState::ECS_Roll) {
 
@@ -1665,7 +1710,8 @@ void APlayerCharacter::ContinueUpdateIKData(float DeltaTime)
 	float HightOfTwoFeet{ UKismetMathLibrary::Abs(Temp1.Z) };
 
 	// 높이 차이가 50이하로 차이나는지 검사한다.
-	if (HightOfTwoFeet < 50.f) {
+	if (HightOfTwoFeet < 50.f) 
+	{
 		TargetHipOffset = HightOfTwoFeet * (-0.5f);
 	}
 
@@ -1734,20 +1780,20 @@ void APlayerCharacter::EndToIdleState(bool bForceStopMontage)
 
 void APlayerCharacter::PressedEventMotion()
 {
-	if (!bControl)return;
-
-	if (bRest)
+	const bool bReturnCondition{ !bControl || bRest };
+	if (bReturnCondition)
 	{
 		return;
 	}
 
 	// 조건 확인
-	if (bEventAble && EventArea && CheckActionableState() && CheckLand())
+	const bool bAbleEvent{ bEventAble && EventArea && CheckActionableState() && CheckLand() };
+	if (bAbleEvent)
 	{
 		ASavePoint* SaveP = Cast<ASavePoint>(EventArea);
 		AExecutionArea* ExeA = Cast<AExecutionArea>(EventArea);
 
-		if (SaveP)
+		if (SaveP != nullptr)
 		{
 			ResetLockOn();
 
@@ -1759,7 +1805,7 @@ void APlayerCharacter::PressedEventMotion()
 			SaveP->ActiveAutoArrange(150.f);
 		}
 
-		if (ExeA)
+		if (ExeA != nullptr)
 		{
 			const bool bEnemyHaveExecutionMontage{ ExeA->GetEnemy() && ExeA->GetEnemy()->ValidTakeExecutionMontage() };
 			const bool bExecutionable{ ExecutionMontage && bEnemyHaveExecutionMontage };

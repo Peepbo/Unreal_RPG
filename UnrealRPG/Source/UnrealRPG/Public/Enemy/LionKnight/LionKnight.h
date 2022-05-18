@@ -36,6 +36,21 @@ protected:
 
 	virtual void InitStat() override;
 
+	/* DataTable에 저장된 SkillSet을 가져오는 함수 */
+	virtual void InitAttackMontage() override;
+
+	virtual void RecoverStun() override;
+
+	/* 2페이지로 진입한다. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void NextPage();
+	virtual void NextPage_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void InitPage();
+	virtual void InitPage_Implementation();
+
+
 	UFUNCTION(BlueprintCallable)
 	AMagic* UseMagic();
 
@@ -56,15 +71,6 @@ protected:
 	/* Dodge가 가능한지 확인한다. TRUE? Play Dodge, FALSE? Not*/
 	bool CheckDodge();
 
-	/* 2페이지로 진입한다. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void NextPage();
-	virtual void NextPage_Implementation();
-
-	UFUNCTION(BlueprintNativeEvent)
-	void InitPage();
-	virtual void InitPage_Implementation();
-
 	void PlayNextPageMontage();
 
 	UFUNCTION(BlueprintCallable)
@@ -72,11 +78,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void SplashDamage(bool bDefaultDamage, float SelectDamage);
-
-	/* DataTable에 저장된 SkillSet을 가져오는 함수 */
-	virtual void InitAttackMontage() override;
-
-	virtual void RecoverStun() override;
 
 private:
 	bool bPrepareBattle;
@@ -87,7 +88,9 @@ private:
 	FTimerHandle ChangeWeaponSettingTimer;
 
 	/* 3방향 회피  0? 왼쪽, 1? 오른쪽, 2? 후면 */
+	UPROPERTY()
 	TArray<FEnemySpecialAttack> DodgeMontage;
+
 	TDoubleLinkedList<FEnemySpecialAttack> DodgeMontageList;
 
 	/* 2페이지로 진입하는 몽타주 */

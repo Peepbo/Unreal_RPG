@@ -6,10 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "Magic.generated.h"
 
-/* Magic에 사용하는 NiagaraFX에 꼭 포함되어야 할 Param
-* 1. Fire (특정 조건에 만족하여 종료할 때 천천히 파티클 생성을 줄일 때 사용하는 Param)
-* 2. Size (FX의 크기를 다르게하고싶을 때 사용하는 Param)
-*/
+class UParticleSystem;
+class UNiagaraSystem;
+class USoundCue;
+class USoundAttenuation;
+class UNiagaraComponent;
+class UStaticMeshComponent;
+
 UCLASS()
 class UNREALRPG_API AMagic : public AActor
 {
@@ -25,7 +28,7 @@ protected:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	bool CastAble() const { return (FX && Mesh); }
+	bool CastAble() const { return (FX != nullptr && Mesh != nullptr); }
 
 	void PlayCollisionSound();
 
@@ -46,38 +49,40 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
 	float MagicDamage;
+
 	/* 마법을 시젼하는 주인 */
+	UPROPERTY()
 	APawn* MagicOwner;
 
 	bool bEndFXParticle;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-		class UParticleSystem* EndFX_particle;
+	UParticleSystem* EndFX_particle;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-		class UNiagaraSystem* EndFX_niagara;
+	UNiagaraSystem* EndFX_niagara;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-		class USoundCue* FXSound;
+	USoundCue* FXSound;
 		
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-		USoundCue* CollisionSound;
+	USoundCue* CollisionSound;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-		class USoundAttenuation* SoundAttenuation;
+	USoundAttenuation* SoundAttenuation;
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "FX Param")
-		float FXSize;
+	float FXSize;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FX Param")
-		float FXSpawnRate;
+	float FXSpawnRate;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-	class UNiagaraComponent* FX;
+	UNiagaraComponent* FX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Magic)
-	class UStaticMeshComponent* Mesh;
+	UStaticMeshComponent* Mesh;
 
 	bool bUseStaticMesh;
 

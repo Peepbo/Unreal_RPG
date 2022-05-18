@@ -22,13 +22,13 @@ struct FBossSkillSet : public FEnemySkillSet
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemySpecialAttack> DodgeMontage;
+	TArray<FEnemySpecialAttack> DodgeMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemySpecialAttack> BackAttackMontage;
+	TArray<FEnemySpecialAttack> BackAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FEnemyMagicAttack> MagicAttackMontage;
+	TArray<FEnemyMagicAttack> MagicAttackMontage;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBossDelegate);

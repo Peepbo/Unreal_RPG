@@ -48,6 +48,7 @@ private:
 	virtual void InitEventLocationAndRotation();
 
 protected:
+	UPROPERTY()
 	APlayerCharacter* PlayerCharacter;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = SavePoint, meta = (AllowPrivateAccess = "true"))

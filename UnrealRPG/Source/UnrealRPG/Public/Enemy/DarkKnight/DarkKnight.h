@@ -6,6 +6,8 @@
 #include "Enemy/Enemy.h"
 #include "DarkKnight.generated.h"
 
+class UKnightAnimInstance;
+class USkeletalMeshComponent;
 /**
  * 
  */
@@ -21,12 +23,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable)
-	void SetBackWeaponVisibility(const bool bNextVisibility);
-
-	UFUNCTION(BlueprintCallable)
-	void SetEquipWeaponVisibility(const bool bNextVisibility);
-
 	virtual void AgroSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
@@ -41,6 +37,21 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex) override;
 
+	virtual void EndDamageImpact() override;
+
+	virtual	void PlayAttackMontage() override;
+
+	virtual void FindCharacter() override;
+
+	virtual void ActiveEnemy(APlayerCharacter* Player) override;
+
+
+	UFUNCTION(BlueprintCallable)
+	void SetBackWeaponVisibility(const bool bNextVisibility);
+
+	UFUNCTION(BlueprintCallable)
+	void SetEquipWeaponVisibility(const bool bNextVisibility);
+
 	UFUNCTION(BlueprintCallable)
 	void StartDraw();
 
@@ -53,14 +64,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndSheath();
 
-	virtual void EndDamageImpact() override;
-
-	virtual	void PlayAttackMontage() override;
-
-	virtual void FindCharacter() override;
-
-	virtual void ActiveEnemy(APlayerCharacter* Player) override;
-
 private:
 	virtual void ResetCombat() override;
 
@@ -71,10 +74,11 @@ private:
 	void ChangeBeginBattleMode();
 
 private:
-	class UKnightAnimInstance* KnightAnimInstance;
+	UPROPERTY()
+	UKnightAnimInstance* KnightAnimInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	class USkeletalMeshComponent* WeaponCaseMesh;
+	USkeletalMeshComponent* WeaponCaseMesh;
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DrawMontage;
@@ -86,9 +90,9 @@ private:
 	bool bShouldDrawWeapon;
 
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
-		FVector EnemyDir;
+	FVector EnemyDir;
 	UPROPERTY(VisibleAnywhere, Category = Temp, meta = (AllowPrivateAccess = "true"))
-		FVector EnemyToTargetDir;
+	FVector EnemyToTargetDir;
 
 	FTimerHandle WalkDirectionLerpTimer;
 

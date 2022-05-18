@@ -11,6 +11,11 @@
 class AEventArea;
 class ASavePoint;
 class AExecutionArea;
+class USpringArmComponent;
+class UCameraComponent;
+class AMeleePlayerController;
+class UPlayerAnimInstance;
+class UWidgetComponent;
 /**
  * 
  */
@@ -85,43 +90,42 @@ protected:
 	
 	/* 콤보를 이어나갈지 멈출지 확인하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		bool CheckComboAttack();
+	bool CheckComboAttack();
 
-	/* 공격을 멈출 때 호출하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void EndAttack();
+	void EndAttack();
 
 	/* 다음 콤보를 진행하는지 검사하는 함수 */
 	void CheckComboTimer();
 
 	/* 콤보 타이머를 실행하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void StartComboTimer();
+	void StartComboTimer();
 
-	/* 데미지 타입 리셋 함수, EnemyDamageTypeResetDelegate에 들어가있는 함수를 모두 호출시킴 */
+	/* 데미지 타입 리셋 함수, EnemyDamageTypeResetDelegate에 들어가있는 함수를 모두 호출시킴 (다중 히트 방지) */
 	UFUNCTION(BlueprintCallable)
-		void ResetEnemyDamageState();
+	void ResetEnemyDamageState();
 
 	void EndSubAttack();
 
 	UFUNCTION(BlueprintCallable)
-		void SaveDegree();
+	void SaveDegree();
 
 	void BeginAttackRotate(float DeltaTime);
 
 	void PrepareChargedAttack();
 
 	UFUNCTION(BlueprintCallable)
-		bool ChargedAttack();
+	bool ChargedAttack();
 
 	void ResetAttack();
 
 	/* 공격 검사를 시작하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void StartAttackCheckTime();
+	void StartAttackCheckTime();
 	/* 공격 검사를 종료하는 함수 */
 	UFUNCTION(BlueprintCallable)
-		void EndAttackCheckTime();
+	void EndAttackCheckTime();
 
 	/* 대쉬 공격 */
 	void DashAttack();
@@ -139,17 +143,17 @@ protected:
 
 	/* 착용 아이템 아이콘 변경 함수 (블루프린트에서 작성) */
 	UFUNCTION(BlueprintImplementableEvent)
-		void UpdateLeftItemIcon();
+	void UpdateLeftItemIcon();
 	UFUNCTION(BlueprintImplementableEvent)
-		void UpdateRightItemIcon();
+	void UpdateRightItemIcon();
 	UFUNCTION(BlueprintImplementableEvent)
-		void UpdateBottomItemIcon();
+	void UpdateBottomItemIcon();
 	
 	UFUNCTION(BlueprintImplementableEvent)
-		void PlayPlusGoldAnimation(float TargetRewardGold);
+	void PlayPlusGoldAnimation(float TargetRewardGold);
 
 	UFUNCTION(BlueprintCallable)
-		void PrepareShieldAttack();
+	void PrepareShieldAttack();
 
 	/* Stamina Function */
 	/* 스태미나 회복 */
@@ -161,13 +165,15 @@ protected:
 
 	void UseStaminaAndStopRecovery(float UseStamina);
 
+	UFUNCTION(BlueprintCallable)
+	float GetStPercentage();
+
 	/* Roll Function */
 	/* 일단 캐릭터가 보는 방향으로 구르기 */
 	void Roll();
 
 	UFUNCTION(BlueprintCallable)
-		void EndRoll();
-
+	void EndRoll();
 
 	/* Lock-On Function */
 	void PressedLockOn();
@@ -178,6 +184,12 @@ protected:
 	/* 락온 위치로 카메라를 회전하는 함수, (RLerp 사용) */
 	void RotateCameraByLockOn();
 
+	/* 락온 상태에서 달리기(sprint)로 전환할 때 호출하는 함수, 캐릭터가 바라보는 방향을 수정함 */
+	UFUNCTION(BlueprintCallable)
+	void ApplyLockOnMovementSetting();
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyLockOnAttackSetting(bool bStartAttack);
 
 	/* Usable Item Function */
 	void PressedUseItem();
@@ -193,6 +205,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndUseItem();
 
+	/* Jump Function */
 	UFUNCTION(BlueprintCallable)
 	bool CheckLand();
 
@@ -200,21 +213,13 @@ protected:
 	void JumpLandAttack();
 
 	UFUNCTION(BlueprintCallable)
-		void SaveMaxmimumVelocity();
+	void SaveMaxmimumVelocity();
 
 	UFUNCTION(BlueprintCallable)
-		void ResetZVelocity() { MaximumZVelocity = 0.f; }
+	void ResetZVelocity() { MaximumZVelocity = 0.f; }
 
-	UFUNCTION(BlueprintCallable)
-		void SetHitPoint_Test(FVector HitPoint) { LastHitPoint = HitPoint; }
 
-	/* 락온 상태에서 달리기(sprint)로 전환할 때 호출하는 함수, 캐릭터가 바라보는 방향을 수정함 */
-	UFUNCTION(BlueprintCallable)
-		void ApplyLockOnMovementSetting();
-
-	UFUNCTION(BlueprintCallable)
-		void ApplyLockOnAttackSetting(bool bStartAttack);
-
+	/* Other */
 	UFUNCTION(BlueprintCallable)
 	void EndGuardBreak() { bGuardBreak = false; }
 
@@ -232,10 +237,7 @@ protected:
 	AEventArea* GetEventArea() const { return EventArea; }
 
 	UFUNCTION(BlueprintCallable)
-	float GetStPercentage();
-
-	UFUNCTION(BlueprintCallable)
-		void IncreaseGold(float Value);
+	void IncreaseGold(float Value);
 
 public:
 	// Called every frame
@@ -260,7 +262,7 @@ public:
 	void SetEventAble(bool bNext, AEventArea* EArea);
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-		void SetButtonEventUIVisibility(bool bOpen);
+	void SetButtonEventUIVisibility(bool bOpen);
 
 	/* FadeTime동안 컨트롤을 막는 하는 함수 */
 	UFUNCTION(BlueprintCallable)
@@ -309,8 +311,8 @@ private:
 
 	void StopAttackToIdle();
 
-
 	bool CheckActionableState();
+
 	void EndToIdleState(bool bForceStopMontage = false);
 
 	void PressedEventMotion();
@@ -326,22 +328,22 @@ private:
 	/* Camera Variable */
 	/* 카메라를 달아 놓을 카메라 팔 추가 (카메라와 캐릭터 사이에 일정 거리를 두기위해 만든 컴포넌트) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* CameraBoom;
+	USpringArmComponent* CameraBoom;
 
 	/* 캐릭터를 따라 움직이는 카메라 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class UCameraComponent* FollowCamera;
+	UCameraComponent* FollowCamera;
 
 	/* 좌우를 둘러보는 감도 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		float BaseTurnRate;
+	float BaseTurnRate;
 
 	/* 상하를 둘러보는 감도 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		float BaseLookUpRate;
+	float BaseLookUpRate;
 
 	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		float LockOnCameraSpeed;
+	float LockOnCameraSpeed;
 
 
 	/* Control Variable */
@@ -395,15 +397,15 @@ private:
 	/* Montage Variable */
 	/* 공격 몽타주 모음 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		TArray<UAnimMontage*> MainComboMontages;
+	TArray<UAnimMontage*> MainComboMontages;
 
 	/* 차지 몽타주 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		TArray<UAnimMontage*> ChargedComboMontages;
+	TArray<UAnimMontage*> ChargedComboMontages;
 
 	/* DashAttack 몽타주 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* DashAttackMontage;
+	UAnimMontage* DashAttackMontage;
 
 	/* JumpAttack 몽타주 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -416,13 +418,13 @@ private:
 	/* Default Item Variable */
 	/* 타입의 안정성을 보장해주는 템플릿 클래스, 기본 무기를 설정하는 곳 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<AWeapon> DefaultWeaponClass;
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<AShield> DefaultShieldClass;
+	TSubclassOf<AShield> DefaultShieldClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<APotion> DefaultPotionClass;
+	TSubclassOf<APotion> DefaultPotionClass;
 
 
 	/* Attack Variable */
@@ -432,10 +434,10 @@ private:
 
 	/* 콤보 공격 인덱스 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		int32 ComboAttackMontageIndex;
+	int32 ComboAttackMontageIndex;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		int32 ChargedComboAttackMontageIndex;
+	int32 ChargedComboAttackMontageIndex;
 
 	/* Enemy의 DamageTypeReset을 모아둘 멀티캐스트 델리게이트, 여러번 공격되는 것을 방지 */
 	FEnemyDamageTypeResetDelegate EnemyDamageTypeResetDelegate;
@@ -445,14 +447,14 @@ private:
 
 	/* 공격 전 회전을 할 지 */
 	UPROPERTY(BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		bool bIsBeforeAttackRotate;
+	bool bIsBeforeAttackRotate;
 
 	/* 컨트롤러가 가리키는 월드 방향 */
 	FRotator SaveRotator;
 
 	/* 회전(공격 전) 속도 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float BeforeAttackRotateSpeed;
+	float BeforeAttackRotateSpeed;
 
 	/* 강 공격인지 아닌지, 해당 변수의 상태에 따라 데미지 적용 값이 바뀐다. */
 	bool bIsChargedAttack;
@@ -463,11 +465,11 @@ private:
 
 	/* AttackMontage를 강제로 종료할 때 BlendOutValue */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float StopAttackMontageBlendOutValue;
+	float StopAttackMontageBlendOutValue;
 
 	/* AttackMontage의 최대 검사 횟수 */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		int32 MaximumAttackIndex;
+	int32 MaximumAttackIndex;
 
 	EPlayerAttackType PlayerAttackType;
 
@@ -505,14 +507,16 @@ private:
 	/* Lock-On Variable */
 	/* 락온 상태인지 아닌지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		bool bLockOn;
+	bool bLockOn;
 
 	/* 락온 시 visible이 켜져야되는 위젯, 해당 위젯의 월드 위치를 카메라(컨트롤러)가 lookAt함 */
-	class UWidgetComponent* LockOnWidgetData;
+	UPROPERTY()
+	UWidgetComponent* LockOnWidgetData;
 	/* 최소 Pitch 값, 몬스터 크기에 따라 달라지는 값(원활한 전투 시야를 위해 추가함) */
 	float MinimumLockOnPitchValue;
 
 	/* SphereOverlapActors에 필요한 Array (락온 전용), 미리 캐쉬해둠 */
+	UPROPERTY()
 	TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
 
 
@@ -521,7 +525,8 @@ private:
 
 	/* Animation Instance Variable */
 	/* 매번 AnimInstance를 검사하지않고 캐싱하여 재사용 */ // fix umelee -> uplayer
-	class UPlayerAnimInstance* AnimInstance;
+	UPROPERTY()
+	UPlayerAnimInstance* AnimInstance;
 
 	FVector2D MoveValue;
 	FVector2D LastMoveValue;
@@ -560,15 +565,15 @@ private:
 
 	/* Socket Name Variable */
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		FName LeftHandSocketName;
+	FName LeftHandSocketName;
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		FName RightHandSocketName;
+	FName RightHandSocketName;
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		FName PotionSocketName;
+	FName PotionSocketName;
 	UPROPERTY(EditDefaultsOnly, Category = IK, meta = (AllowPrivateAccess = "true"))
-		FName LeftFootSocketName;
+	FName LeftFootSocketName;
 	UPROPERTY(EditDefaultsOnly, Category = IK, meta = (AllowPrivateAccess = "true"))
-		FName RightFootSocketName;
+	FName RightFootSocketName;
 
 
 	/* Player Data */
@@ -577,17 +582,22 @@ private:
 
 
 	/* Event Motion */
+	UPROPERTY()
 	AEventArea* EventArea;
 
 	UPROPERTY(BlueprintReadOnly, Category = Event, meta = (AllowPrivateAccess = "true"))
 	FName EventText;
 	bool bEventAble;
 	bool bRest;
+
+	UPROPERTY()
 	ASavePoint* CheckPoint;
 
 	FVector RestEndPoint;
 	FRotator ToRestRotator;
+
 	/* Execution */
+	UPROPERTY()
 	AExecutionArea* ExecutionArea;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Event, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* ExecutionMontage;
@@ -596,7 +606,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Sound, meta = (AllowPrivateAccess = "true"))
 	USceneComponent* ListenerComponent;
 
-	class AMeleePlayerController* PlayerController;
+	AMeleePlayerController* PlayerController;
 
 public:
 	FORCEINLINE bool GetLockOn() const { return bLockOn; }

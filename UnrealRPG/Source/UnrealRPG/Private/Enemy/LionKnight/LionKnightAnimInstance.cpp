@@ -17,9 +17,4 @@ void ULionKnightAnimInstance::InitializeAnimationProperties()
 void ULionKnightAnimInstance::UpdateAnimationProperties(float DeltaTime)
 {
 	Super::UpdateAnimationProperties(DeltaTime);
-
-	if (LionKnight)
-	{
-
-	}
 }

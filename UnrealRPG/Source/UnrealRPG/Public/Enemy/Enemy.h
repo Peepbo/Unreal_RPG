@@ -13,6 +13,11 @@ class APlayerCharacter;
 class AExecutionArea;
 class AMagic;
 class UAnimMontage;
+class UAnimInstance;
+class AEnemyAIController;
+class UBehaviorTree;
+class USphereComponent;
+class UWidgetComponent;
 
 USTRUCT(BlueprintType)
 struct FEnemyStatDataTable : public FTableRowBase
@@ -78,36 +83,52 @@ protected:
 		const FHitResult& SweepResult);
 
 	UFUNCTION()
-		virtual void AgroSphereEndOverlap(
-			UPrimitiveComponent* OverlappedComponent,
-			AActor* OtherActor,
-			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex);
-
-	/* 공격 시작 범위 */
-	UFUNCTION()
-		void CombatRangeOverlap(
-			UPrimitiveComponent* OverlappedComponent,
-			AActor* OtherActor,
-			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex,
-			bool bFromSweep,
-			const FHitResult& SweepResult);
-
-	/* 공격 범위 벗어남 */
-	UFUNCTION()
-		void CombatRangeEndOverlap(
-			UPrimitiveComponent* OverlappedComponent,
-			AActor* OtherActor,
-			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex);
+	virtual void AgroSphereEndOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
 
 	/* non-battle에서 battle로, 혹은 battle에서 non-battle로 */
 	UFUNCTION(BlueprintCallable)
-		virtual void ChangeBattleMode();
+	virtual void ChangeBattleMode();
 
 	UFUNCTION(BlueprintCallable)
-		virtual	void PlayAttackMontage();
+	virtual	void PlayAttackMontage();
+
+	virtual void FindCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EndAttack();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void RecoverStun();
+
+	virtual void ChooseNextAttack();
+
+	virtual void InitAttackMontage();
+
+	virtual void InitStat();
+
+
+	/* 공격 시작 범위 */
+	UFUNCTION()
+	void CombatRangeOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
+	/* 공격 범위 벗어남 */
+	UFUNCTION()
+	void CombatRangeEndOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
+
 
 	/* 캐릭터의 크기를 변경하는 함수 (LockOn에 필요) */
 	void ChangeEnemySize(EEnemySize Size);
@@ -116,33 +137,33 @@ protected:
 	void ChangeColliderSetting(bool bBattle);
 
 	UFUNCTION(BlueprintCallable)
-		void Die();
+	void Die();
 
 
 	/* 이동된 함수 */
 	UFUNCTION(BlueprintCallable)
-		void SaveTargetRotator();
+	void SaveTargetRotator();
 
 	UFUNCTION(BlueprintCallable)
-		void StartRotate();
+	void StartRotate();
 
 	UFUNCTION(BlueprintCallable)
-		void StopRotate();
+	void StopRotate();
 
 	UFUNCTION()
 	void TracingAttackSphere(float Damage);
 
 	UFUNCTION(BlueprintCallable)
-		void StartAttackCheckTime(float DamagePersantage = 1.f);
+	void StartAttackCheckTime(float DamagePersantage = 1.f);
 
 	UFUNCTION(BlueprintCallable)
-		void EndAttackCheckTime();
+	void EndAttackCheckTime();
 
 	UFUNCTION(BlueprintCallable)
-		void FaceOff(float NextWalkDirection);
+	void FaceOff(float NextWalkDirection);
 
 	UFUNCTION(BlueprintCallable)
-		void EndFaceOff();
+	void EndFaceOff();
 
 	UFUNCTION(BlueprintCallable)
 	void Chase();
@@ -152,12 +173,11 @@ protected:
 	void EndRestTimer();
 
 	UFUNCTION(BlueprintCallable)
-		void ChangeSprinting(bool IsSprinting);
+	void ChangeSprinting(bool IsSprinting);
 
-	virtual void FindCharacter();
 
 	UFUNCTION(BlueprintCallable)
-		float GetDegreeForwardToTarget();
+	float GetDegreeForwardToTarget();
 
 	float GetDistanceToTarget();
 
@@ -165,8 +185,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StartAttack();
 
-	UFUNCTION(BlueprintCallable)
-	virtual void EndAttack();
 
 	UFUNCTION(BlueprintCallable)
 	void GetWeaponMesh(class USkeletalMeshComponent* ItemMesh);
@@ -184,52 +202,43 @@ protected:
 	void RecoverMentality();
 	void StartRecoverMentalityDelayTimer(float Delay);
 
-	UFUNCTION(BlueprintCallable)
-	virtual void RecoverStun();
 	void StartStunRecoveryTimer(float Delay);
 
 	UFUNCTION(BlueprintCallable)
 	void DestroyExecutionArea();
 
-	virtual void ChooseNextAttack();
-
-	virtual void InitAttackMontage();
-
-	virtual void InitStat();
-
 private:
-	void CombatTurn(float DeltaTime);
+	virtual void TargetDeath(float RewardGold) override;
+
+
 	virtual void CheckCombatReset(float DeltaTime);
+
 	UFUNCTION(BlueprintCallable)
 	virtual void ResetCombat();
-	void ResetTransform();
 
-	virtual void TargetDeath(float RewardGold) override;
 	UFUNCTION(BlueprintCallable)
 	virtual void ActiveEnemy(APlayerCharacter* Player);
 
+
+	void CombatTurn(float DeltaTime);
+
+	void ResetTransform();
+
 	UFUNCTION(BlueprintCallable)
 	void CreateExecutionArea();
-
 
 	UFUNCTION(BlueprintCallable)
 	void EndBackAttack();
 
 protected:
-	class UAnimInstance* AnimInstance;
+	UPROPERTY()
+	UAnimInstance* AnimInstance;
 
-	class AEnemyAIController* EnemyAIController;
+	UPROPERTY()
+	AEnemyAIController* EnemyAIController;
 
 	FTimerHandle ResetBattleModeTimer;
 	FTimerHandle EndCombatTimer;
-
-	///* 일반 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	//TArray<FEnemyNormalAttack> NormalAttackMontage;
-	//
-	///* 특수 공격 관련 변수 (DataTable을 사용하지 않는 Enemy의 경우 사용) */
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat)
-	//TArray<FEnemySpecialAttack> SpecialAttackMontage;
 
 	UPROPERTY()
 	UEnemyAdvancedAttackManager* AttackManager;
@@ -252,15 +261,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Behavior Tree")
 	APlayerCharacter* Target;
 
-
+	UPROPERTY()
 	APlayerCharacter* OverlapCharacter;
 
+	UPROPERTY()
 	FTimerHandle SearchTimer;
-
 	
 
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
-		float InplaceRotateSpeed;
+	float InplaceRotateSpeed;
 
 	bool bTurn;
 
@@ -285,48 +294,51 @@ protected:
 	float RestDelay;
 
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		bool bStun;
+	bool bStun;
 
 
 	UPROPERTY(EditDefaultsOnly, Category = Setting, meta = (AllowPrivateAccess = "true"))
-		FName EnemyDataTableRowName;
+	FName EnemyDataTableRowName;
 
 	/* Stat DataTable Variable */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
-		UDataTable* EnemyStatDataTable;
+	UDataTable* EnemyStatDataTable;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
-		FName CharacterName;
+	FName CharacterName;
 
 	UPROPERTY(VisibleAnywhere, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
-		FName LockOnSocketName = "Hips";
+	FName LockOnSocketName = "Hips";
 
 	/* 몬스터 크기를 대략적으로 나타내는 enum 변수 */
 	UPROPERTY(VisibleAnywhere, Category = "Stat DataTable", meta = (AllowPrivateAccess = "true"))
-		EEnemySize EnemySize;
+	EEnemySize EnemySize;
 
 	/* 정신력, 데미지를 입으면 정신력이 깎이게 되며 2.5초동안 데미지를 입지 않으면 다시 정신력이 회복된다. */
 	/* 정신력이 0 혹은 그 이하에 도달하면 기절 애니메이션이 실행되며 애니메이션(보스의 1->2페이지 전환 제외)에 상관없이 모든 애니메이션을 스킵하고 실행한다. */
 	UPROPERTY(VisibleAnywhere, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float Mentality;
+	float Mentality;
+
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float MaximumMentality;
+	float MaximumMentality;
+
 	FTimerHandle MentalityRecoveryTimer;
+
 	bool bRecoverMentality;
 
 	/* Skill DataTable Variable */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill DataTable", meta = (AllowPrivateAccess = "true"))
-		UDataTable* EnemySkillDataTable;
+	UDataTable* EnemySkillDataTable;
 
 private:
 
 	/* AI관련 행동을 저장하는 트리 */
 	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true"))
-	class UBehaviorTree* BehaviorTree;
+	UBehaviorTree* BehaviorTree;
 
 	/* 적(플레이어) 인식 콜라이더 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Combat, meta = (AllowPrivateAccess = "true"))
-	class USphereComponent* AgroSphere;
+	USphereComponent* AgroSphere;
 
 	/* 공격 콜라이더 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Combat, meta = (AllowPrivateAccess = "true"))
@@ -339,7 +351,7 @@ private:
 
 	/* 락온되는 위치 및 이미지를 포함하는 위젯 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Combat, meta = (AllowPrivateAccess = "true"))
-	class UWidgetComponent* LockOnWidget;
+	UWidgetComponent* LockOnWidget;
 
 
 	/* 락온 시 최소 Pitch값을 나타내는 변수, 크기에 따라 달라짐 */
@@ -347,20 +359,19 @@ private:
 
 	bool bLockOnEnemy;
 
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-		FRotator LastSaveRotate;
+	FRotator LastSaveRotate;
 
 	bool bAttackable;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		USkeletalMeshComponent* WeaponMesh;
+	USkeletalMeshComponent* WeaponMesh;
 
 	FTimerHandle AttackCheckTimer;
 
 	/* -1 : left, 0 : forward, 1 : right */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float WalkDirection;
+	float WalkDirection;
 
 	/* true: 왼쪽, false: 오른쪽 */
 	bool bTurnLeft;
@@ -368,17 +379,11 @@ private:
 	bool bMove;
 
 
-
 	UPROPERTY(EditDefaultsOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		float AttackRotateSpeed;
+	float AttackRotateSpeed;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		class UWidgetComponent* HealthBar;
-
-
-
-
-
+	UWidgetComponent* HealthBar;
 
 
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -398,9 +403,6 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AExecutionArea* TakeExecutionArea;
 
-
-
-
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -411,6 +413,10 @@ public:
 
 	UFUNCTION()
 	void ResetLockOn() { bLockOnEnemy = false; }
+	UFUNCTION(BlueprintCallable)
+	void SetMove(bool bNextBool) { bMove = bNextBool; }
+	UFUNCTION(BlueprintCallable)
+	void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
 
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 	FORCEINLINE bool GetBattleMode() const { return bIsBattleMode; }
@@ -418,24 +424,12 @@ public:
 	FORCEINLINE void SetSprinting(bool IsSprint) { bIsSprint = IsSprint; }
 	FORCEINLINE UWidgetComponent* GetLockOnWidget() const { return LockOnWidget; }
 	FORCEINLINE float GetMinimumLockOnPitchValue() const { return LockOnMinimumPitchValue; }
-	
 	FORCEINLINE bool GetLockOn() const { return bLockOnEnemy; }
 	FORCEINLINE void SetLockOn(bool NextBool) { bLockOnEnemy = NextBool; }
-
 	FORCEINLINE float GetWalkDirection() const { return WalkDirection; }
 	FORCEINLINE bool GetTurn() const { return bTurn; }
-
-	UFUNCTION(BlueprintCallable)
-		void SetMove(bool bNextBool) { bMove = bNextBool; }
 	FORCEINLINE bool GetMove() const { return bMove; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetTurnLeft(bool bNextTurn) { bTurnLeft = bNextTurn; }
-
 	FORCEINLINE bool GetTurnLeft() const { return bTurnLeft; }
-
 	FORCEINLINE USkeletalMeshComponent* GetWeapon() { return WeaponMesh; }
-
 	FORCEINLINE bool ValidTakeExecutionMontage() const { return TakeExecutionMontage != nullptr; }
-
 };

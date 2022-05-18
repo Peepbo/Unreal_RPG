@@ -27,6 +27,7 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void ApplyDamageToEnemy(int32 Index);
 
+	/* 플레이어가 바라봐야하는 각도를 계산한다. */
 	virtual void InitEventLocationAndRotation() override;
 
 protected:
@@ -39,12 +40,13 @@ protected:
 		const FHitResult& SweepResult) override;
 
 protected:
+	UPROPERTY()
 	AEnemy* Enemy;
+
 	bool bActive;
 
 private:
 	TArray<float> ExecutionDamages;
-
 
 public:
 	FORCEINLINE AEnemy* GetEnemy() const { return Enemy; }

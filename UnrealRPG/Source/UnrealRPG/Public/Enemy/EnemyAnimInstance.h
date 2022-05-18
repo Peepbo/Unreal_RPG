@@ -6,6 +6,8 @@
 #include "MeleeAnimInstance.h"
 #include "EnemyAnimInstance.generated.h"
 
+class AEnemy;
+
 /**
  * 
  */
@@ -21,21 +23,21 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		float MoveValue;
+	float MoveValue;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Class", meta = (AllowPrivateAccess = "true"))
-	class AEnemy* Enemy;
+	AEnemy* Enemy;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		float WalkDirection;
+	float WalkDirection;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		bool bTurn;
+	bool bTurn;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		bool bTurnLeft;
+	bool bTurnLeft;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		bool bWalkDirectionZero;
+	bool bWalkDirectionZero;
 };

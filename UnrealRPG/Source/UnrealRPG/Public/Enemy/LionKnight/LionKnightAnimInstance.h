@@ -6,6 +6,7 @@
 #include "Enemy/EnemyAnimInstance.h"
 #include "LionKnightAnimInstance.generated.h"
 
+class ALionKnight;
 /**
  * 
  */
@@ -20,5 +21,5 @@ public:
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Class", meta = (AllowPrivateAccess = "true"))
-		class ALionKnight* LionKnight;
+	ALionKnight* LionKnight;
 };

@@ -8,9 +8,9 @@
 #include "RPGTypes.h"
 #include "Shield.generated.h"
 
-/**
- * 
- */
+class UTexture2D;
+class USkeletalMesh;
+
 USTRUCT(BlueprintType)
 struct FShieldDataTable : public FTableRowBase
 {
@@ -23,10 +23,10 @@ struct FShieldDataTable : public FTableRowBase
 	float ShieldDefence;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* ShieldIcon;
+	UTexture2D* ShieldIcon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class USkeletalMesh* ShieldMesh;
+	USkeletalMesh* ShieldMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DefenceDegree;
