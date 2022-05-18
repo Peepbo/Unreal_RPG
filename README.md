@@ -44,7 +44,7 @@ WepPage :  https://blog.naver.com/tngus1140
   > 락온 `Right Thumbstick Button`    
 
 ---
-
+        
 ### 캐릭터 기능
 >1. 플레이어 기능 : IK_Foot, 락온, 콤보 공격, 보스 기절 시 특수 공격
 >2. 필드 몬스터 기능 : 정찰, 대치, 추격, 공격
@@ -55,3 +55,33 @@ WepPage :  https://blog.naver.com/tngus1140
 >2. 몬스터 공격 선택 시스템   
 >3. 보스 전투 시스템       
 >4. 재화 시스템    
+        
+### 사용 에셋
+> #### Sound       
+> > ##### Sound Phenomenon Fantasy  
+> > ##### DarkSoul3 Sound (Youtube)
+> > ##### Action RPG (Epic Sample)      
+> #### Animation
+> > ##### Sword Animation Pack      
+> > ##### Free Fantasy Weapon Sample        
+> > ##### Essential Sword & Shield Animations       
+> > ##### Boss Animations Pack
+> > ##### ARPG Warrior
+> #### Level Disign
+> > ##### Megascans Goddess Temple      
+> > ##### Infinity Blade: Grass Lands       
+> > ##### Infinity Blade: Fire Lands        
+> > ##### Paragon       
+> #### VFX      
+> > ##### RPG FX Starter Pack       
+> > ##### Realistic Starter VFX Pack Vol 2      
+> > ##### Niagara Mega VFX Pack vol. 1      
+> > ##### Niagara Footstep VFX      
+> > ##### Infinity Blade: Effects       
+> > ##### FX Variety Pack       
+> > ##### Particle Effect (Epic Sample)     
+> > ##### Elemental Demo (Epic Sample)         
+> #### Character
+> > ##### ESM Lion Knight       
+> > ##### Renaissance Knight Set        
+> > ##### Paladin J Nordstom (Mixamo)       
