@@ -97,6 +97,9 @@ Content/Environment/*
 Content/sA_Megapack_v1/*
 Content/FXVillesBloodVFXPack/*
 
+# Sound
+Content/FantasyOrchestral/*
+
 # Others
 Content/Assets/*
 Content/_Game/Map/Level1/*

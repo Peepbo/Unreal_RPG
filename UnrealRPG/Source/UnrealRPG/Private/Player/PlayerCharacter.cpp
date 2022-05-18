@@ -184,11 +184,8 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	if (!bControl)
-	{
-		return;
-	}
-	if (!CheckActionableState())
+	const bool bReturnCondition{!bControl || !CheckActionableState() && CombatState != ECombatState::ECS_MovableInteraction && CombatState != ECombatState::ECS_Guard };
+	if (bReturnCondition)
 	{
 		return;
 	}
@@ -218,11 +215,8 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
-	if (!bControl)
-	{
-		return;
-	}
-	if (!CheckActionableState())
+	const bool bReturnCondition{ !bControl || !CheckActionableState() && CombatState != ECombatState::ECS_MovableInteraction && CombatState != ECombatState::ECS_Guard };
+	if (bReturnCondition)
 	{
 		return;
 	}
@@ -833,7 +827,7 @@ void APlayerCharacter::EndSprint()
 
 void APlayerCharacter::PrepareChargedAttack()
 {
-	if (ChargedComboMontages[0] != nullptr)
+	if (ChargedComboMontages[0] == nullptr)
 	{
 		return;
 	}
