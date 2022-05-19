@@ -199,7 +199,6 @@ bool ALionKnight::CheckDodge()
 	{
 		return false;
 	}
-	//EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), true);
 	/* Dodge 조건
 	*
 	* 1. 플레이어가 가까이 있다. (len < 500) (멀리있으면 dodge할 필요가 없다.)
@@ -260,6 +259,7 @@ void ALionKnight::PlayNextPageMontage()
 		AnimInstance->Montage_Play(NextPageMontage);
 
 		bEvent = true;
+		bTurn = false;
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bEvent"), bEvent);
 	}
 }
