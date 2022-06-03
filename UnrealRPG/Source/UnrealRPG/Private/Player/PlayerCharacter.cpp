@@ -939,7 +939,7 @@ void APlayerCharacter::PressedLockOn()
 		UKismetSystemLibrary::SphereOverlapActors(
 			this,
 			GetActorLocation(),
-			1500.f,
+			3000.f,
 			TraceObjectTypes,
 			AEnemy::StaticClass(),
 			{ this },
@@ -990,8 +990,21 @@ AEnemy* APlayerCharacter::GetNearestEnemyWithLockOn(const TArray<AActor*> Actors
 		// 라디안 값을 디그리 값으로 바꿔준다.
 		const float ValueToDegree{ UKismetMathLibrary::DegAcos(DotProductValue) };
 
-		// 카메라 정면으로 부터 좌, 우 50도내에 있는 경우
-		if (ValueToDegree <= 50.f)
+		// ray를 쏴서 중간에 다른 장애물이 없는지 확인한다.
+		FHitResult RayResult;
+		UKismetSystemLibrary::LineTraceSingle(
+			this,
+			GetActorLocation(),
+			Actor->GetActorLocation(),
+			ETraceTypeQuery::TraceTypeQuery1,
+			false,
+			{ this, Actor },
+			EDrawDebugTrace::None,
+			RayResult,
+			true);
+
+		// Ray가 bBlock하지 않고 카메라 정면으로 부터 좌, 우 50도내에 있는 경우
+		if (!RayResult.bBlockingHit && ValueToDegree <= 50.f)
 		{
 			const float NowDistance{ UKismetMathLibrary::Vector_Distance( Actor->GetActorLocation(), GetActorLocation()) };
 
