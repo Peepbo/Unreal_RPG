@@ -15,9 +15,10 @@
 ### 일정 관리       
 > Trello : https://trello.com/b/tThGDM2D/unreal-rpg  
 ### 개인 블로그      
-> WepPage :  https://blog.naver.com/tngus1140  
-        
-
+> WepPage : https://blog.naver.com/tngus1140  
+### 플레이 영상
+> Youtube : https://www.youtube.com/watch?v=GY3NxI8G73U&list=PLeUwWOMlHNwQPCqQ_0bK2DIs1nTzjvqJ5&index=5         
+                
 ### 조작법
 
 > #### 키보드, 마우스 조작법
