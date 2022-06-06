@@ -11,8 +11,8 @@
 
 ALionKnight::ALionKnight():
 	bPrepareBattle(false),
-	NextPageStartHealthPercentage(0.5f),
-	bSecondPageUp(false),
+	NextPhaseStartHealthPercentage(0.5f),
+	bSecondPhaseUp(false),
 	bEvent(false)
 {
 	GroundedWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundedWeapon"));
@@ -93,11 +93,11 @@ bool ALionKnight::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAt
 {
 	Super::CustomTakeDamage(DamageAmount, DamageCauser, AttackType);
 
-	const bool bNextPageCondition{ !bStun && !bSecondPageUp && GetHpPercentage() <= NextPageStartHealthPercentage };
-	if (bNextPageCondition)
+	const bool bNextPhaseCondition{ !bStun && !bSecondPhaseUp && GetHpPercentage() <= NextPhaseStartHealthPercentage };
+	if (bNextPhaseCondition)
 	{
-		bSecondPageUp = true;
-		PlayNextPageMontage();
+		bSecondPhaseUp = true;
+		PlayNextPhaseMontage();
 	}
 
 	if (bDying)
@@ -171,7 +171,7 @@ void ALionKnight::ResetBoss()
 	bPrepareBattle = false;
 	EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bPrepareBattle"), bPrepareBattle);
 
-	InitPage();
+	InitPhase();
 }
 
 void ALionKnight::EndDodge()
@@ -194,7 +194,7 @@ void ALionKnight::EndEvent()
 
 bool ALionKnight::CheckDodge()
 {
-	const bool bReturnCondition{ DodgeMontageList.GetHead() == nullptr || AttackManager->GetMontageType() == EEnemyMontageType::EEMT_Back || bEvent };
+	const bool bReturnCondition{ DodgeMontageList.GetHead() == nullptr || AttackManager->GetMontageType() == EEnemyMontageType::EEMT_Back || bEvent || bStun };
 	if (bReturnCondition)
 	{
 		return false;
@@ -238,25 +238,25 @@ bool ALionKnight::CheckDodge()
 	return bPlayDodge;
 }
 
-void ALionKnight::NextPage_Implementation()
+void ALionKnight::NextPhase_Implementation()
 {
 	InitAttackMontage();
 }
 
-void ALionKnight::InitPage_Implementation()
+void ALionKnight::InitPhase_Implementation()
 {
-	bSecondPageUp = false;
+	bSecondPhaseUp = false;
 	InitAttackMontage();
 }
 
-void ALionKnight::PlayNextPageMontage()
+void ALionKnight::PlayNextPhaseMontage()
 {
-	if (NextPageMontage != nullptr)
+	if (NextPhaseMontage != nullptr)
 	{
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bDodge"), false);
 		EnemyAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("bStun"), false);
 
-		AnimInstance->Montage_Play(NextPageMontage);
+		AnimInstance->Montage_Play(NextPhaseMontage);
 
 		bEvent = true;
 		bTurn = false;
@@ -288,7 +288,7 @@ void ALionKnight::SplashDamage(bool bDefaultDamage, float SelectDamage)
 
 	if (bDefaultDamage)
 	{
-		Damage = !bSecondPageUp ? 10.f : 15.f;
+		Damage = !bSecondPhaseUp ? 10.f : 15.f;
 	}
 	
 	FVector SocketLocation{ GetMesh()->GetSocketLocation("WeaponFront") };
@@ -319,8 +319,8 @@ void ALionKnight::InitAttackMontage()
 	FBossSkillSet* SkillSetDataRow = nullptr;
 
 	FString RowString{ EnemyDataTableRowName.ToString() };
-	const int32 PageIndex{ !bSecondPageUp ? 1 : 2 };
-	RowString.Append(FString::FromInt(PageIndex));
+	const int32 PhaseIndex{ !bSecondPhaseUp ? 1 : 2 };
+	RowString.Append(FString::FromInt(PhaseIndex));
 	
 	SkillSetDataRow = SkillSetTableObject->FindRow<FBossSkillSet>(FName(*RowString), TEXT(""));
 	
@@ -342,9 +342,9 @@ void ALionKnight::RecoverStun()
 {
 	Super::RecoverStun();
 
-	if (!bSecondPageUp && GetHpPercentage() <= NextPageStartHealthPercentage)
+	if (!bSecondPhaseUp && GetHpPercentage() <= NextPhaseStartHealthPercentage)
 	{
-		bSecondPageUp = true;
-		PlayNextPageMontage();
+		bSecondPhaseUp = true;
+		PlayNextPhaseMontage();
 	}
 }

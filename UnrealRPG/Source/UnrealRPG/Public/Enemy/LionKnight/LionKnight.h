@@ -43,12 +43,12 @@ protected:
 
 	/* 2페이지로 진입한다. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void NextPage();
-	virtual void NextPage_Implementation();
+	void NextPhase();
+	virtual void NextPhase_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void InitPage();
-	virtual void InitPage_Implementation();
+	void InitPhase();
+	virtual void InitPhase_Implementation();
 
 
 	UFUNCTION(BlueprintCallable)
@@ -71,7 +71,7 @@ protected:
 	/* Dodge가 가능한지 확인한다. TRUE? Play Dodge, FALSE? Not*/
 	bool CheckDodge();
 
-	void PlayNextPageMontage();
+	void PlayNextPhaseMontage();
 
 	UFUNCTION(BlueprintCallable)
 	void BreakGround();
@@ -94,16 +94,16 @@ private:
 	TDoubleLinkedList<FEnemySpecialAttack> DodgeMontageList;
 
 	/* 2페이지로 진입하는 몽타주 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss Page", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* NextPageMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss Phase", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* NextPhaseMontage;
 
 	/* 2페이지로 진입할 때 필요한 체력 퍼센트 */
-	UPROPERTY(EditDefaultsOnly, Category = "Boss Page", meta = (AllowPrivateAccess = "true"))
-	float NextPageStartHealthPercentage;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss Phase", meta = (AllowPrivateAccess = "true"))
+	float NextPhaseStartHealthPercentage;
 
 	/* 2페이지 인지 아닌지 */
-	UPROPERTY(VisibleAnywhere, Category = "Boss Page", meta = (AllowPrivateAccess = "true"))
-	bool bSecondPageUp;
+	UPROPERTY(VisibleAnywhere, Category = "Boss Phase", meta = (AllowPrivateAccess = "true"))
+	bool bSecondPhaseUp;
 
 	bool bEvent;
 

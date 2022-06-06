@@ -42,9 +42,9 @@ class UNREALRPG_API ABoss : public AEnemy
 
 protected:
 	UFUNCTION(BlueprintCallable)
-	void CallPage2Dispatcher()
+	void CallPhase2Dispatcher()
 	{
-		BossPage2Dispatcher.Broadcast();
+		BossPhase2Dispatcher.Broadcast();
 	}
 	void CallDieDispatcher()
 	{
@@ -57,7 +57,7 @@ private:
 	
 protected:
 	UPROPERTY(BlueprintAssignable)
-	FBossDelegate BossPage2Dispatcher;
+	FBossDelegate BossPhase2Dispatcher;
 	UPROPERTY(BlueprintAssignable)
 	FBossDelegate BossDieDispatcher;
 
