@@ -403,6 +403,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AExecutionArea* TakeExecutionArea;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = SaveData, meta = (AllowPrivateAccess = "true"))
+	int32 EnemyIndex;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

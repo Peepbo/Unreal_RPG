@@ -110,6 +110,11 @@ float AMeleeCharacter::GetHpPercentage()
 	return HP / MaximumHP;
 }
 
+void AMeleeCharacter::ForceDie()
+{
+	bDying = true;
+}
+
 bool AMeleeCharacter::CustomTakeDamage(float DamageAmount, AActor* DamageCauser, EAttackType AttackType)
 {
 	if (bDying)

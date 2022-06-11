@@ -53,7 +53,8 @@ AEnemy::AEnemy() :
 	bUseSpecialAttack(false),
 	bAutoCombatReset(true),
 	bDodge(false),
-	RestDelay(1.f)
+	RestDelay(1.f),
+	EnemyIndex(0)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
