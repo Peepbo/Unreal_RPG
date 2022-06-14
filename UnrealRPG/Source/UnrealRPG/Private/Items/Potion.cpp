@@ -5,7 +5,22 @@
 
 APotion::APotion()
 {
+	InitUseableCount();
+}
 
+void APotion::InitUseableCount()
+{
+	UseableCount = MaximumCount;
+}
+
+bool APotion::CheckUseableCount()
+{
+	return UseableCount > 0;
+}
+
+void APotion::UsePotion()
+{
+	UseableCount--;
 }
 
 void APotion::OnConstruction(const FTransform& Transform)
@@ -34,6 +49,8 @@ void APotion::OnConstruction(const FTransform& Transform)
 			ItemMesh->SetSkeletalMesh(PotionDataRow->PotionMesh);
 
 			RecoveryAmount = PotionDataRow->RecoveryAmount;
+			MaximumCount = PotionDataRow->MaximumCount;
+			UseableCount = MaximumCount;
 		}
 	}
 }

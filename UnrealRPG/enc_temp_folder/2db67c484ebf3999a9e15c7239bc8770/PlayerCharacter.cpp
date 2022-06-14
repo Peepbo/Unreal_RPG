@@ -1071,6 +1071,7 @@ void APlayerCharacter::PressedUseItem()
 
 			EndToIdleState(true);
 			UseItem();
+			EquippedPotion->UsePotion();
 		}
 	}
 }
@@ -1093,8 +1094,6 @@ void APlayerCharacter::SkipUseItem()
 
 void APlayerCharacter::DrinkPotion()
 {
-	EquippedPotion->UsePotion();
-
 	PlayDrinkPotionAnimation();
 	const float NextHP{ HP + EquippedPotion->GetRecoveryAmount() };
 

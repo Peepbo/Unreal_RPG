@@ -152,6 +152,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayPlusGoldAnimation(float TargetRewardGold);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayDrinkPotionAnimation();
+
 	UFUNCTION(BlueprintCallable)
 	void PrepareShieldAttack();
 
